@@ -321,7 +321,7 @@ double hkAlphaHelper(const RDKit::ROMol &mol, python::object atomContribs) {
 RDKit::SparseIntVect<boost::uint32_t> *MorganFingerprintHelper(
     const RDKit::ROMol &mol, int radius, int nBits, python::object invariants,
     python::object fromAtoms, bool useChirality, bool useBondTypes,
-    bool useFeatures, bool useCounts, python::object bitInfo) {
+    bool useFeatures, bool useCounts, python::object bitInfo, bool includeRedundantEnvironments) {
   std::vector<boost::uint32_t> *invars = 0;
   if (invariants) {
     unsigned int nInvar =
@@ -360,12 +360,12 @@ RDKit::SparseIntVect<boost::uint32_t> *MorganFingerprintHelper(
   if (nBits < 0) {
     res = RDKit::MorganFingerprints::getFingerprint(
         mol, static_cast<unsigned int>(radius), invars, froms, useChirality,
-        useBondTypes, useCounts, false, bitInfoMap);
+        useBondTypes, useCounts, false, bitInfoMap, includeRedundantEnvironments);
   } else {
     res = RDKit::MorganFingerprints::getHashedFingerprint(
         mol, static_cast<unsigned int>(radius),
         static_cast<unsigned int>(nBits), invars, froms, useChirality,
-        useBondTypes, false, bitInfoMap);
+        useBondTypes, false, bitInfoMap, includeRedundantEnvironments);
   }
   if (bitInfoMap) {
     bitInfo.attr("clear")();
@@ -392,24 +392,24 @@ RDKit::SparseIntVect<boost::uint32_t> *MorganFingerprintHelper(
 RDKit::SparseIntVect<boost::uint32_t> *GetMorganFingerprint(
     const RDKit::ROMol &mol, int radius, python::object invariants,
     python::object fromAtoms, bool useChirality, bool useBondTypes,
-    bool useFeatures, bool useCounts, python::object bitInfo) {
+    bool useFeatures, bool useCounts, python::object bitInfo, bool includeRedundantEnvironments) {
   return MorganFingerprintHelper(mol, radius, -1, invariants, fromAtoms,
                                  useChirality, useBondTypes, useFeatures,
-                                 useCounts, bitInfo);
+                                 useCounts, bitInfo, includeRedundantEnvironments);
 }
 RDKit::SparseIntVect<boost::uint32_t> *GetHashedMorganFingerprint(
     const RDKit::ROMol &mol, int radius, int nBits, python::object invariants,
     python::object fromAtoms, bool useChirality, bool useBondTypes,
-    bool useFeatures, python::object bitInfo) {
+    bool useFeatures, python::object bitInfo, bool includeRedundantEnvironments) {
   return MorganFingerprintHelper(mol, radius, nBits, invariants, fromAtoms,
                                  useChirality, useBondTypes, useFeatures, true,
-                                 bitInfo);
+                                 bitInfo, includeRedundantEnvironments);
 }
 
 ExplicitBitVect *GetMorganFingerprintBV(
     const RDKit::ROMol &mol, int radius, unsigned int nBits,
     python::object invariants, python::object fromAtoms, bool useChirality,
-    bool useBondTypes, bool useFeatures, python::object bitInfo) {
+    bool useBondTypes, bool useFeatures, python::object bitInfo, bool includeRedundantEnvironments) {
   std::vector<boost::uint32_t> *invars = 0;
   if (invariants) {
     unsigned int nInvar =
@@ -439,7 +439,7 @@ ExplicitBitVect *GetMorganFingerprintBV(
   ExplicitBitVect *res;
   res = RDKit::MorganFingerprints::getFingerprintAsBitVect(
       mol, static_cast<unsigned int>(radius), nBits, invars, froms.get(),
-      useChirality, useBondTypes, false, bitInfoMap);
+      useChirality, useBondTypes, false, bitInfoMap, includeRedundantEnvironments);
   if (bitInfoMap) {
     bitInfo.attr("clear")();
     for (RDKit::MorganFingerprints::BitInfoMap::const_iterator iter =
@@ -931,7 +931,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
        python::arg("fromAtoms") = python::list(),
        python::arg("useChirality") = false, python::arg("useBondTypes") = true,
        python::arg("useFeatures") = false, python::arg("useCounts") = true,
-       python::arg("bitInfo") = python::object()),
+       python::arg("bitInfo") = python::object(),
+       python::arg("includeRedundantEnvironments") = false),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
   docString = "Returns a hashed Morgan fingerprint for a molecule";
@@ -942,7 +943,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
        python::arg("fromAtoms") = python::list(),
        python::arg("useChirality") = false, python::arg("useBondTypes") = true,
        python::arg("useFeatures") = false,
-       python::arg("bitInfo") = python::object()),
+       python::arg("bitInfo") = python::object(),
+       python::arg("includeRedundantEnvironments") = false),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
   docString = "Returns a Morgan fingerprint for a molecule as a bit vector";
@@ -953,7 +955,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
        python::arg("fromAtoms") = python::list(),
        python::arg("useChirality") = false, python::arg("useBondTypes") = true,
        python::arg("useFeatures") = false,
-       python::arg("bitInfo") = python::object()),
+       python::arg("bitInfo") = python::object(),
+       python::arg("includeRedundantEnvironments") = false),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
   python::scope().attr("_MorganFingerprint_version") =
