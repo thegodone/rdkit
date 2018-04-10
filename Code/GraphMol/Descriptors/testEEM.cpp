@@ -18,19 +18,27 @@
 #include <algorithm>
 #include <fstream>
 #include <sstream>
+#include <boost/iostreams/device/file.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
+#include <boost/iostreams/stream.hpp>
+
+
+#include <chrono>  // for high_resolution_clock
 
 #include <GraphMol/Descriptors/EEM.h>
 
-void testEEM() {
+void testEEM1() {
   std::cout << "=>start test EEM\n";
   std::string pathName = getenv("RDBASE");
   std::string sdfName =
-      pathName + "/Code/GraphMol/Descriptors/test_data/set00.sdf";
+      pathName + "/Code/GraphMol/Descriptors/test_data/setEEM1.sdf";
+  auto start = std::chrono::high_resolution_clock::now();
 
   RDKit::SDMolSupplier reader(sdfName, true, false);
 
   std::string fName =
-      pathName + "/Code/GraphMol/Descriptors/test_data/eem.out";
+      pathName + "/Code/GraphMol/Descriptors/test_data/eem1.out";
 
   std::ifstream instrm(fName.c_str());
 
@@ -72,30 +80,39 @@ void testEEM() {
       double ref = atof(myrow[i + 2].c_str());
       if(fabs(ref - charges[i]) >= 0.01) {
 
-         //std::cout << inm << "," << "ref: " << ref << " ,val: "<<  charges[i] << "\n";
+           std::cout << inm << "," << "ref: " << ref << " ,val: "<<  charges[i] << "Symbol: "<< m->getAtomWithIdx(i)->getSymbol() <<"\n";
              ++errorAtoms;
            }
 
       //TEST_ASSERT(fabs(ref - charges[i]) < 0.01);
     }
-
+    //if (nDone>1) {break;}
+    if (nDone % 100== 0) {std::cout << nDone << "\n";}
+    
     if(errorAtoms>0) {
-      std::cout << inm << "\n";
+      std::cout << "id" << nDone << ", name:" << inm << "\n";
       ++errorMols;
+      std::cout << RDKit::MolToSmiles(*m) << "\n";
     }
 
     delete m;
     //break;
     ++nDone;
   }
-    std::cout << "Errors:" <<  errorMols << "\n";
+  auto finish = std::chrono::high_resolution_clock::now();
+std::chrono::duration<double> elapsed = finish - start;
+std::cout << "Elapsed time: " << elapsed.count() << " s\n";
+
+    std::cout << "Errors Mols:" <<  errorMols << "\n";
 
 
   BOOST_LOG(rdErrorLog) << "test on : " << nDone << " molecules done"
                         << std::endl;
 }
 
+
+
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
-  testEEM();
+  testEEM1();
 }
