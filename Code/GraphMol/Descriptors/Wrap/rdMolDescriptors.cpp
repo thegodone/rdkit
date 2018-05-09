@@ -112,6 +112,16 @@ python::tuple calcCrippenDescriptors(const RDKit::ROMol &mol,
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
 
+python::tuple calcCoulombMat(RDKit::ROMol &mol, int confId, int nbmats, int seed) {
+  std::vector<std::vector<double>> results;
+  RDKit::Descriptors::CoulombMat(mol, results, confId, nbmats, seed);
+  python::list result;
+  for (auto &res : results) {
+    result.append(res);
+  }
+  return python::tuple(result);
+}
+
 python::list calcEEMcharges(RDKit::ROMol &mol, int confId) {
         std::vector<double> res;
         RDKit::Descriptors::EEM(mol, res, confId);
@@ -1496,6 +1506,14 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               python::return_value_policy<python::manage_new_object>());
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
+  python::scope().attr("_CalcCoulombMat_version") = RDKit::Descriptors::CoulombMatVersion;
+  docString = "Returns severals Coulomb randomized Matrixes";
+  python::def("CalcCoulombMat", calcCoulombMat,
+                (python::arg("mol"), python::arg("confId") = -1, 
+                python::arg("nbmats") = 1, 
+                python::arg("seed") = 1),
+                docString.c_str());
+
   python::scope().attr("_CalcEMMcharges_version") = RDKit::Descriptors::EEMVersion;
   docString = "Returns EEM atomic partial charges";
   python::def("CalcEEMcharges", calcEEMcharges,
