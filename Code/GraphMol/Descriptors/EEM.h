@@ -1,6 +1,6 @@
 //
 //  Copyright (c) 2017, Guillaume GODIN
-//  "Copyright 2013-2016 Tomas Racek (tom@krab1k.net)"
+//  inspired by Thomas Racek's EEM reference implementation
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
