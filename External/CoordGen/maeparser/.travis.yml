@@ -1,0 +1,26 @@
+sudo: false
+
+language: cpp
+
+before_script:
+  - mkdir build
+  - cd build
+  - export CXX="g++-4.8"
+  - cmake ..
+
+script:
+  - make
+  - make test CTEST_OUTPUT_ON_FAILURE=1
+
+addons:
+  apt:
+    sources:
+      - george-edison55-precise-backports
+      - ubuntu-toolchain-r-test
+    packages:
+      - cmake
+      - cmake-data
+      - gcc-4.8
+      - g++-4.8
+      - libboost-all-dev
+

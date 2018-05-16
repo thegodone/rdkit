@@ -1,0 +1,17 @@
+# Create 32-bit Linux artefacts on Windows/CYGWIN
+export SERVLET_API="../../StandardFiles/ThirdParty/servlet-api.jar"
+export LOG4J_API="../../StandardFiles/ThirdParty/log4j-1.2.8.jar"
+export SUPPORT_LIBS="$SERVLET_API;$LOG4J_API"
+export TMPPATH="$PATH"
+export EXE=""
+export LIB_EXT="so"
+export LIB_PREFIX="lib"
+export KILL_AT=""
+export OBJ_EXT="o"
+export PATH="/cygdrive/c/CYGWIN_old/opt/crosstool/gcc-3.3.6-glibc-2.3.2/i386-unknown-linux-gnu/bin:$TMPPATH"
+export CC="i386-unknown-linux-gnu-gcc.exe -fPIC  -fno-exceptions "
+export LD="i386-unknown-linux-gnu-gcc.exe "
+export LD_OPTS=" -fPIC -lm -static-libgcc -fno-exceptions "
+export BITS="32"
+export JDK_INCLUDE=/cygdrive/c/jdk6/xcomp/linux32/include
+export JDK_MACHINE_INCLUDE=/cygdrive/c/jdk6/xcomp/linux32/include/linux

@@ -1,0 +1,18 @@
+# Create 32-bit Linux artefacts on native machine
+# export SERVLET_API=/opt/apache-tomcat/lib/servlet-api.jar
+export SERVLET_API=../../StandardFiles/ThirdParty/servlet-api.jar
+export LOG4J_API="../../StandardFiles/ThirdParty/log4j-1.2.8.jar"
+export SUPPORT_LIBS="$SERVLET_API:$LOG4J_API"
+export TMPPATH="$PATH"
+export EXE=""
+export LIB_EXT="so"
+export LIB_PREFIX="lib"
+export KILL_AT=""
+export OBJ_EXT="o"
+export PATH="$TMPPATH"
+export CC="gcc -fPIC  -fno-exceptions "
+export LD="gcc "
+export LD_OPTS=" -fPIC -lm -static-libgcc -fno-exceptions "
+export BITS="32"
+export JDK_INCLUDE=/usr/lib/jvm/java-1.6.0-openjdk.x86_64/include
+export JDK_MACHINE_INCLUDE=/usr/lib/jvm/java-1.6.0-openjdk.x86_64/include/linux

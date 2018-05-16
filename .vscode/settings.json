@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "cmath": "cpp",
+        "complex": "cpp",
+        "functional": "cpp",
+        "*.ipp": "cpp",
+        "*.tcc": "cpp",
+        "slist": "cpp",
+        "system_error": "cpp"
+    }
+}

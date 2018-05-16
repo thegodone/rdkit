@@ -1,0 +1,19 @@
+# Create 32-bit Linux artefacts on native machine
+# Ubuntu defines
+export SERVLET_API=/usr/share/java/servlet-api.jar
+export LOG4J_API=/usr/share/java/log4j-1.2.jar
+
+export SUPPORT_LIBS="$SERVLET_API:$LOG4J_API"
+export TMPPATH="$PATH"
+export EXE=""
+export LIB_EXT="so"
+export LIB_PREFIX="lib"
+export KILL_AT=""
+export OBJ_EXT="o"
+export PATH="$TMPPATH"
+export CC="gcc -fPIC  -fno-exceptions "
+export LD="gcc "
+export LD_OPTS=" -fPIC -lm -static-libgcc -fno-exceptions "
+export BITS="32"
+export JDK_INCLUDE=/usr/lib/jvm/java-6-openjdk-amd64/include
+export JDK_MACHINE_INCLUDE=/usr/lib/jvm/java-6-openjdk-amd64/include/linux
