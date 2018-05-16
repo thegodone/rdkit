@@ -119,7 +119,7 @@ void getLocalCoulombMats(const RDKit::ROMol &mol, std::vector< std::vector<doubl
 
       int localatomsnumber=1; 
       for (int j=1; j < numatoms; j++) {
-         if (Y(j)>rcut) {
+         if (Y(j)>rcut or j>nbmats-1) { // stop if than nbmats neighbours atoms already seen!!!
            localatomsnumber = j;
            break;
          }
@@ -134,6 +134,7 @@ void getLocalCoulombMats(const RDKit::ROMol &mol, std::vector< std::vector<doubl
           localz[j]=z[IX(j)];
       }
  
+
       // definition of submatrix size
       MatrixXd subMat(localatomsnumber,localatomsnumber);
       igl::slice(Distance3D, ri, ri, subMat);
