@@ -64,7 +64,7 @@ VectorXd getUpperMat(MatrixXd mat) {
   }
   return res;
 }
- MatrixXd getCoulombMat(VectorXd numbers, int numatoms, MatrixXd Distance3D, unsigned int alpha, bool localdecay) {
+ MatrixXd getCoulombMat(VectorXd numbers, int numatoms, MatrixXd Distance3D,  int alpha, bool localdecay) {
   // 3D distance matrix strange result compare to initial data
 
   MatrixXd ProdV = numbers*numbers.transpose(); // outer products of vector ie (z[i] * z[j])
@@ -99,7 +99,7 @@ MatrixXd permuteEM(MatrixXd Mat, MatrixXi IX){
 
 
 void getLocalCoulombMats(const RDKit::ROMol &mol, std::vector< std::vector<double> > &res, 
-      double *dist3D, unsigned int alpha, double rcut, bool localdecay, bool reduced, int nbmats) {
+      double *dist3D,  int alpha, double rcut, bool localdecay, bool reduced, int nbmats) {
 
     int numatoms = mol.getNumAtoms();
     double *z = new double[numatoms];
@@ -142,7 +142,7 @@ void getLocalCoulombMats(const RDKit::ROMol &mol, std::vector< std::vector<doubl
    
       MatrixXd localCoulomb(localatomsnumber,localatomsnumber);
 
-      localCoulomb = getCoulombMat( localnumbers, localatomsnumber, subMat, 1, localdecay);
+      localCoulomb = getCoulombMat( localnumbers, localatomsnumber, subMat, alpha, localdecay);
 
       if (reduced) {
 
@@ -186,7 +186,8 @@ void getLocalCoulombMats(const RDKit::ROMol &mol, std::vector< std::vector<doubl
 
 }
 
-void getRandCoulombMats(const RDKit::ROMol &mol, std::vector< std::vector<double> > &res, double *dist3D, unsigned int  numAtoms,  int nbmats, int seed, bool localdecay) {
+void getRandCoulombMats(const RDKit::ROMol &mol, std::vector< std::vector<double> > &res, double *dist3D, 
+unsigned int  numAtoms,  int nbmats, int seed, bool localdecay,  int alpha) {
 
   mt.seed(seed);
   // initialize the variables for the getCoulombMat
@@ -201,7 +202,7 @@ void getRandCoulombMats(const RDKit::ROMol &mol, std::vector< std::vector<double
   
   MatrixXd Distance3D = Map<MatrixXd>(dist3D, numatoms, numatoms); // convert the result array to matrix (1 column)
 
-  MatrixXd CMM = getCoulombMat(numbers, numatoms, Distance3D, 1, localdecay); // not sure localdecay is required there!
+  MatrixXd CMM = getCoulombMat(numbers, numatoms, Distance3D, alpha, localdecay); // not sure localdecay is required there!
 
   MatrixXd EigenCMnorm = CMM.rowwise().norm(); // compute row norms
     
@@ -234,7 +235,7 @@ void getRandCoulombMats(const RDKit::ROMol &mol, std::vector< std::vector<double
 }
 
 void getCoulombMats(const ROMol &mol, std::vector< std::vector<double> > &res,
-              unsigned int numAtoms, int confId, unsigned int nbmats, int seed, double rcut, bool local, bool decaying, bool reduced) {
+              unsigned int numAtoms, int confId, unsigned int nbmats,  int alpha , int seed, double rcut, bool local, bool decaying, bool reduced) {
   // 3D distance matrix
   double *dist3D = MolOps::get3DDistanceMat(mol, confId, false, true);
 
@@ -242,28 +243,29 @@ void getCoulombMats(const ROMol &mol, std::vector< std::vector<double> > &res,
     res.clear();
     res.resize(numAtoms);
     std::cout << "test local CoulombMat:\n";
-    getLocalCoulombMats(mol, res, dist3D, 1, rcut, decaying, reduced, nbmats);
+    getLocalCoulombMats(mol, res, dist3D, alpha, rcut, decaying, reduced, nbmats);
     std::cout << "***************************\n";
   } 
   else { 
     res.clear();
     res.resize(nbmats);
     std::cout << "test global CoulombMat:\n";
-    getRandCoulombMats(mol, res, dist3D, numAtoms, nbmats, seed, decaying);
+    getRandCoulombMats(mol, res, dist3D, numAtoms, nbmats, seed, decaying, alpha);
     std::cout << "==========================\n";
 
   }
 }
 }  // end of anonymous namespace
 
-void CoulombMat(const ROMol &mol, std::vector<std::vector<double>>  &res, int confId,  int nbmats, int seed, double rcut, bool local, bool decaying, bool reduced) {
+void CoulombMat(const ROMol &mol, std::vector<std::vector<double>>  &res, int confId,  int nbmats,
+ int seed, double rcut, bool local, bool decaying, bool reduced,  int alpha) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers")
   unsigned int numAtoms = mol.getNumAtoms();
-
+  // check that here or in the next call ?
   res.clear();
   res.resize(nbmats);
 
-  getCoulombMats(mol, res, numAtoms, confId, nbmats, seed, rcut, local, decaying, reduced);
+  getCoulombMats(mol, res, numAtoms, confId, nbmats, alpha, seed, rcut, local, decaying, reduced);
 }
 }  // namespace Descriptors
 }  // namespace RDKit
