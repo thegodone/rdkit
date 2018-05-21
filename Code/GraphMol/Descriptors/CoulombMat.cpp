@@ -33,6 +33,7 @@
 #include "sort.h"
 #include "MolData3Ddescriptors.h"
 #include <Eigen/Dense>
+
 using namespace Eigen;
 
 namespace RDKit {
@@ -188,7 +189,7 @@ void getLocalCoulombMats(const RDKit::ROMol &mol, std::vector< std::vector<doubl
 }
 
 void getRandCoulombMats(const RDKit::ROMol &mol, std::vector< std::vector<double> > &res, double *dist3D, 
-unsigned int  numAtoms,  int nbmats, int seed, bool localdecay,  int alpha) {
+unsigned int  numAtoms,  int nbmats, int seed, int padding, bool localdecay, bool sorted, bool eigenval, int alpha) {
 
   mt.seed(seed);
   // initialize the variables for the getCoulombMat
@@ -208,65 +209,92 @@ unsigned int  numAtoms,  int nbmats, int seed, bool localdecay,  int alpha) {
   MatrixXd EigenCMnorm = CMM.rowwise().norm(); // compute row norms
     
   for (unsigned int j=0; j< nbmats; j++) {
-
-    std::unique_ptr<double[]> result = randnormal(numAtoms); // check if this is always the same or not ;-)
-
-    MatrixXd Eigenresult = Map<MatrixXd>(result.get(), numAtoms, 1); // convert the result array to matrix (1 column)
-
     // prepare result of sort matrix using igl header
     MatrixXd Y;
     MatrixXi IX;
+    if (sorted) {
+    
+      igl::sort(EigenCMnorm,1,false,Y,IX); // sort and find index
 
-    // sort ascending norm+result and get the indexes
-    // need to add this in the compilation ... headers
-    igl::sort(EigenCMnorm+Eigenresult,1,true,Y,IX); // sort and find index
+    }
+    else {
+      std::unique_ptr<double[]> result = randnormal(numAtoms); // check if this is always the same or not ;-)
 
+      MatrixXd Eigenresult = Map<MatrixXd>(result.get(), numAtoms, 1); // convert the result array to matrix (1 column)
+
+
+
+      // sort ascending norm+result and get the indexes
+      // need to add this in the compilation ... headers
+      igl::sort(EigenCMnorm+Eigenresult,1,true,Y,IX); // sort and find index
+    }
+
+    
     // last step : permute the matrix using the IX indexes (only is seed>=0 else return the orignal matrix!)
-    MatrixXd MRES=permuteEM(CMM, IX);
+    MatrixXd RRES=permuteEM(CMM, IX);
+
     // we can add padding using block method too see the local example
+    // caution padding >= max(numAtoms)
+    MatrixXd MRES = MatrixXd::Zero(padding,padding);
 
+    MRES.block(0,0,numAtoms,numAtoms) = RRES; // CAUTION: need to add a check on the side of MRES lower than the FRES
+
+    VectorXd RES(padding);
+    if (eigenval) {
+      // get eigen vectors 
+      Eigen::EigenSolver<MatrixXd> es(MRES);
+
+      RES = es.eigenvalues().real();
+
+    }
     // than we compress symmetric matrxi using upper triangle into a vector
-
-    VectorXd RES = getUpperMat(MRES);
-
+    else  {
+       VectorXd RES1= getUpperMat(MRES);
+       RES.resize(RES1.size());
+       RES = RES1;
+    }
+    //VectorXd RES= getUpperMat(MRES);
+    
     std::vector<double> rcm(RES.data(), RES.data() + RES.rows() * RES.cols());
+
     
     res[j] = rcm;
   }
 }
 
 void getCoulombMats(const ROMol &mol, std::vector< std::vector<double> > &res,
-              unsigned int numAtoms, int confId, unsigned int nbmats,  int alpha , int seed, double rcut, bool local, bool decaying, bool reduced) {
+              unsigned int numAtoms, int confId, unsigned int nbmats,  int alpha , int seed, int padding,
+               double rcut, bool local, bool decaying, bool reduced, bool sorted, bool eigenval) {
   // 3D distance matrix
   double *dist3D = MolOps::get3DDistanceMat(mol, confId, false, true);
 
   if (local) {
     res.clear();
     res.resize(numAtoms);
-    std::cout << "test local CoulombMat:\n";
+    //std::cout << "test local CoulombMat:\n";
     getLocalCoulombMats(mol, res, dist3D, alpha, rcut, decaying, reduced, nbmats);
-    std::cout << "***************************\n";
+    //std::cout << "***************************\n";
   } 
   else { 
     res.clear();
     res.resize(nbmats);
-    std::cout << "test global CoulombMat:\n";
-    getRandCoulombMats(mol, res, dist3D, numAtoms, nbmats, seed, decaying, alpha);
-    std::cout << "==========================\n";
+    //std::cout << "test global CoulombMat:\n";
+    getRandCoulombMats(mol, res, dist3D, numAtoms, nbmats, seed, padding, decaying, sorted, eigenval, alpha);
+    //std::cout << "==========================\n";
 
   }
 }
 }  // end of anonymous namespace
 
 void CoulombMat(const ROMol &mol, std::vector<std::vector<double>>  &res, int confId,  int nbmats,
- int seed, double rcut, bool local, bool decaying, bool reduced,  int alpha) {
+ int seed, int padding, double rcut, bool local, bool decaying, bool reduced, bool sorted, bool eigenval, int alpha) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers")
   unsigned int numAtoms = mol.getNumAtoms();
   // check that here or in the next call ?
   res.clear();
   res.resize(nbmats);
 
-  getCoulombMats(mol, res, numAtoms, confId, nbmats, alpha, seed, rcut, local, decaying, reduced);
+  getCoulombMats(mol, res, numAtoms, confId, nbmats, alpha, seed, padding, rcut, local, decaying, reduced, sorted, eigenval);
 }
 }  // namespace Descriptors
 }  // namespace RDKit
