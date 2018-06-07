@@ -50,7 +50,7 @@ def loadsmi(f):
     return smi
 
 if __name__ == "__main__":
-    f='/Users/GVALMTGG/Downloads/qm7smiles.csv'
+    f='/pathto/qm7smiles.csv'
     startTime = time.time()
     smi=loadsmi(f)
     print smi

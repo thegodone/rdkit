@@ -44,7 +44,7 @@ def loaddata(f):
 	return X,Y
 
 if __name__ == "__main__":
-	f='/Users/GVALMTGG/Downloads/qm7smiles.csv'
+	f='/pathto/qm7smiles.csv'
 	S,Y=loaddata(f)
 	print len(Y)
 	print "---------"
