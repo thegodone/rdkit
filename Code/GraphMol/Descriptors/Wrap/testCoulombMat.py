@@ -69,7 +69,8 @@ print ('The mat script took {0} second !'.format(time.time() - startTime))
 startTime = time.time()
 
 for i in range(1):
-	vs = rdMD.CalcCoulombMat(m,-1,10,1, rcut = 2.0, local = True, decaying =  True, reduced = True)
+	vs = rdMD.CalcCoulombMat(m,-1,10,1, rcut = 6.5, local = True, decaying =  True, reduced = False, alpha = 6)
+    # check if the limit 10 is realy apply yes 
 	for v in vs:
 		#natoms = isqrt(len(v))
 		natoms = len(v)
@@ -81,7 +82,6 @@ print ('The mat script took {0} second !'.format(time.time() - startTime))
 for i in range(1):
 	vs = rdMD.CalcCoulombMat(m,-1,10,1, rcut = 6.5, local = True, decaying =  True, reduced = True, alpha = 6) 
 	# check if alpha is also apply to diag values... strange 
-	# fix the size of the max occurance ??? don't see what it works
 	for v in vs:
 		natoms = len(v)
 		arr = np.reshape(v,(1,natoms))

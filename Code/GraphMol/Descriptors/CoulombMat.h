@@ -35,7 +35,8 @@ class ROMol;
 namespace Descriptors {
 const std::string CoulombMatVersion = "1.0.0";
 	void CoulombMat(const ROMol &mol, std::vector<std::vector<double>> &res, int confId, int nbmats,
-		 int seed, int padding, double rcut, bool local, bool decaying, bool reduced,  bool sorted, bool eigenval, int alpha);
+		 int seed, int padding, double rcut, bool local, bool decaying, bool reduced,  bool sorted,
+		 bool eigenval, int alpha,  bool bob, std::vector<std::string> smiles);
 }
 }
 #endif

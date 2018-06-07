@@ -113,10 +113,10 @@ python::tuple calcCrippenDescriptors(const RDKit::ROMol &mol,
 #ifdef RDK_BUILD_DESCRIPTORS3D
 
 python::tuple calcCoulombMat(RDKit::ROMol &mol, int confId, int nbmats, int seed, int padding,
- double rcut, bool local, bool decaying, bool reduced, bool sorted, bool eigenval, int alpha) {
+ double rcut, bool local, bool decaying, bool reduced, bool sorted, bool eigenval, int alpha, bool bob, std::vector<std::string> smiles) {
   std::vector<std::vector<double>> results;
   RDKit::Descriptors::CoulombMat(mol, results, confId, nbmats, seed, padding, rcut,
-   local, decaying, reduced, sorted, eigenval, alpha);
+   local, decaying, reduced, sorted, eigenval, alpha, bob, smiles);
   python::list result;
   for (auto &res : results) {
     result.append(res);
@@ -1523,7 +1523,9 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                 python::arg("reduced") = false,
                 python::arg("sorted") = true,
                 python::arg("eigenval") = false,
-                python::arg("alpha") = 1),
+                python::arg("alpha") = 1,
+                python::arg("bob") = false,
+                python::arg("smiles") = python::list()),
                 docString.c_str());
 
   python::scope().attr("_CalcEMMcharges_version") = RDKit::Descriptors::EEMVersion;

@@ -50,7 +50,8 @@ LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges
 LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
   rdkit_test(testAUTOCORR3D testAUTOCORR3D.cpp
 LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+  rdkit_test(testCoulombMat testCoulombMat.cpp
+LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ForceField ForceFieldHelpers Optimizer DistGeomHelpers ${RDKit_THREAD_LIBS} )
 endif(RDK_BUILD_DESCRIPTORS3D)
-
 
 add_subdirectory(Wrap)
