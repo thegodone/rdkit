@@ -112,11 +112,37 @@ python::tuple calcCrippenDescriptors(const RDKit::ROMol &mol,
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
 
+
+python::dict calcBagOfBondsMap(std::vector<std::string> smiles) {
+    std::map<std::string, unsigned int> res = RDKit::Descriptors::BagOfBondsMap(smiles);
+    typename std::map<std::string, unsigned int>::iterator iter;
+    python::dict dictionary;
+    for (iter = res.begin(); iter != res.end(); ++iter) {
+		dictionary[iter->first] = iter->second;
+	}
+    return dictionary;
+}
+
+python::list calcBagOfBondVector(RDKit::ROMol &mol, int confId,  int alpha,  python::dict bagsDict) {
+    std::map<std::string, unsigned int> MaxBags;
+    for (unsigned int i = 0;
+       i < python::extract<unsigned int>(bagsDict.keys().attr("__len__")());
+       ++i) {
+        MaxBags[python::extract<std::string>(bagsDict.keys()[i])] =
+        python::extract<unsigned int>(bagsDict.values()[i]);
+    }
+    std::vector<double> res;
+    RDKit::Descriptors::BagOfBondsVector(mol, res, confId,  alpha, MaxBags);
+    python::list pyres;
+    BOOST_FOREACH (double iv, res) { pyres.append(iv); }
+    return pyres;
+}
+
 python::tuple calcCoulombMat(RDKit::ROMol &mol, int confId, int nbmats, int seed, int padding,
- double rcut, bool local, bool decaying, bool reduced, bool sorted, bool eigenval, int alpha, bool bob, std::vector<std::string> smiles) {
+ double rcut, bool local, bool decaying, bool reduced, bool sorted, bool eigenval, int alpha) {
   std::vector<std::vector<double>> results;
   RDKit::Descriptors::CoulombMat(mol, results, confId, nbmats, seed, padding, rcut,
-   local, decaying, reduced, sorted, eigenval, alpha, bob, smiles);
+  local, decaying, reduced, sorted, eigenval, alpha);
   python::list result;
   for (auto &res : results) {
     result.append(res);
@@ -1510,6 +1536,20 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
 
+  python::scope().attr("_CalcBagOfBondVector_version") = RDKit::Descriptors::BagOfBondsVersion;
+  docString = "Returns vector of bag of Bond from Coulomb Matrixe";
+  python::def("CalcBagOfBondVector", calcBagOfBondVector,
+                (python::arg("mol"), python::arg("confId") = -1, 
+                python::arg("alpha") = 1,
+                python::arg("MaxBags") = python::dict()),
+                docString.c_str());
+
+  python::scope().attr("_CalcBagOfBondMap_version") = RDKit::Descriptors::BagOfBondsVersion;
+  docString = "Returns Map of bag of Bond from smile list";
+  python::def("CalcBagOfBondsMap", calcBagOfBondsMap,
+                (python::arg("smiles") = python::list()),
+                docString.c_str());
+
   python::scope().attr("_CalcCoulombMat_version") = RDKit::Descriptors::CoulombMatVersion;
   docString = "Returns severals Coulomb randomized Matrixes";
   python::def("CalcCoulombMat", calcCoulombMat,
@@ -1523,9 +1563,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                 python::arg("reduced") = false,
                 python::arg("sorted") = true,
                 python::arg("eigenval") = false,
-                python::arg("alpha") = 1,
-                python::arg("bob") = false,
-                python::arg("smiles") = python::list()),
+                python::arg("alpha") = 1),
                 docString.c_str());
 
   python::scope().attr("_CalcEMMcharges_version") = RDKit::Descriptors::EEMVersion;

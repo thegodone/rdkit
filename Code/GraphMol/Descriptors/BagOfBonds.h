@@ -26,17 +26,19 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-#ifndef CoulombMatRDKIT_H_MAY2018
-#define CoulombMatRDKIT_H_MAY2018
+#ifndef BagOfBondsRDKIT_H_JUNE2018
+#define BagOfBondsRDKIT_H_JUNE2018
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
 namespace RDKit {
 class ROMol;
 namespace Descriptors {
-const std::string CoulombMatVersion = "1.0.0";
-	void CoulombMat(const ROMol &mol, std::vector<std::vector<double>> &res, int confId, int nbmats,
-		 int seed, int padding, double rcut, bool local, bool decaying, bool reduced,  bool sorted,
-		 bool eigenval, int alpha);
+const std::string BagOfBondsVersion = "1.0.0";
+
+	void BagOfBondsVector(const ROMol &mol, std::vector<double> &res, int confId,
+    int alpha, std::map<std::string, unsigned int> MaxBags);
+
+    std::map<std::string, unsigned int>  BagOfBondsMap(std::vector<std::string>  smiles);
 }
 }
 #endif

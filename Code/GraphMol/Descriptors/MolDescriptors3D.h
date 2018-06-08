@@ -11,6 +11,7 @@
 #ifndef RD_MOLDESCRIPTORS3D_H_SEPT2016
 #define RD_MOLDESCRIPTORS3D_H_SEPT2016
 
+#include <GraphMol/Descriptors/BagOfBonds.h>
 #include <GraphMol/Descriptors/CoulombMat.h>
 #include <GraphMol/Descriptors/EEM.h>
 #include <GraphMol/Descriptors/PBF.h>
