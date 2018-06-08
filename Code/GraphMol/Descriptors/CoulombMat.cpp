@@ -293,7 +293,6 @@ void CoulombMat(const ROMol &mol, std::vector<std::vector<double>>  &res, int co
   // check that here or in the next call ?
   res.clear();
   res.resize(nbmats);
-  bob = true;
   getCoulombMats(mol, res, numAtoms, confId, nbmats, alpha, seed, padding, rcut, local, decaying, reduced, sorted, eigenval);
 }
 }  // namespace Descriptors
