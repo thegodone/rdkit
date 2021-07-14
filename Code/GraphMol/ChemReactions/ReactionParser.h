@@ -83,7 +83,7 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReactionParserException
 RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnSmartsToChemicalReaction(
     const std::string &text,
     std::map<std::string, std::string> *replacements = nullptr,
-    bool useSmiles = false);
+    bool useSmiles = false, bool sanitize = false);
 
 //! returns the reaction SMARTS for a reaction
 RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnSmarts(
