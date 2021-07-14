@@ -91,6 +91,7 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
     if (AddToDict<std::vector<double>>(obj, dict, keys[i])) continue;
     if (AddToDict<std::vector<std::string>>(obj, dict, keys[i])) continue;
     if (AddToDict<std::string>(obj, dict, keys[i])) continue;
+    if (AddToDict<std::list<int>>(obj, dict, keys[i])) continue;
   }
   return dict;
 }

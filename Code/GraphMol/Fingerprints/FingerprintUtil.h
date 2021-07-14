@@ -113,6 +113,13 @@ RDKIT_FINGERPRINTS_EXPORT void getConnectivityInvariants(
     bool includeRingMembership = true);
 const std::string morganConnectivityInvariantVersion = "1.0.0";
 
+RDKIT_FINGERPRINTS_EXPORT void getDynamicConnectivityInvariants(
+    const ROMol &mol, std::vector<std::uint32_t> &invars,
+     std::map<long, std::vector<unsigned int> > &info,   
+     std::vector<unsigned int > filterfeatures );
+const std::string morganDynamicConnectivityInvariantVersion = "1.0.0";
+
+
 //! returns the feature invariants for a molecule
 /*!
 
@@ -129,7 +136,13 @@ const std::string morganConnectivityInvariantVersion = "1.0.0";
 RDKIT_FINGERPRINTS_EXPORT void getFeatureInvariants(
     const ROMol &mol, std::vector<std::uint32_t> &invars,
     std::vector<const ROMol *> *patterns = nullptr);
-const std::string morganFeatureInvariantVersion = "0.1.0";
+const std::string morganFeatureInvariantVersion = "1.0.0";
+
+
+RDKIT_FINGERPRINTS_EXPORT void getFeatureInvariantsFull(
+    const ROMol &mol, std::vector<std::uint32_t> &invars,
+    std::vector<const ROMol *> *patterns = 0);
+const std::string morganFeatureInvariantFullVersion = "1.0.0";
 
 }  // namespace MorganFingerprints
 

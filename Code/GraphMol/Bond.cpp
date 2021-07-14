@@ -7,11 +7,15 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <sstream>
+#include <string>
+#include <iomanip>
+
 #include "Bond.h"
 #include "Atom.h"
 #include "ROMol.h"
 #include <RDGeneral/Invariant.h>
-
+#include <map>
 namespace RDKit {
 
 Bond::Bond() : RDProps() { initBond(); };
@@ -166,6 +170,66 @@ double Bond::getBondTypeAsDouble() const {
     case AROMATIC:
       return 1.5;
       break;
+    case CGRSD:
+      return 2.0;
+      break;
+    case CGRST:
+      return 3.0;
+      break;
+    case CGRSA:
+      return 1.5;
+      break;
+    case CGRSN:
+      return 0.0;
+      break;
+    case CGRNS:
+      return 1.0;
+      break;
+     case CGRDS:
+      return 1.0;
+      break;
+    case CGRDT:
+      return 3.0;
+      break;
+    case CGRDA:
+      return 1.5;
+      break;
+    case CGRDN:
+      return 0.0;
+      break;
+    case CGRND:
+      return 2.0;
+      break;
+    case CGRTS:
+      return 1.0;
+      break;
+    case CGRTD:
+      return 2.0;
+      break;
+    case CGRTA:
+      return 1.5;
+      break;
+    case CGRTN:
+      return 0.0;
+      break;
+    case CGRNT:
+      return 3.0;
+      break;
+    case CGRAS:
+      return 1.0;
+      break;
+    case CGRAD:
+      return 2.0;
+      break;
+    case CGRAT:
+      return 3.0;
+      break;
+    case CGRAN:
+      return 0.0;
+      break;
+    case CGRNA:
+      return 1.5;
+      break;
     case DATIVEONE:
       return 1.0;
       break;  // FIX: this should probably be different
@@ -220,6 +284,66 @@ double Bond::getValenceContrib(const Atom *atom) const {
     case AROMATIC:
       return 1.5;
       break;
+    case CGRSD:
+      return 2.0;
+      break;
+    case CGRST:
+      return 3.0;
+      break;
+    case CGRSA:
+      return 1.5;
+      break;
+    case CGRSN:
+      return 0.0;
+      break;
+    case CGRNS:
+      return 1.0;
+      break;
+    case CGRDS:
+      return 1.0;
+      break;
+    case CGRDT:
+      return 3.0;
+      break;
+    case CGRDA:
+      return 1.5;
+      break;
+    case CGRDN:
+      return 0.0;
+      break;
+    case CGRND:
+      return 2.0;
+      break;
+    case CGRTS:
+      return 1.0;
+      break;
+    case CGRTD:
+      return 2.0;
+      break;
+    case CGRTA:
+      return 1.5;
+      break;
+    case CGRTN:
+      return 0.0;
+      break;
+    case CGRNT:
+      return 3.0;
+      break;
+    case CGRAS:
+      return 1.0;
+      break;
+    case CGRAD:
+      return 2.0;
+      break;
+    case CGRAT:
+      return 3.0;
+      break;
+    case CGRAN:
+      return 0.0;
+      break;
+    case CGRNA:
+     return 1.5;
+      break;   
     case DATIVEONE:
       if (atom->getIdx() == getEndAtomIdx()) {
         return 1.0;
@@ -237,6 +361,89 @@ double Bond::getValenceContrib(const Atom *atom) const {
     default:
       UNDER_CONSTRUCTION("Bad bond type");
   }
+}
+    
+unsigned int Bond::getNumAtomMaps() const {
+    PRECONDITION(dp_mol != nullptr, "no owning molecule for bond");
+    unsigned int db = dp_mol->getAtomWithIdx(d_beginAtomIdx)->getAtomMapNum() > 0;
+    unsigned int de = dp_mol->getAtomWithIdx(d_endAtomIdx)->getAtomMapNum() > 0;
+    return db+de;
+}
+
+
+ 
+std::map<unsigned int, unsigned int > Bond::getMappedAtomsNum( bool &mappedonly) const{
+  
+  PRECONDITION(dp_mol != nullptr, "no owning molecule for bond");
+  std::map<unsigned int, unsigned int > res;
+  unsigned int db = dp_mol->getAtomWithIdx(d_beginAtomIdx)->getAtomMapNum();
+  unsigned int de = dp_mol->getAtomWithIdx(d_endAtomIdx)->getAtomMapNum();
+  if (mappedonly) {
+	if (db>0 ){
+		res[db]  = d_beginAtomIdx ;
+	}
+	if (de>0 ){
+                res[de]  = d_endAtomIdx ;
+        }
+ } 
+ else {
+   res[d_beginAtomIdx] = db ;
+   res[d_endAtomIdx] = de;
+ }
+
+
+  return res;
+}
+
+std::string Bond::getBondTypeWithAtoms(bool withmapnum) const{
+ PRECONDITION(dp_mol != nullptr, "no owning molecule for bond");
+std::stringstream ss;
+  unsigned int anb = dp_mol->getAtomWithIdx(d_beginAtomIdx)->getAtomicNum();
+  unsigned int ane = dp_mol->getAtomWithIdx(d_endAtomIdx)->getAtomicNum();
+  unsigned int bondtypeval;
+  switch (getBondType()) { 
+    case UNSPECIFIED:
+    case IONIC:
+    case ZERO:
+      bondtypeval= 0;
+      break;
+    case SINGLE:
+      bondtypeval= 1;
+      break;
+    case DOUBLE:
+      bondtypeval= 2;
+      break;
+    case TRIPLE:
+      bondtypeval = 3;
+      break;
+    case QUADRUPLE:
+      bondtypeval= 4;
+      break;
+    case QUINTUPLE:
+      bondtypeval= 5;
+      break;
+    case HEXTUPLE:
+      bondtypeval= 6;
+      break; 
+   case AROMATIC:
+      bondtypeval= 100;
+      break;
+   default:
+      bondtypeval = 0;
+   }
+ ss << std::setfill('0') << std::setw(3) << bondtypeval; // bondtype number
+ ss << std::setfill('0') << std::setw(3) << std::min(anb,ane); // lower atom number
+ ss << std::setfill('0') << std::setw(3) << std::max(anb,ane); // higher atom number
+
+if (withmapnum) {
+ unsigned int de = dp_mol->getAtomWithIdx(d_endAtomIdx)->getAtomMapNum();
+ unsigned int db = dp_mol->getAtomWithIdx(d_beginAtomIdx)->getAtomMapNum();
+ ss << std::setfill('0') << std::setw(3) << std::min(db,de); // lowe atom map number
+ ss << std::setfill('0') << std::setw(3) << std::max(db,de); // higher atom map number
+}
+ 
+ return ss.str();
+
 }
 
 void Bond::setQuery(QUERYBOND_QUERY *what) {

@@ -248,6 +248,66 @@ std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx, bool doKekule,
     case Bond::TRIPLE:
       res = "#";
       break;
+    case Bond::CGRSD:
+      res = "{-=}";
+      break;
+    case Bond::CGRST:
+      res = "{-#}";
+      break;
+    case Bond::CGRSA:
+      res = "{-:}";
+      break;
+    case Bond::CGRSN:
+      res = "{-!}";
+      break;
+    case Bond::CGRNS:
+      res = "{!-}";
+      break;
+    case Bond::CGRDS:
+      res = "{=-}";
+      break;
+    case Bond::CGRDT:
+      res = "{=#}";
+      break;
+    case Bond::CGRDA:
+      res = "{=:}";
+      break;
+    case Bond::CGRDN:
+      res = "{=!}";
+      break;
+    case Bond::CGRND:
+      res = "{!=}";
+      break;
+    case Bond::CGRTS:
+      res = "{#-}";
+      break;
+    case Bond::CGRTD:
+      res = "{#=}";
+      break;
+    case Bond::CGRTA:
+      res = "{#:}";
+      break;
+    case Bond::CGRTN:
+      res = "{#!}";
+      break;
+    case Bond::CGRNT:
+      res = "{!#}";
+      break;
+    case Bond::CGRAS:
+      res = "{:-}";
+      break;
+    case Bond::CGRAD:
+      res = "{:=}";
+      break;
+    case Bond::CGRAT:
+      res = "{:#}";
+      break;
+    case Bond::CGRAN:
+      res = "{:!}";
+      break;
+    case Bond::CGRNA:
+      res = "{!:}";
+      break;
     case Bond::AROMATIC:
       if (dir != Bond::NONE && dir != Bond::UNKNOWN) {
         switch (dir) {

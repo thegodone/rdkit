@@ -629,5 +629,99 @@ unsigned int ROMol::addConformer(Conformer *conf, bool assignId) {
   d_confs.push_back(nConf);
   return conf->getId();
 }
+    
+// new method for the mapping depending of the flag we get MapNum to Idx or Idx to MapNum
+std::map<unsigned int, unsigned int > ROMol::getMappedAtomDict(bool &mappedonly) const {
+  PRECONDITION(getNumAtoms() > 0, "no atoms");
+  std::map<unsigned int, unsigned int > res;
+  for (ConstAtomIterator ai = beginAtoms(); ai != endAtoms(); ++ai) {
+    if ((*ai)->getAtomicNum() > 1) {
+       if (mappedonly) {
+         if ((*ai)->getAtomMapNum()>0) {
+	   res[(*ai)->getAtomMapNum()]= (*ai)->getIdx();
+	 }
+       } 
+       else {    
+          res[(*ai)->getIdx()]= (*ai)->getAtomMapNum();
+      }
+    }
+  }
+  return res;
+}
+
+// new method for the mapping depending of the flag we get MapNum to Idx or Idx to MapNum
+std::vector< unsigned int > ROMol::getMappedAtomSet() const {
+  PRECONDITION(getNumAtoms() > 0, "no atoms");
+  std::vector< unsigned int > res;
+  for (ConstAtomIterator ai = beginAtoms(); ai != endAtoms(); ++ai) {
+    if ((*ai)->getAtomicNum() > 1) {
+         if ((*ai)->getAtomMapNum()>0) {
+           res.push_back( (*ai)->getAtomMapNum() );
+       }
+    }
+  }
+  std::sort(res.begin(),res.end());
+  return res;
+}
+
+unsigned int ROMol::getMaxMapNum() const {
+     PRECONDITION(getNumAtoms() > 0, "no atoms");   	
+     unsigned int res = 0;
+     for (ConstAtomIterator ai = beginAtoms(); ai != endAtoms(); ++ai) {
+	  if ((*ai) && (*ai)->getAtomicNum() > 1) {
+             unsigned int amn = (*ai)->getAtomMapNum();
+	     res = std::max(res,amn);
+	     //std::cout << res << " ";
+	  }
+      }
+    // std::cout << "\n";
+    return res;
+}
+
+void ROMol::cleanMapNums() {
+      PRECONDITION(getNumAtoms() > 0, "no atoms");
+     for (AtomIterator ai = beginAtoms(); ai != endAtoms(); ++ai) {
+          (*ai)->setAtomMapNum(0);
+      }
+}
+
+void ROMol::propagateMapNum(Atom* start, unsigned int &maxmap, bool* visited) {
+       unsigned int atid = start->getIdx();
+       if (visited[atid]) {
+	       return;
+       }
+       
+       visited[atid]=true;
+ 
+       if (start->getAtomicNum() > 1 && start->getAtomMapNum()==0  ) {
+       		start->setAtomMapNum(++maxmap);
+       }
+       ROMol::ADJ_ITER begin, end;
+       boost::tie(begin, end) = this->getAtomNeighbors(start);
+       while (begin != end) {
+          Atom *at = this->getAtomWithIdx(*begin);
+          this->propagateMapNum(at, maxmap, visited);
+          ++begin;
+       }
+}
+
+
+// new method for the mapping depending of the flag we get MapNum to Idx or Idx to MapNum
+void ROMol::addMapping(unsigned int &maxmap) {
+	Atom* start = this->getAtomWithIdx(0);
+	unsigned int l = this->getNumAtoms();
+	
+	bool *visited = (bool*) std::malloc(l*sizeof(bool));
+        for (unsigned int p = 0; p<l; p++){
+
+		visited[p]=false;	
+      	}
+	
+	propagateMapNum(start, maxmap, visited);	
+	free (visited);
+}
+
+// add maps to closest points
+
 
 }  // namespace RDKit

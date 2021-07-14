@@ -274,7 +274,7 @@ bool IsMoleculeAgentOfReaction(const ChemicalReaction &rxn, const ROMol &mol) {
 }
 
 ChemicalReaction *ReactionFromSmarts(const char *smarts, python::dict replDict,
-                                     bool useSmiles) {
+                                     bool useSmiles, bool sanitize) {
   PRECONDITION(smarts, "null SMARTS string");
   std::map<std::string, std::string> replacements;
   for (unsigned int i = 0;
@@ -284,7 +284,7 @@ ChemicalReaction *ReactionFromSmarts(const char *smarts, python::dict replDict,
         python::extract<std::string>(replDict.values()[i]);
   }
   ChemicalReaction *res;
-  res = RxnSmartsToChemicalReaction(smarts, &replacements, useSmiles);
+  res = RxnSmartsToChemicalReaction(smarts, &replacements, useSmiles, sanitize);
   return res;
 }
 
@@ -733,7 +733,7 @@ Sample Usage:
   python::def(
       "ReactionFromSmarts", RDKit::ReactionFromSmarts,
       (python::arg("SMARTS"), python::arg("replacements") = python::dict(),
-       python::arg("useSmiles") = false),
+       python::arg("useSmiles") = false, python::arg("sanitize") = false),
       "construct a ChemicalReaction from a reaction SMARTS string. \n\
 see the documentation for rdkit.Chem.MolFromSmiles for an explanation\n\
 of the replacements argument.",

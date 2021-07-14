@@ -31,7 +31,11 @@ namespace Descriptors {
 const std::string AtomFeatVersion = "1.0.0";
 
 RDKIT_DESCRIPTORS_EXPORT void AtomFeatVect(
-    const ROMol &, std::vector<double> &res, int atomid = 0,  bool addchiral = false );
+    const ROMol &, std::vector<double> &res, 
+    int atomid = 0,  bool addchiral = false, 
+    bool add3dfeatures = false, bool emb = false, 
+    bool ori = false );
+
 }  // namespace Descriptors
 }  // namespace RDKit
 #endif

@@ -109,7 +109,8 @@ endif()
 add_subdirectory(MolStandardize)
 add_subdirectory(ScaffoldNetwork)
 add_subdirectory(MolEnumerator)
-
+add_subdirectory(CondensedGraphRxn)
+add_subdirectory(Filters)
 
 rdkit_test(graphmolTest1 test1.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol
  SubstructMatch ForceFieldHelpers ForceField)

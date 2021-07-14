@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <cmath>
+#include <math.h>
 
 #include "ROMol.h"
 #include "Atom.h"
@@ -177,6 +178,82 @@ unsigned int Atom::getTotalNumHs(bool includeNeighbors) const {
   return res;
 }
 
+//
+//   return number of neighbors mapped atoms
+//   
+unsigned int Atom::getNumMappedNeighbors() const {
+    ROMol::ADJ_ITER begin, end;
+    const ROMol *parent = &getOwningMol();
+    boost::tie(begin, end) = parent->getAtomNeighbors(this);
+    unsigned int res = 0;
+    while (begin != end) {
+      const Atom *at = parent->getAtomWithIdx(*begin);
+      if (at->getAtomMapNum()>0) {
+        res++;
+      }
+      ++begin;
+    }
+  return res;
+}
+//
+//   return true if at least one neighbor is a mapped atom
+//
+bool Atom::hasMappedNeighbors() const {
+    ROMol::ADJ_ITER begin, end;
+    const ROMol *parent = &getOwningMol();
+    boost::tie(begin, end) = parent->getAtomNeighbors(this);
+    bool res = false;
+    while (begin != end && !res) {
+      const Atom *at = parent->getAtomWithIdx(*begin);
+      if (at->getAtomMapNum()>0) {
+        res = true;
+      }
+      ++begin;
+    }
+  return res;
+}
+//
+//   return true if all neighbors are mapped atoms
+//
+bool Atom::allNeighborsMapped() const {
+    ROMol::ADJ_ITER begin, end;
+    const ROMol *parent = &getOwningMol();
+    boost::tie(begin, end) = parent->getAtomNeighbors(this);
+    bool res = true;
+    while (begin != end && res) {
+      const Atom *at = parent->getAtomWithIdx(*begin);
+      if (at->getAtomMapNum()==0) {
+        res = false;
+      }
+      ++begin;
+    }
+  return res;
+}
+//
+//  If includeNeighbors is set, we'll loop over our neighbors
+//   and capture the dict of idx, atommapnums of neighbors
+//
+std::map<unsigned int, unsigned int > Atom::getMappedNbrDict(bool &mappedonly ) const {
+    ROMol::ADJ_ITER begin, end;
+    const ROMol *parent = &getOwningMol();
+    boost::tie(begin, end) = parent->getAtomNeighbors(this);
+    std::map<unsigned int, unsigned int > res;
+    while (begin != end) {
+      const Atom *at = parent->getAtomWithIdx(*begin);
+      if (mappedonly) {
+          if (at->getAtomMapNum()>0)
+      	      res[at->getAtomMapNum()]= at->getIdx();		
+      }
+      else  {
+	      res[at->getIdx()]= at->getAtomMapNum();
+      }
+      ++begin;
+    }
+  return res;
+}
+
+    
+    
 unsigned int Atom::getNumImplicitHs() const {
   if (df_noImplicit) {
     return 0;
