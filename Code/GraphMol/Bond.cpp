@@ -7,11 +7,15 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <sstream>
+#include <string>
+#include <iomanip>
+
 #include "Bond.h"
 #include "Atom.h"
 #include "ROMol.h"
 #include <RDGeneral/Invariant.h>
-
+#include <map>
 namespace RDKit {
 
 Bond::Bond() : RDProps() { initBond(); };
@@ -167,6 +171,66 @@ double Bond::getBondTypeAsDouble() const {
     case AROMATIC:
       res = 1.5;
       break;
+    case CGRSD:
+      res = 2.0;
+      break;
+    case CGRST:
+      res = 3.0;
+      break;
+    case CGRSA:
+      res = 1.5;
+      break;
+    case CGRSN:
+      res = 0.0;
+      break;
+    case CGRNS:
+      res = 1.0;
+      break;
+     case CGRDS:
+      res = 1.0;
+      break;
+    case CGRDT:
+      res = 3.0;
+      break;
+    case CGRDA:
+      res = 1.5;
+      break;
+    case CGRDN:
+      res = 0.0;
+      break;
+    case CGRND:
+      res = 2.0;
+      break;
+    case CGRTS:
+      res = 1.0;
+      break;
+    case CGRTD:
+      res = 2.0;
+      break;
+    case CGRTA:
+      res = 1.5;
+      break;
+    case CGRTN:
+      res = 0.0;
+      break;
+    case CGRNT:
+      res = 3.0;
+      break;
+    case CGRAS:
+      res = 1.0;
+      break;
+    case CGRAD:
+      res = 2.0;
+      break;
+    case CGRAT:
+      res = 3.0;
+      break;
+    case CGRAN:
+      res = 0.0;
+      break;
+    case CGRNA:
+      res = 1.5;
+      break;
     case DATIVEONE:
       res = 1.0;
       break;  // FIX: this should probably be different
@@ -190,6 +254,36 @@ double Bond::getValenceContrib(const Atom *atom) const {
   } else {
     res = getBondTypeAsDouble();
   }
+}
+    
+unsigned int Bond::getNumAtomMaps() const {
+    PRECONDITION(dp_mol != nullptr, "no owning molecule for bond");
+    unsigned int db = dp_mol->getAtomWithIdx(d_beginAtomIdx)->getAtomMapNum() > 0;
+    unsigned int de = dp_mol->getAtomWithIdx(d_endAtomIdx)->getAtomMapNum() > 0;
+    return db+de;
+}
+
+
+ 
+std::map<unsigned int, unsigned int > Bond::getMappedAtomsNum( bool &mappedonly) const{
+  
+  PRECONDITION(dp_mol != nullptr, "no owning molecule for bond");
+  std::map<unsigned int, unsigned int > res;
+  unsigned int db = dp_mol->getAtomWithIdx(d_beginAtomIdx)->getAtomMapNum();
+  unsigned int de = dp_mol->getAtomWithIdx(d_endAtomIdx)->getAtomMapNum();
+  if (mappedonly) {
+	if (db>0 ){
+		res[db]  = d_beginAtomIdx ;
+	}
+	if (de>0 ){
+                res[de]  = d_endAtomIdx ;
+        }
+ } 
+ else {
+   res[d_beginAtomIdx] = db ;
+   res[d_endAtomIdx] = de;
+ }
+
 
   return res;
 }

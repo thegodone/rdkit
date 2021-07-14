@@ -22,6 +22,9 @@
 #include <DataStructs/BitVects.h>
 
 #include <GraphMol/Descriptors/USRDescriptor.h>
+#include <GraphMol/Descriptors/EState.h>
+#include <GraphMol/Descriptors/ACSF.h>
+
 
 #ifdef RDK_HAS_EIGEN3
 #include <GraphMol/Descriptors/BCUT.h>
@@ -29,6 +32,7 @@
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
 #include <GraphMol/Descriptors/MolDescriptors3D.h>
+
 #endif
 
 #include <vector>
@@ -115,11 +119,57 @@ python::tuple calcCrippenDescriptors(const RDKit::ROMol &mol,
   return python::make_tuple(logp, mr);
 }
 
+    
+python::tuple calcIState(const RDKit::ROMol &mol, bool isHsone=false) {
+  std::vector<double> results;
+  RDKit::Descriptors::GetIState(mol, results, isHsone);
+  python::list result;
+  for (auto &res : results) {
+    result.append(res);
+  }
+  return python::tuple(result);
+}       
+    
+
+python::tuple calcEState(const RDKit::ROMol &mol) {
+  std::vector<double> results;
+  RDKit::Descriptors::GetEStateTopological(mol, results);
+  python::list result;
+  for (auto &res : results) {
+    result.append(res);
+  }
+  return python::tuple(result);
+}  
+    
+    
+
+python::tuple calcGroups(const RDKit::ROMol &mol) {
+  std::vector<int> results;
+  RDKit::Descriptors::GetAtomsGroup(mol, results);
+  python::list result;
+  for (auto &res : results) {
+    result.append(res);
+  }
+  return python::tuple(result);
+}          
+    
+
+python::tuple calcPeriods(const RDKit::ROMol &mol) {
+  std::vector<int> results;
+  RDKit::Descriptors::GetAtomsPeriod(mol, results);
+  python::list result;
+  for (auto &res : results) {
+    result.append(res);
+  }
+  return python::tuple(result);
+}          
+    
+    
 #ifdef RDK_BUILD_DESCRIPTORS3D
 
 python::tuple calcCoulombMat(const RDKit::ROMol &mol, int confId) {
   std::vector<std::vector<double>> results;
-  RDKit::Descriptors::CoulombMat(mol, results, confId);
+  RDKit::Descriptors::CoulombMat(mol, results);
   python::list result;
   for (auto &res : results) {
     result.append(res);
@@ -127,6 +177,17 @@ python::tuple calcCoulombMat(const RDKit::ROMol &mol, int confId) {
   return python::tuple(result);
 }
 
+    
+python::tuple calcEState3D(const RDKit::ROMol &mol, int confId) {
+  std::vector<double> results;
+  RDKit::Descriptors::GetEStateTopographical(mol, results, confId);
+  python::list result;
+  for (auto &res : results) {
+    result.append(res);
+  }
+  return python::tuple(result);
+}    
+    
 python::list calcEEMcharges(RDKit::ROMol &mol, int confId) {
   std::vector<double> res;
   RDKit::Descriptors::EEM(mol, res, confId);
@@ -203,6 +264,81 @@ python::list calcAUTOCORR2Ds(const RDKit::ROMol &mol,
   return pyres;
 }
 
+    
+python::tuple calcACSF(const RDKit::ROMol &mol, 
+	                   python::list atomsZi,
+                       int confId, double rcut) {
+    
+  std::vector<std::uint32_t> Zi;
+  for (int i = 0; i < len(atomsZi); ++i) {
+    Zi.push_back(boost::python::extract<int>(atomsZi[i]));
+  }
+    
+    
+    int nACSF = Zi.size();
+    int nACSFPairs = nACSF*(nACSF+1)/2;
+    
+    int nG2 = 3; //g2Params.size();
+    int nG4 = 4; //g4Params.size();
+    
+    // only compute G1,2 & 4 (don't consider cos G3 and G5 ACSF)
+    int numcols = ((1+nG2)*nACSF+(nG4)*nACSFPairs);
+ 
+    
+    
+ /* std::vector<std::vector<double>> *g2params = nullptr;
+  if (pyg2params) {
+    unsigned int nVs =
+        python::extract<unsigned int>(pyg2params.attr("__len__")());
+    g2params = new std::vector<std::vector<double>>(nVs);
+    for (unsigned int i = 0; i < nVs; ++i) {
+          //std::unique_ptr<std::vector<double>> fvect =
+      //pythonObjectToVect(pyg2params, 2);
+        
+        
+       double v1 = python::extract<double>(pyg2params[i][0]);
+       double v2 = python::extract<double>(pyg2params[i][1]);
+       (*g2params)[i] = {v1, v2};
+    }
+  }
+
+  std::vector<std::vector<double>> *g4params = nullptr;
+  if (pyg4params) {
+    unsigned int nVs =
+        python::extract<unsigned int>(pyg4params.attr("__len__")());
+    g4params = new std::vector<std::vector<double>>(nVs);
+    for (unsigned int i = 0; i < nVs; ++i) {
+       double v1 = python::extract<double>(pyg4params[i][0]);
+       double v2 = python::extract<double>(pyg4params[i][1]);
+       double v3 = python::extract<double>(pyg4params[i][2]);
+         
+       (*g4params)[i] = {v1, v2, v3};
+    }
+  }
+*/
+  std::vector<std::vector<float>> *res = nullptr;
+    res = new std::vector<std::vector<float>>;
+
+  RDKit::Descriptors::ACSF(mol, *res, Zi, confId, rcut);
+
+    
+    
+  python::list pyres;
+  for (auto &cut : *res) {
+      python::list localL;
+      for (unsigned int j = 0; j < numcols; ++j) {
+        localL.append(cut[j]);
+      }
+      pyres.append(python::tuple(localL));
+  }
+  delete res;
+  python::list tres;
+  tres.append(python::tuple(pyres));
+  return python::tuple(tres);
+  
+}
+    
+    
 #endif
 
 RDKit::SparseIntVect<std::int32_t> *GetAtomPairFingerprint(
@@ -547,9 +683,10 @@ ExplicitBitVect *GetMorganFingerprintBV(
 }
 
 python::list GetAtomFeatures(const RDKit::ROMol &mol, int atomid,
-                             bool addchiral) {
+                             bool addchiral, bool add3dfeatures,
+			     bool emb, bool ori) {
   std::vector<double> res;
-  RDKit::Descriptors::AtomFeatVect(mol, res, atomid, addchiral);
+  RDKit::Descriptors::AtomFeatVect(mol, res, atomid, addchiral, add3dfeatures, emb, ori);
   python::list pyres;
   for (auto iv : res) {
     pyres.append(iv);
@@ -568,6 +705,40 @@ python::list GetConnectivityInvariants(const RDKit::ROMol &mol,
   }
   return res;
 }
+
+python::list GetDynamicConnectivityInvariants(const RDKit::ROMol &mol,
+                               python::dict infodict, 
+			       python::list filterfeatures) {
+  std::vector<std::uint32_t> invars(mol.getNumAtoms());
+
+  std::vector<unsigned int> ff;
+  for (int i = 0; i < len(filterfeatures); ++i) {
+    ff.push_back(boost::python::extract<unsigned int>(filterfeatures[i]));
+  }
+
+  std::map<long, std::vector<unsigned int> > info;  
+  
+  RDKit::MorganFingerprints::getDynamicConnectivityInvariants(mol, invars, info, ff);
+  python::list res;
+  BOOST_FOREACH (std::uint32_t iv, invars) { res.append(python::long_(iv)); }
+
+
+  //std::map<long, std::vector<unsigned int> >::iterator it;
+
+  for (auto it = info.begin(); it !=info.end(); ++it) {
+	long key = it->first;
+        std::vector <unsigned int> val = it->second;
+
+        python::list vallst;
+        std::for_each(val.begin(),val.end(), [&](const unsigned int v) { vallst.append(v); });
+        infodict[key] = vallst;
+  }
+
+  return res;
+}
+
+
+
 python::list GetFeatureInvariants(const RDKit::ROMol &mol) {
   std::vector<std::uint32_t> invars(mol.getNumAtoms());
   RDKit::MorganFingerprints::getFeatureInvariants(mol, invars);
@@ -575,6 +746,14 @@ python::list GetFeatureInvariants(const RDKit::ROMol &mol) {
   for (const auto iv : invars) {
     res.append(python::long_(iv));
   }
+  return res;
+}
+
+python::list GetFeatureInvariantsFull(const RDKit::ROMol &mol) {
+  std::vector<std::uint32_t> invars(6*mol.getNumAtoms());
+  RDKit::MorganFingerprints::getFeatureInvariantsFull(mol, invars);
+  python::list res;
+  BOOST_FOREACH (std::uint32_t iv, invars) { res.append(python::long_(iv)); }
   return res;
 }
 
@@ -1055,12 +1234,26 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               docString.c_str());
   python::scope().attr("_ConnectivityInvariants_version") =
       RDKit::MorganFingerprints::morganConnectivityInvariantVersion;
+  
+  python::def("GetDynamicConnectivityInvariants", GetDynamicConnectivityInvariants,
+              (python::arg("mol"),
+               python::arg("info") = python::dict(),
+	       python::arg("filterfeatures") = python::list()),
+              docString.c_str());
+  python::scope().attr("_Dynamic ConnectivityInvariants_version") =
+      RDKit::MorganFingerprints::morganDynamicConnectivityInvariantVersion;
 
   docString = "Returns feature invariants (FCFP-like) for a molecule.";
   python::def("GetFeatureInvariants", GetFeatureInvariants,
               (python::arg("mol")), docString.c_str());
   python::scope().attr("_FeatureInvariants_version") =
       RDKit::MorganFingerprints::morganFeatureInvariantVersion;
+
+  docString = "Returns default full features invariant matrix ie (atomx*feature) for a molecule.";
+  python::def("GetFeatureInvariantsFull", GetFeatureInvariantsFull,
+              (python::arg("mol")), docString.c_str());
+  python::scope().attr("_FeatureInvariantsFull_version") =
+      RDKit::MorganFingerprints::morganFeatureInvariantFullVersion;
 
   // USR descriptor
   docString = "Returns a USR descriptor for one conformer of a molecule";
@@ -1505,7 +1698,10 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   docString = "Returns the Atom Features vector";
   python::def("GetAtomFeatures", GetAtomFeatures,
               (python::arg("mol"), python::arg("atomid"),
-               python::arg("addchiral") = false),
+               python::arg("addchiral") = false,
+               python::arg("add3dfeatures") = false,
+	       python::arg("emb") = false,
+	       python::arg("ori") = false),
               docString.c_str());
 
   python::scope().attr("_CalcNumSpiroAtoms_version") =
@@ -1635,6 +1831,36 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
+    
+  python::scope().attr("_CalcEState_version") =
+      RDKit::Descriptors::EStateVersion;
+  docString = "Returns EState topological";
+  python::def("CalcEState", calcEState,
+              (python::arg("mol")),
+              docString.c_str());  
+    
+    python::scope().attr("_CalcIState_version") =
+      RDKit::Descriptors::EStateVersion;
+  docString = "Returns IState intrinsect values";
+  python::def("CalcIState", calcIState,
+              (python::arg("mol"), python::arg("isHsone") = false),
+              docString.c_str());  
+    
+  python::scope().attr("_CalcGroups_version") =
+      RDKit::Descriptors::EStateVersion;
+  docString = "Returns Atoms Groups";
+  python::def("CalcGroups", calcGroups,
+              (python::arg("mol")),
+              docString.c_str());   
+    
+  python::scope().attr("_CalcPeriods_version") =
+      RDKit::Descriptors::EStateVersion;
+  docString = "Returns Atoms Periods";
+  python::def("CalcPeriods", calcPeriods,
+              (python::arg("mol")),
+              docString.c_str());       
+    
+    
 #ifdef RDK_BUILD_DESCRIPTORS3D
   python::scope().attr("_CalcCoulombMat_version") =
       RDKit::Descriptors::CoulombMatVersion;
@@ -1650,6 +1876,14 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("mol"), python::arg("confId") = -1),
               docString.c_str());
 
+  python::scope().attr("_CalcEState3D_version") =
+      RDKit::Descriptors::EStateVersion;
+  docString = "Returns EState topographical";
+  python::def("CalcEState3D", calcEState3D,
+              (python::arg("mol"), python::arg("confId") = -1),
+              docString.c_str());    
+    
+    
   python::scope().attr("_CalcWHIM_version") = RDKit::Descriptors::WHIMVersion;
   docString = "Returns the WHIM descriptors vector";
   python::def(
@@ -1690,7 +1924,17 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("mol"), python::arg("confId") = -1,
                python::arg("CustomAtomProperty") = ""),
               docString.c_str());
-
+    
+  python::scope().attr("_CalcACSF_version") =
+      RDKit::Descriptors::ACSFVersion;
+  docString = "Returns ACSF G1,G2,G4 atom descriptors vector";
+  python::def(
+        "CalcACSF", calcACSF,
+        (python::arg("mol"), python::arg("atomsZi"),
+         python::arg("confId") = -1, 
+         python::arg("rcut") = 6.0),
+        docString.c_str());
+    
   python::scope().attr("_CalcPBF_version") = RDKit::Descriptors::PBFVersion;
   docString =
       "Returns the PBF (plane of best fit) descriptor "

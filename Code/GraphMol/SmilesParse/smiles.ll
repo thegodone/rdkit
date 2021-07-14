@@ -105,6 +105,7 @@ size_t setup_smiles_string(const std::string &text,yyscan_t yyscanner){
 @[' ']*BP |
 @[' ']*OH 	{ return CHI_CLASS_TOKEN; }
 
+
 @		{ return AT_TOKEN; }
 
 
@@ -316,6 +317,46 @@ s		    {	yylval->atom = new Atom( 16 );
 <IN_ATOM_STATE>\'Ts\'	{ yylval->atom = new Atom(117); return ATOM_TOKEN; }
 <IN_ATOM_STATE>\'Og\'	{ yylval->atom = new Atom(118); return ATOM_TOKEN; }
 
+\{\!\-\}  { yylval->bond = new Bond(Bond::CGRNS);
+          return BOND_TOKEN; }
+\{\!\=\}  { yylval->bond = new Bond(Bond::CGRND);
+          return BOND_TOKEN; }
+\{\!\#\}  { yylval->bond = new Bond(Bond::CGRNT);
+          return BOND_TOKEN; }
+\{\!\:\}  { yylval->bond = new Bond(Bond::CGRNA);
+          return BOND_TOKEN; }
+\{\:\#\}  { yylval->bond = new Bond(Bond::CGRAT);
+          return BOND_TOKEN; }
+\{\:\=\}  { yylval->bond = new Bond(Bond::CGRAD);
+          return BOND_TOKEN; }
+\{\:\-\}  { yylval->bond = new Bond(Bond::CGRAS);
+          return BOND_TOKEN; }
+\{\:\!\}  { yylval->bond = new Bond(Bond::CGRAN);
+          return BOND_TOKEN; }
+\{\=\:\}  { yylval->bond = new Bond(Bond::CGRDA);
+          return BOND_TOKEN; }
+\{\=\!\}  { yylval->bond = new Bond(Bond::CGRDN);
+          return BOND_TOKEN; }
+\{\=\-\}  { yylval->bond = new Bond(Bond::CGRDS);
+          return BOND_TOKEN; }
+\{\=\#\}  { yylval->bond = new Bond(Bond::CGRDT);
+          return BOND_TOKEN; }
+\{\-\!\}  { yylval->bond = new Bond(Bond::CGRSN);
+          return BOND_TOKEN; }
+\{\-\=\}  { yylval->bond = new Bond(Bond::CGRSD);
+          return BOND_TOKEN; }
+\{\-\#\}  { yylval->bond = new Bond(Bond::CGRST);
+          return BOND_TOKEN; }
+\{\-\:\}  { yylval->bond = new Bond(Bond::CGRSA);
+          return BOND_TOKEN; }
+\{\#\=\}  { yylval->bond = new Bond(Bond::CGRTD);
+          return BOND_TOKEN; }	  
+\{\#\-\}  { yylval->bond = new Bond(Bond::CGRTS);
+          return BOND_TOKEN; }
+\{\#\:\}  { yylval->bond = new Bond(Bond::CGRTA);
+          return BOND_TOKEN; }
+\{\#\!\}  { yylval->bond = new Bond(Bond::CGRTN);
+          return BOND_TOKEN; }
 \=	{ yylval->bond = new Bond(Bond::DOUBLE);
 	  return BOND_TOKEN; }
 \#	{ yylval->bond = new Bond(Bond::TRIPLE);

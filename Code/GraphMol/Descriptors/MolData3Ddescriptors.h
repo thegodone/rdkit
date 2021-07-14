@@ -42,6 +42,7 @@ class RDKIT_DESCRIPTORS_EXPORT MolData3Ddescriptors {
   Data3Ddescriptors data3D;
 
  public:
+
   MolData3Ddescriptors();
   std::vector<double> GetCharges(const RDKit::ROMol& mol);
   std::vector<double> GetRelativeMW(const RDKit::ROMol& mol);

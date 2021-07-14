@@ -34,6 +34,7 @@
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/MolOps.h>
 
 #include <boost/algorithm/string.hpp>
 #include <vector>
@@ -90,21 +91,37 @@ std::vector<std::string> splitSmartsIntoComponents(
 
 ROMol *constructMolFromString(const std::string &txt,
                               std::map<std::string, std::string> *replacements,
-                              bool useSmiles) {
-  ROMol *mol;
+                              bool useSmiles, bool sanitize) {
+  ROMol *mol; 
   if (!useSmiles) {
     mol = SmartsToMol(txt, 0, false, replacements);
   } else {
     mol = SmilesToMol(txt, 0, false, replacements);
   }
+ 
+  if (sanitize){
+      unsigned int sanitizeOps = MolOps::SANITIZE_ALL ^ MolOps::SANITIZE_KEKULIZE ^ MolOps::SANITIZE_PROPERTIES;
+
+      //mol->updatePropertyCache(false); 
+      unsigned int failed;
+      try {
+          MolOps::sanitizeMol(*(RWMol *)mol, failed, sanitizeOps);
+      }
+      catch (MolSanitizeException &) {
+          BOOST_LOG(rdInfoLog) << "Issue to sanitize Reaction\n";
+      }
+  }
+
   return mol;
+
+  // return mol;
 }
 
 }  // end of namespace DaylightParserUtils
 
 ChemicalReaction *RxnSmartsToChemicalReaction(
     const std::string &text, std::map<std::string, std::string> *replacements,
-    bool useSmiles) {
+    bool useSmiles, bool sanitize) {
 
   std::vector<std::size_t> pos;
 
@@ -147,7 +164,7 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
   for (const auto &txt : reactSmarts) {
     ROMol *mol;
     mol = DaylightParserUtils::constructMolFromString(txt, replacements,
-                                                      useSmiles);
+                                                      useSmiles, sanitize);
     if (!mol) {
       std::string errMsg = "Problems constructing reactant from SMARTS: ";
       errMsg += txt;
@@ -160,7 +177,7 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
   for (const auto &txt : productSmarts) {
     ROMol *mol;
     mol = DaylightParserUtils::constructMolFromString(txt, replacements,
-                                                      useSmiles);
+                                                      useSmiles, sanitize);
     if (!mol) {
       std::string errMsg = "Problems constructing product from SMARTS: ";
       errMsg += txt;
@@ -175,7 +192,7 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
   // allow a reaction template to have no agent specified
   if (agentText.size() != 0) {
     agentMol = DaylightParserUtils::constructMolFromString(
-        agentText, replacements, useSmiles);
+        agentText, replacements, useSmiles, sanitize);
     if (!agentMol) {
       std::string errMsg = "Problems constructing agent from SMARTS: ";
       errMsg += agentText;

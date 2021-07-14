@@ -13,6 +13,7 @@
 
 // std stuff
 #include <iostream>
+#include <map>
 
 // Ours
 #include <RDGeneral/Invariant.h>
@@ -73,6 +74,26 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
     DATIVE,     //!< standard two-electron dative
     DATIVEL,    //!< standard two-electron dative
     DATIVER,    //!< standard two-electron dative
+    CGRSD,
+    CGRST,
+    CGRSA,
+    CGRSN,
+    CGRNS,
+    CGRDS,
+    CGRDT,
+    CGRDA,
+    CGRDN,
+    CGRND,
+    CGRTS,
+    CGRTD,
+    CGRTA,
+    CGRTN,
+    CGRNT,
+    CGRAS,
+    CGRAD,
+    CGRAT,
+    CGRAN,
+    CGRNA,    
     OTHER,
     ZERO  //!< Zero-order bond (from
     // http://pubs.acs.org/doi/abs/10.1021/ci200488k)
@@ -136,6 +157,16 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   //! returns the status of our \c isAromatic flag
   bool getIsAromatic() const { return df_isAromatic; }
 
+  //! return number (ie 0,1,2) of mapped atoms of this bond
+  unsigned int getNumAtomMaps() const;
+
+  //! return idx, map number of atoms of this bond (zero is skipped)
+  std::map<unsigned int, unsigned int > getMappedAtomsNum( bool &mappedonly) const;
+
+  //! return the bondtype as a string composed of bondtype val and atomic
+  //! number of the atoms of the bond
+  std::string getBondTypeWithAtoms (bool withmapnum) const;
+    
   //! sets our \c isConjugated flag
   void setIsConjugated(bool what) { df_isConjugated = what; }
   //! returns the status of our \c isConjugated flag

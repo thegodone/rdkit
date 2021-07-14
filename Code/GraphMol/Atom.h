@@ -18,6 +18,8 @@
 
 // Std stuff
 #include <iostream>
+#include <boost/foreach.hpp>
+#include <map>
 
 // ours
 #include <RDGeneral/Invariant.h>
@@ -116,6 +118,17 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   //! sets our atomic number
   void setAtomicNum(int newNum) { d_atomicNum = newNum; }
 
+  //! return number of map neighbors  
+  unsigned int getNumMappedNeighbors() const;
+  //! return if atom a neighbor with mapnum
+  bool hasMappedNeighbors() const;
+  //! return if all neighbors are mapped
+  bool allNeighborsMapped() const;
+
+  //! return map with idx &  map number of atoms
+  std::map<unsigned int, unsigned int > getMappedNbrDict( bool &mappedonly) const;
+    
+    
   //! returns our symbol (determined by our atomic number)
   std::string getSymbol() const;
 

@@ -777,11 +777,15 @@ void checkProductChirality(Atom::ChiralType reactantChirality,
 void setReactantAtomPropertiesToProduct(Atom *productAtom,
                                         const Atom &reactantAtom,
                                         bool setImplicitProperties) {
+
+    productAtom->setAtomMapNum(reactantAtom.getAtomMapNum());
+
   // which properties need to be set from the reactant?
   if (productAtom->getAtomicNum() <= 0 ||
       productAtom->hasProp(common_properties::_MolFileAtomQuery)) {
     productAtom->setAtomicNum(reactantAtom.getAtomicNum());
     productAtom->setIsAromatic(reactantAtom.getIsAromatic());
+
     // don't copy isotope information over from dummy atoms
     // (part of github #243) unless we're setting implicit properties,
     // in which case we do need to copy them in (github #1269)

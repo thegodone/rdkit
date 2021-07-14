@@ -305,6 +305,20 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   unsigned int getNumAtoms(bool onlyExplicit) const;
   //! returns our number of heavy atoms (atomic number > 1)
   unsigned int getNumHeavyAtoms() const;
+
+  //! return max map num of a molecule (zero or more)
+  unsigned int getMaxMapNum() const;
+  //! clean the  map nums of a molecule to zero 
+  void cleanMapNums();
+
+  //! returns map of index and map num of all heavy atoms (atomic number > 1)
+  std::map<unsigned int, unsigned int > getMappedAtomDict(bool &mappedonly)  const;
+
+  //! returns map num list of all heavy atoms (atomic number > 1)
+  std::vector< unsigned int > getMappedAtomSet() const;
+
+  //! complete the map nums of a molecule
+  void addMapping(unsigned int &maxmap);
   //! returns a pointer to a particular Atom
   Atom *getAtomWithIdx(unsigned int idx);
   //! \overload
@@ -739,6 +753,8 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     issues of ownership.
   */
   void initFromOther(const ROMol &other, bool quickCopy, int confId);
+    
+  void propagateMapNum(Atom* start, unsigned int &maxmap, bool* visited);
 };
 
 typedef std::vector<ROMol> MOL_VECT;

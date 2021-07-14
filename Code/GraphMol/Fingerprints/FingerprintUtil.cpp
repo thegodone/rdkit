@@ -256,6 +256,40 @@ void getFeatureInvariants(const ROMol &mol, std::vector<uint32_t> &invars,
   }
 }  // end of getFeatureInvariants()
 
+ void getFeatureInvariantsFull(const ROMol &mol, std::vector<uint32_t>  &invars,
+                          std::vector<const ROMol *> *patterns) {
+  unsigned int nAtoms = mol.getNumAtoms();
+
+  unsigned int nbpatterns = 6;
+
+  PRECONDITION(invars.size() == nbpatterns*nAtoms, "vector too small");
+  std::vector<const ROMol *> featureMatchers;
+  if (!patterns) {
+    featureMatchers.reserve(defaultFeatureSmarts.size());
+    for (std::vector<std::string>::const_iterator smaIt =
+             defaultFeatureSmarts.begin();
+         smaIt != defaultFeatureSmarts.end(); ++smaIt) {
+      const ROMol *matcher = pattern_flyweight(*smaIt).get().getMatcher();
+      CHECK_INVARIANT(matcher, "bad smarts");
+      featureMatchers.push_back(matcher);
+    }
+    patterns = &featureMatchers;
+  }
+  std::fill(invars.begin(), invars.end(), 0);
+  for (unsigned int i = 0; i < patterns->size(); ++i) {
+    std::vector<MatchVectType> matchVect;
+    // to maintain thread safety, we have to copy the pattern
+    // molecules:
+    SubstructMatch(mol, ROMol(*(*patterns)[i], true), matchVect);
+    for (std::vector<MatchVectType>::const_iterator mvIt = matchVect.begin();
+         mvIt != matchVect.end(); ++mvIt) {
+      for (const auto &mIt : *mvIt) {
+        invars[i+nbpatterns*mIt.second] = 1 ;
+      }
+    }
+  }
+ }  // end of getFeatureInvariantsFull()
+
 void getConnectivityInvariants(const ROMol &mol, std::vector<uint32_t> &invars,
                                bool includeRingMembership) {
   unsigned int nAtoms = mol.getNumAtoms();
@@ -280,6 +314,143 @@ void getConnectivityInvariants(const ROMol &mol, std::vector<uint32_t> &invars,
     invars[i] = vectHasher(components);
   }
 }  // end of getConnectivityInvariants()
+
+
+std::vector<Atom::ChiralType> RS{Atom::CHI_TETRAHEDRAL_CW,
+                                 Atom::CHI_TETRAHEDRAL_CCW, Atom::CHI_OTHER};
+std::vector<Atom::HybridizationType> HS{Atom::SP, Atom::SP2, Atom::SP3,
+                                        Atom::SP3D, Atom::SP3D2};
+
+std::set<unsigned int> getAtomsWithBondConjugated(const ROMol &mol) {
+ std::set<unsigned int>  res;
+ for (auto bond : mol.bonds()) {
+    if (bond->getIsConjugated()) {
+        res.insert(bond->getBeginAtomIdx());  
+        res.insert(bond->getEndAtomIdx());
+      }
+  }
+  return res;
+}
+
+void getDynamicConnectivityInvariants(const ROMol &mol, std::vector<uint32_t> &invars, 
+	 std::map<long, std::vector<unsigned int> > &info,  std::vector<unsigned int > filterfeatures ) {
+  unsigned int nAtoms = mol.getNumAtoms();
+  PRECONDITION(invars.size() >= nAtoms, "vector too small");
+  gboost::hash<std::vector<uint32_t>> vectHasher;
+  std::set<unsigned int> AtConj;
+  bool foundringsize = false;
+  if (std::binary_search(filterfeatures.begin(), filterfeatures.end(), 12))  {
+     AtConj =  getAtomsWithBondConjugated(mol);
+  }
+
+  for (unsigned int i = 0; i < nAtoms; ++i) {
+    Atom const *atom = mol.getAtomWithIdx(i);
+    std::vector<uint32_t> components;
+    int indx = 1;
+
+    if (std::binary_search(filterfeatures.begin(), filterfeatures.end(), 1))
+      components.push_back(atom->getAtomicNum());
+
+    if (std::binary_search(filterfeatures.begin(), filterfeatures.end(), 2))
+      components.push_back(atom->getTotalDegree());
+    
+    if (std::binary_search(filterfeatures.begin(), filterfeatures.end(), 3))
+      components.push_back(atom->getTotalNumHs());
+  
+    if (std::binary_search(filterfeatures.begin(), filterfeatures.end(), 4))  
+      components.push_back(atom->getFormalCharge());
+  
+    if (std::binary_search(filterfeatures.begin(), filterfeatures.end(), 5)) {
+      int deltaMass = static_cast<int>(
+          atom->getMass() -
+          PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum()));
+      components.push_back(deltaMass);
+    }
+
+   if (std::binary_search(filterfeatures.begin(), filterfeatures.end(), 6))  
+      components.push_back(atom->getIsAromatic());
+
+   if (std::binary_search(filterfeatures.begin(), filterfeatures.end(), 7))  
+      components.push_back(atom->getDegree());
+
+   if (std::binary_search(filterfeatures.begin(), filterfeatures.end(), 8))  
+      components.push_back(atom->getImplicitValence());
+
+   if (std::binary_search(filterfeatures.begin(), filterfeatures.end(), 9))  
+      components.push_back(atom->getNumRadicalElectrons());
+
+   if (std::binary_search(filterfeatures.begin(), filterfeatures.end(), 10))  {
+       indx = 1;
+       bool foundHybrid = false;
+       Atom::HybridizationType hs = atom->getHybridization();
+       for (auto hsquery : HS) {
+        if (hs == hsquery) {
+          components.push_back(indx);
+	  foundHybrid = true;
+        }
+	++indx;
+      }
+       if (!foundHybrid)
+          components.push_back(0);
+   }
+
+   if (std::binary_search(filterfeatures.begin(), filterfeatures.end(), 11))  {
+       indx = 1;
+       Atom::ChiralType rs = atom->getChiralTag();
+       bool foundChiral = false;
+       for (auto rsquery : RS) {
+        if (rs == rsquery) {
+          components.push_back(indx);
+	  foundChiral = true;
+        }
+	++indx;
+       }
+       if (!foundChiral)
+          components.push_back(0);
+      
+   }
+
+   // conjugated atom  
+   if (std::binary_search(filterfeatures.begin(), filterfeatures.end(), 12))  {
+      if (std::find(AtConj.begin(), AtConj.end(), i) != AtConj.end())  {
+          components.push_back(1);
+      }
+      else{
+          components.push_back(0);
+      }
+   }
+
+   // both "isring" and "ring size" if small mid!
+   if (std::binary_search(filterfeatures.begin(), filterfeatures.end(), 13)) {
+        if (atom->getOwningMol().getRingInfo()->numAtomRings(i)) {
+        components.push_back(1);
+        foundringsize = false;
+        for (unsigned int ringsize = 3; ringsize < 10; ringsize++) {
+          if (mol.getRingInfo()->isAtomInRingOfSize(i, ringsize)) {
+             components.push_back(ringsize);
+             foundringsize = true;
+             break;
+          }
+        }
+
+        if (!foundringsize)
+          components.push_back(0);
+      } else {
+        // not in ring
+        components.push_back(0);
+        components.push_back(0);
+       }
+    }
+ 
+    invars[i] = vectHasher(components);
+    info[invars[i]] = components;
+  }
+}  // end of getDynamicConnectivityInvariants()
+
+
+
+
+
 
 }  // namespace MorganFingerprints
 
