@@ -454,6 +454,68 @@ uint8_t getTwiceBondType(const Bond &b) {
     case Bond::HYDROGEN:
       return 0;
       break;
+		  
+    case Bond::CGRSD:
+      return 4;
+      break;
+    case Bond::CGRST:
+      return 6;
+      break;
+    case Bond::CGRSA:
+      return 3;
+      break;
+    case Bond::CGRSN:
+      return 0;
+      break;
+    case Bond::CGRNS:
+      return 2;
+      break;
+    case Bond::CGRDS:
+      return 2;
+      break;
+    case Bond::CGRDT:
+      return 6;
+      break;
+    case Bond::CGRDA:
+      return 3;
+      break;
+    case Bond::CGRDN:
+      return 0;
+      break;
+    case Bond::CGRND:
+      return 4;
+      break;
+    case Bond::CGRTS:
+      return 2;
+      break;
+    case Bond::CGRTD:
+      return 4;
+      break;
+    case Bond::CGRTA:
+      return 3;
+      break;
+    case Bond::CGRTN:
+      return 0;
+      break;
+    case Bond::CGRNT:
+      return 6;
+      break;
+    case Bond::CGRAS:
+      return 2;
+      break;
+    case Bond::CGRAD:
+      return 4;
+      break;
+    case Bond::CGRAT:
+      return 6;
+      break;
+    case Bond::CGRAN:
+      return 0;
+      break;
+    case Bond::CGRNA:
+      return 3;
+      break;
+		  
     default:
       UNDER_CONSTRUCTION("Bad bond type");
   }
