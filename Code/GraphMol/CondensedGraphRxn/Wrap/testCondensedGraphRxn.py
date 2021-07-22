@@ -175,7 +175,7 @@ class TestCondensedGraphRxn(unittest.TestCase):
   def testCase7(self,display=True):
       # Check Friedel-Crafts alkylation
       sma = "c1cc[cH:3]cc1.C[CH:2](C)[Cl:1]>>c1cc[c:3]([CH:2](C)C)cc1.[Cl-:1]"
-      expt = "[cH:3]1[cH:6][cH:5][cH:4][cH:10][cH:9]1.[Cl:1][CH:2]([CH3:7])[CH3:8]>>[CH:2]([c:3]1[cH:6][cH:5][cH:4][cH:10][cH:9]1)([CH3:7])[CH3:8].[ClH:1]"
+      expt = "[cH:3]1[cH:6][cH:5][cH:4][cH:10][cH:9]1.[Cl:1][CH:2]([CH3:7])[CH3:8]>>[CH:2]([c:3]1[cH:6][cH:5][cH:4][cH:10][cH:9]1)([CH3:7])[CH3:8].[Cl-:1]"
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
       
   def testCase8(self,display=True):
@@ -212,13 +212,13 @@ class TestCondensedGraphRxn(unittest.TestCase):
   def testCase13(self,display=True):
       # Benzene hydrogenation
       sma = "C[c:4]1[cH:3][c:2](C)[cH:1][c:6](C)[cH:5]1>>C[CH:6]1[CH2:5][CH:4](C)[CH2:3][CH:2](C)[CH2:1]1"
-      expt = "[cH:1]1[c:2]([CH3:8])[cH:3][c:4]([CH3:7])[cH:5][c:6]1[CH3:9]>>[CH2:1]1[CH:2]([CH3:9])[CH2:3][CH:4]([CH3:8])[CH2:5][CH:6]1[CH3:7]"
+      expt = "[cH:1]1[c:2]([CH3:9])[cH:3][c:4]([CH3:8])[cH:5][c:6]1[CH3:7]>>[CH2:1]1[CH:2]([CH3:9])[CH2:3][CH:4]([CH3:8])[CH2:5][CH:6]1[CH3:7]"
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
       
   def testCase14(self,display=True):
       # Strecker step 1
       sma = "[NH3:1].[CH:4]#[N:5].CC[CH:2]=[O:3]>>CC[CH:2]([NH2:1])[C:4]#[N:5]"
-      expt = "[CH:2](=[O:3])[CH2:7][CH3:6].[CH:4]#[N:5].[NH3:1]>>[NH2:1][CH:2]([C:4]#[N:5])[CH2:7][CH3:6].[OH2:3]"
+      expt = "[CH:2](=[O:3])[CH2:7][CH3:6].[NH3:1].[CH:4]#[N:5]>>[NH2:1][CH:2]([C:4]#[N:5])[CH2:7][CH3:6].[OH2:3]"
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
       
       
@@ -237,7 +237,7 @@ class TestCondensedGraphRxn(unittest.TestCase):
   def testCase17(self,display=True):
       # Complex Reaction 1 without acid reaction mapped (major product only)
       sma = "CC(C)[OH:4].CC(C)[C:1](=O)[O:2][C:3](=O)C(C)C>>CC(C)[O:4][C:1](=O)C(C)C"
-      expt = "[C:1]([O:2][C:3](=[O:12])[CH:13]([CH3:14])[CH3:15])(=[O:8])[CH:9]([CH3:10])[CH3:11].[OH:4][CH:6]([CH3:5])[CH3:7]>>[CH:3](=[O:12])[CH:13]([CH3:14])[CH3:15].[C:1]([O:4][CH:6]([CH3:5])[CH3:7])(=[O:8])[CH:9]([CH3:10])[CH3:11].[OH2:2]"
+      expt = "[CH:1](=[CH:2][CH:3]=[CH:4][CH2:8][CH3:9])[CH3:7].[CH:5](=[CH:6][C:14](=[O:15])[O:16][CH3:17])[C:10]([O:11][CH3:12])=[O:13]>>[CH:1]1([CH3:7])[CH:2]=[CH:3][CH:4]([CH2:8][CH3:9])[CH:5]([C:10]([O:11][CH3:12])=[O:13])[CH:6]1[C:14](=[O:15])[O:16][CH3:17]"
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
       
   def testCase18(self,display=True):
