@@ -42,7 +42,7 @@ class TestCondensedGraphRxn(unittest.TestCase):
     'C{!=}O',
     'C{=#}O']
     
-    self.smarts = ['[CH3:1][OH:2]>>[cH2:1]:[o:2]',
+    self.smarts = ['[CH3:1][OH:2]>>[cH2:1][o:2]',
     '[CH2:1]:[O:2]>>[CH2:1]=[O:2]',
     '[CH2:1]:[O:2]>>[CH:1]#[O:2]',
     '[CH:1]#[O:2]>>[CH2:1]=[O:2]',
