@@ -47,7 +47,7 @@ class TestCondensedGraphRxn(unittest.TestCase):
     '[cH2:1][o:2]>>[CH:1]#[O:2]',
     '[CH:1]#[O:2]>>[CH2:1]=[O:2]',
     '[CH4:1].[OH2:2]>>[CH:1]#[O:2]',
-    '[CH4:1].[OH2:2]>>[CH2:1]:[O:2]',
+    '[CH4:1].[OH2:2]>>[cH2:1][o:2]',
     '[CH:1]#[O:2]>>[CH4:1].[OH2:2]',
     '[CH:1]#[O:2]>>[CH3:1][OH:2]',
     '[CH2:1]=[O:2]>>[CH4:1].[OH2:2]',
