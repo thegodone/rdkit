@@ -42,7 +42,7 @@ class TestCondensedGraphRxn(unittest.TestCase):
     'C{!=}O',
     'C{=#}O']
     
-    self.smarts = ['[CH3:1][OH:2]>>[CH2:1]:[O:2]',
+    self.smarts = ['[CH3:1][OH:2]>>[cH2:1]:[o:2]',
     '[CH2:1]:[O:2]>>[CH2:1]=[O:2]',
     '[CH2:1]:[O:2]>>[CH:1]#[O:2]',
     '[CH:1]#[O:2]>>[CH2:1]=[O:2]',
@@ -139,7 +139,8 @@ class TestCondensedGraphRxn(unittest.TestCase):
       print("test reaction complete mapping")
       # Check the reverse/forward case
       sma = "C[C:3](=[O:4])O.[OH:1][CH:2](COC)CC>>C[C:3](=[O:4])[O:1][CH:2](COC)CC"
-      expt = "[OH:1][CH:2]([CH2:6][O:7][CH3:8])[CH2:9][CH3:10].[C:3](=[O:4])([CH3:5])[OH:11]>>[C:3](=[O:4])([CH3:5])[OH:11].[O:1]([CH:2]([CH2:6][O:7][CH3:8])[CH2:9][CH3:10])[C:3](=[O:4])[CH3:5]"
+      expt = "[OH:1][CH:2]([CH2:6][O:7][CH3:8])[CH2:9][CH3:10].[CH:3](=[O:4])[CH3:5]>>[O:1]([CH:2]([CH2:6][O:7][CH3:8])[CH2:9][CH3:10])[C:3](=[O:4])[CH3:5]"
+      #expt = "[OH:1][CH:2]([CH2:6][O:7][CH3:8])[CH2:9][CH3:10].[C:3](=[O:4])([CH3:5])[OH:11]>>[C:3](=[O:4])([CH3:5])[OH:11].[O:1]([CH:2]([CH2:6][O:7][CH3:8])[CH2:9][CH3:10])[C:3](=[O:4])[CH3:5]"
       print(CGR.RxnCompleteMapping(sma, debug=True))
       
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
