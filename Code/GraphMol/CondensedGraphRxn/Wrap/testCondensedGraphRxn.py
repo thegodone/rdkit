@@ -102,20 +102,16 @@ class TestCondensedGraphRxn(unittest.TestCase):
     sma = '[cH:1]1[cH:2][cH:3][cH:4][cH:5][cH:6]1>>[CH2:1]1[CH2:2][CH2:3][CH2:4][CH2:5][CH2:6]1'
     cgr = 'C1{:-}C{:-}C{:-}C{:-}C{:-}C{:-}1'
     self.assertEqual (cgr, CGR.CGRwriter(sma))
-    print(CGR.CGRreader(cgr))
 
   def testSignature(self):
     sma = '[CH3:1][O:2][CH3:3].[CH3:4]>>[CH2:1][O:2][CH3:3][CH3:4]'
-    print("Testing signature CGR for %s"%(sma))
     cgr0 = 'C{!-}C'
     cgr1 = 'C{!-}CO'
     cgr2 = 'COC{!-}C'
     self.assertEqual (cgr0, CGR.CGRwriter(sma, signature=True, radius = 0))
     self.assertEqual(cgr1, CGR.CGRwriter(sma, signature=True, radius = 1))
     self.assertEqual(cgr2, CGR.CGRwriter(sma, signature=True, radius = 2))
-    print("CGR r=0: %s"%(CGR.CGRwriter(sma, signature = True,radius=0)))
-    print("CGR r=1: %s"%(CGR.CGRwriter(sma,signature=True,radius=1)))
-    print("CGR r=2: %s"%(CGR.CGRwriter(sma,signature=True,radius=2)))
+
 
   def testAldolCondensation(self):
       sma = "[CH3:10][CH:9]([CH3:11])[c:6]1[cH:7][cH:8][c:3]([CH:2]=[O:1])[cH:4][cH:5]1.[CH3:15][CH2:14][CH:13]=[O:12]>>[CH3:10][CH:9]([CH3:11])[c:6]1[cH:7][cH:8][c:3](\[CH:2]=[C:14](/[CH3:15])[CH:13]=[O:12])[cH:4][cH:5]1"
@@ -127,16 +123,13 @@ class TestCondensedGraphRxn(unittest.TestCase):
       sign = [cgr0,cgr1,cgr2,cgr3]
 
       # Test the full molecule
-      print("Testing aldol condensation with signature-CGR:")
       self.assertEqual(cgr,CGR.CGRwriter(sma))
       for r,expt in zip(list(range(4)),sign):
           self.assertEqual(expt,CGR.CGRwriter(sma,signature=True,radius=r))
-          print(CGR.CGRwriter(sma,signature=True,radius=r))
 
     
   def testCase1(self,display=False):
       r = 0      
-      print("test reaction complete mapping")
       # Check the reverse/forward case
       sma = "C[C:3](=[O:4])O.[OH:1][CH:2](COC)CC>>C[C:3](=[O:4])[O:1][CH:2](COC)CC"
       expt = "[OH:1][CH:2]([CH2:6][O:7][CH3:8])[CH2:9][CH3:10].[CH:3](=[O:4])[CH3:5]>>[O:1]([CH:2]([CH2:6][O:7][CH3:8])[CH2:9][CH3:10])[C:3](=[O:4])[CH3:5]"      
@@ -250,7 +243,7 @@ class TestCondensedGraphRxn(unittest.TestCase):
       # Baeyer-Villiger (full)
       sma = "C[C:6](=O)[O:5][OH:4].[CH3:3][C:2](=[O:1])C1=CC=CC=C1>>C[C:6]([OH:5])=O.[CH3:3][O:4][C:2](=[O:1])C1=CC=CC=C1"
       expt = "[O:1]=[C:2]([CH3:3])[c:9]1[cH:10][cH:11][cH:12][cH:13][cH:14]1.[OH:4][O:5][C:6]([CH3:7])=[O:8]>>[O:1]=[C:2]([O:4][CH3:3])[c:9]1[cH:10][cH:11][cH:12][cH:13][cH:14]1.[OH:5][C:6]([CH3:7])=[O:8]"
-      self.assertEqual( CGR.RxnCompleteMapping(sma, debug=True), expt)
+      self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
 
 if __name__ == '__main__':
   unittest.main()
