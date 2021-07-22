@@ -134,122 +134,123 @@ class TestCondensedGraphRxn(unittest.TestCase):
           print(CGR.CGRwriter(sma,signature=True,radius=r))
 
     
-  def testCases(self,display=True):
+  def testCase1(self,display=True):
       r = 0      
       print("test reaction complete mapping")
       # Check the reverse/forward case
       sma = "C[C:3](=[O:4])O.[OH:1][CH:2](COC)CC>>C[C:3](=[O:4])[O:1][CH:2](COC)CC"
-      expt = "[OH:1][CH:2]([CH2:6][O:7][CH3:8])[CH2:9][CH3:10].[CH:3](=[O:4])[CH3:5]>>[O:1]([CH:2]([CH2:6][O:7][CH3:8])[CH2:9][CH3:10])[C:3](=[O:4])[CH3:5]"
-      #expt = "[OH:1][CH:2]([CH2:6][O:7][CH3:8])[CH2:9][CH3:10].[C:3](=[O:4])([CH3:5])[OH:11]>>[C:3](=[O:4])([CH3:5])[OH:11].[O:1]([CH:2]([CH2:6][O:7][CH3:8])[CH2:9][CH3:10])[C:3](=[O:4])[CH3:5]"
-      print(CGR.RxnCompleteMapping(sma, debug=True))
-      
+      expt = "[OH:1][CH:2]([CH2:6][O:7][CH3:8])[CH2:9][CH3:10].[CH:3](=[O:4])[CH3:5]>>[O:1]([CH:2]([CH2:6][O:7][CH3:8])[CH2:9][CH3:10])[C:3](=[O:4])[CH3:5]"      
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
-      r+=1
+      
+  def testCase2(self,display=True):
       # Check the forward/reverse case
       sma = "CC[CH:2](COC)[O:1][C:3](C)=[O:4]>>C[C:3]([OH:5])=[O:4].CC[CH:2]([OH:1])COC"
       expt = "[O:1]([CH:2]([CH2:7][CH3:6])[CH2:8][O:9][CH3:10])[C:3](=[O:4])[CH3:11].[OH2:5]>>[C:3](=[O:4])([OH:5])[CH3:11].[OH:1][CH:2]([CH2:7][CH3:6])[CH2:8][O:9][CH3:10]"
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
-      r+=1
+  
+  def testCase3(self,display=True):    
       # Check the SN2: The empty case
       sma = "[Cl:1][CH2:2]COc1ccccc1[CH2:3][Cl:4]>>[I:5][CH2:2]COc1ccccc1[CH2:3][I:6]"
       expt = "[Cl:1][CH2:2][CH2:7][O:8][c:9]1[cH:10][cH:11][cH:12][cH:13][c:14]1[CH2:3][Cl:4].[IH:6].[IH:5]>>[CH2:2]([I:5])[CH2:7][O:8][c:9]1[cH:10][cH:11][cH:12][cH:13][c:14]1[CH2:3][I:6].[ClH:4].[ClH:1]"
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
-      r+=1
+
+  def testCase4(self,display=True):
       # Check the aldol condensation with 2x the same input molecule
       sma = "CC[CH2:3][C:4](C)=[O:5].CCC[C:8]([CH3:10])=[O:9]>>CCC[C:8]([CH3:10])=[C:3](CC)[C:4](C)=[O:5].[OH2:9]"
       expt = "[CH2:3]([C:4](=[O:5])[CH3:16])[CH2:14][CH3:15].[C:8](=[O:9])([CH3:10])[CH2:13][CH2:12][CH3:11]>>[C:3]([C:4](=[O:5])[CH3:16])(=[C:8]([CH3:10])[CH2:13][CH2:12][CH3:11])[CH2:14][CH3:15].[OH2:9]"
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
-      r+=1
+
+  def testCase5(self,display=True):
       # Check the aldol addition => this one is tricky because we need to fix hydrogen atoms
       sma = "CC[CH2:3][C:4](C)=[O:5].CCC[C:8]([CH3:10])=[O:9]>>CCC[C:8]([CH3:10])([OH:9])[CH:3](CC)[C:4](C)=[O:5]"
       expt = "[CH2:3]([C:4](=[O:5])[CH3:16])[CH2:14][CH3:15].[C:8](=[O:9])([CH3:10])[CH2:13][CH2:12][CH3:11]>>[CH:3]([C:4](=[O:5])[CH3:16])([C:8]([OH:9])([CH3:10])[CH2:13][CH2:12][CH3:11])[CH2:14][CH3:15]"
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
-      r+=1
+      
+  def testCase6(self,display=True):
       # Check the Diels-Alder with symmetry on the dienophile
       sma = "C[CH:1]=[CH:2][CH:3]=[CH:4]CC.COC(=O)[CH:5]=[CH:6]C(=O)OC>>C[CH:1]1[CH:2]=[CH:3][CH:4](CC)[CH:5](C(OC)=O)[CH:6]1C(=O)OC"
       expt = "[CH:5](=[CH:6][C:14](=[O:15])[O:16][CH3:17])[C:10]([O:11][CH3:12])=[O:13].[CH:1](=[CH:2][CH:3]=[CH:4][CH2:8][CH3:9])[CH3:7]>>[CH:1]1([CH3:7])[CH:2]=[CH:3][CH:4]([CH2:8][CH3:9])[CH:5]([C:10]([O:11][CH3:12])=[O:13])[CH:6]1[C:14](=[O:15])[O:16][CH3:17]"
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
-      r+=1
+
+  def testCase7(self,display=True):
       # Check Friedel-Crafts alkylation
       sma = "c1cc[cH:3]cc1.C[CH:2](C)[Cl:1]>>c1cc[c:3]([CH:2](C)C)cc1.[Cl-:1]"
       expt = "[cH:3]1[cH:6][cH:5][cH:4][cH:10][cH:9]1.[Cl:1][CH:2]([CH3:7])[CH3:8]>>[CH:2]([c:3]1[cH:6][cH:5][cH:4][cH:10][cH:9]1)([CH3:7])[CH3:8].[ClH:1]"
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
-      r+=1
+      
+  def testCase8(self,display=True):
       # Check Reductive amination
       sma = "[NH2:2][CH2:1]C1=CC=CC=C1.C[CH:5]1CCC[CH:6](C)[C:3]1=[O:4]>>C[CH:5]1CCC[CH:6](C)[CH:3]1[NH:2][CH2:1]C1=CC=CC=C1"
       expt = "[CH2:1]([NH2:2])[c:12]1[cH:13][cH:14][cH:15][cH:16][cH:17]1.[C:3]1(=[O:4])[CH:5]([CH3:7])[CH2:8][CH2:9][CH2:10][CH:6]1[CH3:11]>>[CH2:1]([NH:2][CH:3]1[CH:5]([CH3:7])[CH2:8][CH2:9][CH2:10][CH:6]1[CH3:11])[c:12]1[cH:13][cH:14][cH:15][cH:16][cH:17]1.[OH2:4]"
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
-      r+=1
+      
+  def testCase9(self,display=True):
       # Williamson ether
       sma = "CC[CH2:4][OH:3].CC[CH2:1][Br:2]>>CC[CH2:1][O:3][CH2:4]CC"
       expt = "[OH:3][CH2:4][CH2:7][CH3:8].[CH2:1]([Br:2])[CH2:6][CH3:5]>>[CH2:1]([O:3][CH2:4][CH2:7][CH3:8])[CH2:6][CH3:5].[BrH:2]"
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
-      r+=1
+      
+  def testCase10(self,display=True):
       # Gabriel synthesis
       # alternate string output order... a potential canonical issue ?
       sma = "[NH2:4][NH2:1].[Cl:3][CH2:2]C1=CC=CC=C1>>[NH3:4].[NH2:1][CH2:2]C1=CC=CC=C1"
       expt = "[CH2:2]([Cl:3])[c:5]1[cH:6][cH:7][cH:8][cH:9][cH:10]1.[NH2:1][NH2:4]>>[NH2:1][CH2:2][c:5]1[cH:6][cH:7][cH:8][cH:9][cH:10]1.[NH3:4].[ClH:3]"
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
-      r+=1
+      
+  def testCase11(self,display=True):
       # 3,3-sigmatropic rearrangement
       sma = "CC(C)[CH:4]=[CH:5][CH2:6][CH2:3][CH:2]=[CH:1]C(C)C>>CC(C)[CH:1]([CH:2]=[CH2:3])[CH:4](C(C)C)[CH:5]=[CH2:6]"
       expt = "[CH:1](=[CH:2][CH2:3][CH2:6][CH:5]=[CH:4][CH:8]([CH3:7])[CH3:9])[CH:10]([CH3:11])[CH3:12]>>[CH:1]([CH:2]=[CH2:3])([CH:4]([CH:5]=[CH2:6])[CH:10]([CH3:11])[CH3:12])[CH:8]([CH3:7])[CH3:9]"
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
-      r+=1      
+      
+  def testCase12(self,display=True):
       # Check the Claisen: Forward/reverse case
       sma = "CC[CH2:6][C:5]([O:4][CH2:3][CH:2]=[CH2:1])=[CH:7]C(C)C>>CC[CH2:6][C:5](=[O:4])[CH:7]([CH2:3][CH:2]=[CH2:1])C(C)C"
       expt = "[CH2:1]=[CH:2][CH2:3][O:4][C:5]([CH2:6][CH2:9][CH3:8])=[CH:7][CH:10]([CH3:11])[CH3:12]>>[CH2:1]=[CH:2][CH2:3][CH:7]([C:5](=[O:4])[CH2:6][CH2:9][CH3:8])[CH:10]([CH3:11])[CH3:12]"
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
-      r+=1      
+      
+  def testCase13(self,display=True):
       # Benzene hydrogenation
       sma = "C[c:4]1[cH:3][c:2](C)[cH:1][c:6](C)[cH:5]1>>C[CH:6]1[CH2:5][CH:4](C)[CH2:3][CH:2](C)[CH2:1]1"
       expt = "[cH:1]1[c:2]([CH3:8])[cH:3][c:4]([CH3:7])[cH:5][c:6]1[CH3:9]>>[CH2:1]1[CH:2]([CH3:9])[CH2:3][CH:4]([CH3:8])[CH2:5][CH:6]1[CH3:7]"
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
-      r+=1      
+      
+  def testCase14(self,display=True):
       # Strecker step 1
       sma = "[NH3:1].[CH:4]#[N:5].CC[CH:2]=[O:3]>>CC[CH:2]([NH2:1])[C:4]#[N:5]"
       expt = "[CH:2](=[O:3])[CH2:7][CH3:6].[CH:4]#[N:5].[NH3:1]>>[NH2:1][CH:2]([C:4]#[N:5])[CH2:7][CH3:6].[OH2:3]"
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
-      r+=1   
+      
+      
+  def testCase15(self,display=True):
       # Strecker step 2
       sma = "CC[CH:1](N)[C:3]#[N:5]>>CC[CH:1](N)[C:3]([OH:4])=[O:2]"
       expt = "[CH:1]([C:3]#[N:5])([CH2:7][CH3:6])[NH2:8].[OH2:4].[OH2:2]>>[CH:1]([C:3](=[O:2])[OH:4])([CH2:7][CH3:6])[NH2:8].[NH3:5]"
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
-      r+=1   
+      
+  def testCase16(self,display=True):
       # Strecker step 1+2
       sma = "[NH3:1].[CH:4]#[N:5].C1CCCCC1C[CH:2]=[O:3]>>C1CCCCC1C[CH:2]([NH2:1])[C:4]([OH:7])=[O:6]"
       expt = "[CH:2](=[O:3])[CH2:14][CH:13]1[CH2:8][CH2:9][CH2:10][CH2:11][CH2:12]1.[OH2:7].[OH2:6].[CH:4]#[N:5].[NH3:1]>>[NH2:1][CH:2]([C:4](=[O:6])[OH:7])[CH2:14][CH:13]1[CH2:8][CH2:9][CH2:10][CH2:11][CH2:12]1.[NH3:5].[OH2:3]"
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
-      r+=1   
+      
+  def testCase17(self,display=True):
       # Complex Reaction 1 without acid reaction mapped (major product only)
       sma = "CC(C)[OH:4].CC(C)[C:1](=O)[O:2][C:3](=O)C(C)C>>CC(C)[O:4][C:1](=O)C(C)C"
       expt = "[C:1]([O:2][C:3](=[O:12])[CH:13]([CH3:14])[CH3:15])(=[O:8])[CH:9]([CH3:10])[CH3:11].[OH:4][CH:6]([CH3:5])[CH3:7]>>[CH:3](=[O:12])[CH:13]([CH3:14])[CH3:15].[C:1]([O:4][CH:6]([CH3:5])[CH3:7])(=[O:8])[CH:9]([CH3:10])[CH3:11].[OH2:2]"
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
-      r+=1
+      
+  def testCase18(self,display=True):
       # Baeyer-Villiger (major)
       sma = "[CH3:3][C:2](=[O:1])C1=CC=CC=C1>>[CH3:3][O:4][C:2](=[O:1])C1=CC=CC=C1"
       expt ="[O:1]=[C:2]([CH3:3])[c:5]1[cH:6][cH:7][cH:8][cH:9][cH:10]1.[OH2:4]>>[O:1]=[C:2]([O:4][CH3:3])[c:5]1[cH:6][cH:7][cH:8][cH:9][cH:10]1"
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
-      r+=1      
+      
+  def testCase19(self,display=True):
       # Baeyer-Villiger (full)
       sma = "C[C:6](=O)[O:5][OH:4].[CH3:3][C:2](=[O:1])C1=CC=CC=C1>>C[C:6]([OH:5])=O.[CH3:3][O:4][C:2](=[O:1])C1=CC=CC=C1"
       expt = "[O:1]=[C:2]([CH3:3])[c:9]1[cH:10][cH:11][cH:12][cH:13][cH:14]1.[OH:4][O:5][C:6]([CH3:7])=[O:8]>>[O:1]=[C:2]([O:4][CH3:3])[c:9]1[cH:10][cH:11][cH:12][cH:13][cH:14]1.[OH:5][C:6]([CH3:7])=[O:8]"
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=True), expt)
-      r+=1
-      print("*********************************")
-      #print(CGR.RxnCompleteMapping(sma, debug=False))
-
-      print("reaction passed: ",r)
-      print("=================================")
-
-
-
-      
-    
-      # Check SN2 incomplete mapping of reaction center
-      sma = "[CH:1]1=[CH:2][CH:3]=[C:4]([C:5](=[CH:6]1)[CH2:7]Cl)[O:8][CH2:9][CH2:10]Cl>[Na+].[I-]>[CH:1]1=[CH:2][CH:3]=[C:4]([C:5](=[CH:6]1)[CH2:7]I)[O:8][CH2:9][CH2:10]I"
-      expt =""
-      #self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
 
 if __name__ == '__main__':
   unittest.main()
