@@ -134,7 +134,7 @@ class TestCondensedGraphRxn(unittest.TestCase):
           print(CGR.CGRwriter(sma,signature=True,radius=r))
 
     
-  def testCases(self,display=False):
+  def testCases(self,display=True):
       r = 0      
       print("test reaction complete mapping")
       # Check the reverse/forward case
