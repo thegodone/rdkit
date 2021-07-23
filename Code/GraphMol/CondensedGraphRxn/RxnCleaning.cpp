@@ -1271,15 +1271,19 @@ namespace RDKit {
             if (debug) {
                 // check data process
                 std::cout << "8: max map " << maxmap << std::endl;
+                std::cout << "8: max map new" << newmaxmap << std::endl;
+
             }
+            
+            
             if (debug) {
                 // check data process
                 std::cout << "9: add maxmap to products " << maxmap << std::endl;
             }
 
-            // new order in  python code inverse step 10 & 11
+            // new order in python code inverse step 10 & 11
 
-
+            
             addGroup(pdiff, conserved, rkeep, maxmap, debug);
 
             if (debug) {
