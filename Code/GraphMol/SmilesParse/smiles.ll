@@ -317,45 +317,45 @@ s		    {	yylval->atom = new Atom( 16 );
 <IN_ATOM_STATE>\'Ts\'	{ yylval->atom = new Atom(117); return ATOM_TOKEN; }
 <IN_ATOM_STATE>\'Og\'	{ yylval->atom = new Atom(118); return ATOM_TOKEN; }
 
-\{\!\-\}  { yylval->bond = new Bond(Bond::CGRNS);
+\{\!\-\}  { yylval->bond = new Bond(Bond::CRSNS);
           return BOND_TOKEN; }
-\{\!\=\}  { yylval->bond = new Bond(Bond::CGRND);
+\{\!\=\}  { yylval->bond = new Bond(Bond::CRSND);
           return BOND_TOKEN; }
-\{\!\#\}  { yylval->bond = new Bond(Bond::CGRNT);
+\{\!\#\}  { yylval->bond = new Bond(Bond::CRSNT);
           return BOND_TOKEN; }
-\{\!\:\}  { yylval->bond = new Bond(Bond::CGRNA);
+\{\!\:\}  { yylval->bond = new Bond(Bond::CRSNA);
           return BOND_TOKEN; }
-\{\:\#\}  { yylval->bond = new Bond(Bond::CGRAT);
+\{\:\#\}  { yylval->bond = new Bond(Bond::CRSAT);
           return BOND_TOKEN; }
-\{\:\=\}  { yylval->bond = new Bond(Bond::CGRAD);
+\{\:\=\}  { yylval->bond = new Bond(Bond::CRSAD);
           return BOND_TOKEN; }
-\{\:\-\}  { yylval->bond = new Bond(Bond::CGRAS);
+\{\:\-\}  { yylval->bond = new Bond(Bond::CRSAS);
           return BOND_TOKEN; }
-\{\:\!\}  { yylval->bond = new Bond(Bond::CGRAN);
+\{\:\!\}  { yylval->bond = new Bond(Bond::CRSAN);
           return BOND_TOKEN; }
-\{\=\:\}  { yylval->bond = new Bond(Bond::CGRDA);
+\{\=\:\}  { yylval->bond = new Bond(Bond::CRSDA);
           return BOND_TOKEN; }
-\{\=\!\}  { yylval->bond = new Bond(Bond::CGRDN);
+\{\=\!\}  { yylval->bond = new Bond(Bond::CRSDN);
           return BOND_TOKEN; }
-\{\=\-\}  { yylval->bond = new Bond(Bond::CGRDS);
+\{\=\-\}  { yylval->bond = new Bond(Bond::CRSDS);
           return BOND_TOKEN; }
-\{\=\#\}  { yylval->bond = new Bond(Bond::CGRDT);
+\{\=\#\}  { yylval->bond = new Bond(Bond::CRSDT);
           return BOND_TOKEN; }
-\{\-\!\}  { yylval->bond = new Bond(Bond::CGRSN);
+\{\-\!\}  { yylval->bond = new Bond(Bond::CRSSN);
           return BOND_TOKEN; }
-\{\-\=\}  { yylval->bond = new Bond(Bond::CGRSD);
+\{\-\=\}  { yylval->bond = new Bond(Bond::CRSSD);
           return BOND_TOKEN; }
-\{\-\#\}  { yylval->bond = new Bond(Bond::CGRST);
+\{\-\#\}  { yylval->bond = new Bond(Bond::CRSST);
           return BOND_TOKEN; }
-\{\-\:\}  { yylval->bond = new Bond(Bond::CGRSA);
+\{\-\:\}  { yylval->bond = new Bond(Bond::CRSSA);
           return BOND_TOKEN; }
-\{\#\=\}  { yylval->bond = new Bond(Bond::CGRTD);
+\{\#\=\}  { yylval->bond = new Bond(Bond::CRSTD);
           return BOND_TOKEN; }	  
-\{\#\-\}  { yylval->bond = new Bond(Bond::CGRTS);
+\{\#\-\}  { yylval->bond = new Bond(Bond::CRSTS);
           return BOND_TOKEN; }
-\{\#\:\}  { yylval->bond = new Bond(Bond::CGRTA);
+\{\#\:\}  { yylval->bond = new Bond(Bond::CRSTA);
           return BOND_TOKEN; }
-\{\#\!\}  { yylval->bond = new Bond(Bond::CGRTN);
+\{\#\!\}  { yylval->bond = new Bond(Bond::CRSTN);
           return BOND_TOKEN; }
 \=	{ yylval->bond = new Bond(Bond::DOUBLE);
 	  return BOND_TOKEN; }

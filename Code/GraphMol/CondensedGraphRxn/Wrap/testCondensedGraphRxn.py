@@ -79,8 +79,11 @@ class TestCondensedGraphRxn(unittest.TestCase):
 
   def test3Acetal(self):
     sma = ('[CH3:1][C:2]([CH3:3])=[O:4].[OH:5][CH2:6][CH2:7][OH:8]>>[CH3:1][C:2]1([CH3:3])[O:5][CH2:6][CH2:7][O:8]1.[OH2:4]')
+
     cgr = 'CC1(C)({=!}O){!-}OCCO{!-}1' 
+    print('test3Acetal writer:',CGR.CGRwriter(sma))
     self.assertEqual (cgr, CGR.CGRwriter(sma))
+    print('test3Acetal reader:',CGR.CGRreader(cgr))
     self.assertEqual (sma, CGR.CGRreader(cgr))    
 
   def test4Radius(self):
@@ -96,6 +99,7 @@ class TestCondensedGraphRxn(unittest.TestCase):
   def testCanParse(self):
     cgr = 'C{!-}OC(=O)CC1=C({-!}Br)C=C(F)C=C1'
     sma = '[CH4:1].[OH:2][C:3](=[O:4])[CH2:5][c:6]1[c:7]([Br:8])[cH:9][c:10]([F:11])[cH:12][cH:13]1>>[BrH:8].[CH3:1][O:2][C:3](=[O:4])[CH2:5][c:6]1[cH:7][cH:9][c:10]([F:11])[cH:12][cH:13]1'
+    print('testCanParse:',CGR.CGRreader(cgr))
     self.assertEqual (sma, CGR.CGRreader(cgr))
 
   def testAromatizeOnBenzeneReduction(self):
@@ -224,7 +228,7 @@ class TestCondensedGraphRxn(unittest.TestCase):
   def testCase16(self,display=False):
       # Strecker step 1+2
       sma = "[NH3:1].[CH:4]#[N:5].C1CCCCC1C[CH:2]=[O:3]>>C1CCCCC1C[CH:2]([NH2:1])[C:4]([OH:7])=[O:6]"
-      expt = "[CH:2](=[O:3])[CH2:14][CH:13]1[CH2:8][CH2:9][CH2:10][CH2:11][CH2:12]1.[OH2:7].[OH2:6].[CH:4]#[N:5].[NH3:1]>>[NH2:1][CH:2]([C:4](=[O:6])[OH:7])[CH2:14][CH:13]1[CH2:8][CH2:9][CH2:10][CH2:11][CH2:12]1.[NH3:5].[OH2:3]"
+      expt = "[CH:2](=[O:3])[CH2:14][CH:13]1[CH2:8][CH2:9][CH2:10][CH2:11][CH2:12]1.[NH3:1].[CH:4]#[N:5].[OH2:7].[OH2:6]>>[NH2:1][CH:2]([C:4](=[O:6])[OH:7])[CH2:14][CH:13]1[CH2:8][CH2:9][CH2:10][CH2:11][CH2:12]1.[NH3:5].[OH2:3]"
       print('16:', CGR.RxnCompleteMapping(sma))
 
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
