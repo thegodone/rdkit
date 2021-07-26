@@ -1,6 +1,6 @@
 /*
- * FirCGR.cpp defines the code to convert reaction
- * SMARTS to the new Firmenich/Bigchem CGR-smiles
+ * FirCRS.cpp defines the code to convert reaction
+ * SMARTS to the new Firmenich/Bigchem CRS-smiles
  * reaction format.
  *
  * (c) RUUD, Firmenich SA, 2020
@@ -8,7 +8,7 @@
  */
 
 // Block with own imports
-#include "FirCGR.h"
+#include "FirCRS.h"
 
 // Block with RDKit imports
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -45,13 +45,13 @@ MOL_SPTR_VECT read(const std::string &smiles) {
     return molvec;
 }
     
-CGRWriter::CGRWriter() {
+CRSWriter::CRSWriter() {
 }
     
-CGRWriter::~CGRWriter() {
+CRSWriter::~CRSWriter() {
 }
   
-std::vector<TmpBond> CGRWriter::getBonds(RWMOL_SPTR mol, std::map<int,int> m2i) {
+std::vector<TmpBond> CRSWriter::getBonds(RWMOL_SPTR mol, std::map<int,int> m2i) {
     // Collect the fully mapped bonds in the product.
     // TODO: We may have to expand this.
     std::vector<TmpBond> blist;
@@ -70,7 +70,7 @@ std::vector<TmpBond> CGRWriter::getBonds(RWMOL_SPTR mol, std::map<int,int> m2i) 
     return blist;
 }
     
-RWMOL_SPTR CGRWriter::copy(RWMOL_SPTR in) {
+RWMOL_SPTR CRSWriter::copy(RWMOL_SPTR in) {
     RWMOL_SPTR cp(new RWMol());
     for (Atom* atom : in->atoms()) 
         cp->addAtom(new Atom(atom->getAtomicNum()));
@@ -83,27 +83,27 @@ RWMOL_SPTR CGRWriter::copy(RWMOL_SPTR in) {
     return cp;
 }
     
-Bond::BondType CGRWriter::lookup(std::vector<TmpBond> list, TmpBond query) {
+Bond::BondType CRSWriter::lookup(std::vector<TmpBond> list, TmpBond query) {
     auto it = std::find(list.begin(),list.end(),query);
     return it==list.end() ? Bond::ZERO : (*it).bt;
 }
     
-Bond::BondType CGRWriter::propose(Bond::BondType in, Bond::BondType out) {
+Bond::BondType CRSWriter::propose(Bond::BondType in, Bond::BondType out) {
     Bond::BondType res = Bond::ZERO;
     switch (in) {
         case Bond::ZERO:
             switch(out) {
                 case Bond::SINGLE:
-                    res = Bond::CGRNS;
+                    res = Bond::CRSNS;
                     break;
                 case Bond::DOUBLE:
-                    res = Bond::CGRND;
+                    res = Bond::CRSND;
                     break;
                 case Bond::TRIPLE:
-                    res = Bond::CGRNT;
+                    res = Bond::CRSNT;
                     break;
                 case Bond::AROMATIC:
-                    res = Bond::CGRNA;
+                    res = Bond::CRSNA;
                     break;
                 default:
                     res = in;
@@ -113,16 +113,16 @@ Bond::BondType CGRWriter::propose(Bond::BondType in, Bond::BondType out) {
         case Bond::SINGLE:
            switch(out) {
                 case Bond::ZERO:
-                    res = Bond::CGRSN;
+                    res = Bond::CRSSN;
                     break;
                 case Bond::DOUBLE:
-                    res = Bond::CGRSD;
+                    res = Bond::CRSSD;
                     break;
                 case Bond::TRIPLE:
-                    res = Bond::CGRST;
+                    res = Bond::CRSST;
                     break;
                 case Bond::AROMATIC:
-                    res = Bond::CGRSA;
+                    res = Bond::CRSSA;
                     break;
                 default:
                     res = in;
@@ -132,16 +132,16 @@ Bond::BondType CGRWriter::propose(Bond::BondType in, Bond::BondType out) {
         case Bond::DOUBLE:
            switch(out) {
                 case Bond::ZERO:
-                    res = Bond::CGRDN;
+                    res = Bond::CRSDN;
                     break;
                 case Bond::SINGLE:
-                    res = Bond::CGRDS;
+                    res = Bond::CRSDS;
                     break;
                 case Bond::TRIPLE:
-                    res = Bond::CGRDT;
+                    res = Bond::CRSDT;
                     break;
                 case Bond::AROMATIC:
-                    res = Bond::CGRDA;
+                    res = Bond::CRSDA;
                     break;
                 default:
                     res = in;
@@ -151,16 +151,16 @@ Bond::BondType CGRWriter::propose(Bond::BondType in, Bond::BondType out) {
         case Bond::TRIPLE:
            switch(out) {
                 case Bond::ZERO:
-                    res = Bond::CGRTN;
+                    res = Bond::CRSTN;
                     break;
                 case Bond::SINGLE:
-                    res = Bond::CGRTS;
+                    res = Bond::CRSTS;
                     break;
                 case Bond::DOUBLE:
-                    res = Bond::CGRTD;
+                    res = Bond::CRSTD;
                     break;
                 case Bond::AROMATIC:
-                    res = Bond::CGRTA;
+                    res = Bond::CRSTA;
                     break;
                 default:
                     res = in;
@@ -170,16 +170,16 @@ Bond::BondType CGRWriter::propose(Bond::BondType in, Bond::BondType out) {
         case Bond::AROMATIC:
            switch(out) {
                 case Bond::ZERO:
-                    res = Bond::CGRAN;
+                    res = Bond::CRSAN;
                     break;
                 case Bond::SINGLE:
-                    res = Bond::CGRAS;
+                    res = Bond::CRSAS;
                     break;
                 case Bond::DOUBLE:
-                    res = Bond::CGRAD;
+                    res = Bond::CRSAD;
                     break;
                 case Bond::TRIPLE:
-                    res = Bond::CGRAT;
+                    res = Bond::CRSAT;
                     break;
                 default:
                     res = in;
@@ -205,7 +205,7 @@ Atom* lookupAtom(RWMOL_SPTR mol, const unsigned int mnum) {
     return res;
 }
     
-std::string CGRWriter::write(const std::string &rxnsma, bool rnd, int root) {
+std::string CRSWriter::write(const std::string &rxnsma, bool rnd, int root) {
     std::stringstream res;
     
     // Import the vectors for reagents and products
@@ -230,7 +230,7 @@ std::string CGRWriter::write(const std::string &rxnsma, bool rnd, int root) {
 
             // Take the product molecules and make a modification using
             // the information in the reagent molecules. We have 3 cases:
-            // 1. Bond in both or only in product => these become type CGR{N,S,D,T,A}{S,D,T,A}
+            // 1. Bond in both or only in product => these become type CRS{N,S,D,T,A}{S,D,T,A}
             // TODO: Probably only do this if both mapnums are in the reagents (IG sometimes missing).$
             int frag=0;
             for (Bond *bond : prod->bonds()) {
@@ -250,7 +250,7 @@ std::string CGRWriter::write(const std::string &rxnsma, bool rnd, int root) {
                 auto it = std::find(Pbonds.begin(), Pbonds.end(), q);
                 if (it==Pbonds.end()) {
                     // Bond is no longer present in the products 
-                    // => create bond of type CGR{S,D,T,A}N
+                    // => create bond of type CRS{S,D,T,A}N
                     // Only and only if the mapped atoms are present
                     // in the product.
                     const Bond::BondType rbt = q.bt;
@@ -289,109 +289,109 @@ std::string CGRWriter::write(const std::string &rxnsma, bool rnd, int root) {
     return res.str();
 }
         
-CGRReader::CGRReader() {}
+CRSReader::CRSReader() {}
 
-CGRReader::~CGRReader() {}
+CRSReader::~CRSReader() {}
     
-Bond::BondType CGRReader::propose(const Bond::BondType &bt, bool &arom, bool &dearom, bool prod) {
+Bond::BondType CRSReader::propose(const Bond::BondType &bt, bool &arom, bool &dearom, bool prod) {
     Bond::BondType answer = bt;
     switch(bt) {
-        case Bond::CGRNS:
+        case Bond::CRSNS:
             answer = prod ? Bond::SINGLE : Bond::ZERO;
             arom = false;
             dearom = false;
             break;
-        case Bond::CGRND:
+        case Bond::CRSND:
             answer = prod ? Bond::DOUBLE : Bond::ZERO;
             arom = false;
             dearom = false;
             break;
-        case Bond::CGRNT:
+        case Bond::CRSNT:
             answer = prod ? Bond::TRIPLE : Bond::ZERO;
             arom = false;
             dearom = false;
             break;
-        case Bond::CGRNA:
+        case Bond::CRSNA:
             answer = prod ? Bond::AROMATIC : Bond::ZERO;
             arom = prod;
             dearom = false;
             break;
-        case Bond::CGRSN:
+        case Bond::CRSSN:
             answer = prod ? Bond::ZERO : Bond::SINGLE;
             arom = false;
             dearom = false;
             break;
-        case Bond::CGRSD:
+        case Bond::CRSSD:
             answer = prod ? Bond::DOUBLE : Bond::SINGLE;
             arom = false;
             dearom = false;
             break;
-        case Bond::CGRST:
+        case Bond::CRSST:
             answer = prod ? Bond::TRIPLE : Bond::SINGLE;
             arom = false;
             dearom = false;
             break;
-        case Bond::CGRSA:
+        case Bond::CRSSA:
             answer = prod ? Bond::AROMATIC : Bond::SINGLE;
             arom = prod;
             dearom = false;
             break;
-        case Bond::CGRDN:
+        case Bond::CRSDN:
             answer = prod ? Bond::ZERO : Bond::DOUBLE;
             arom = false;
             dearom = false;            
             break;
-        case Bond::CGRDS:
+        case Bond::CRSDS:
             answer = prod ? Bond::SINGLE : Bond::DOUBLE;
             arom = false;
             dearom = false;
             break;
-        case Bond::CGRDT:
+        case Bond::CRSDT:
             answer = prod ? Bond::TRIPLE : Bond::DOUBLE;
             arom = false;
             dearom = false;
             break;
-        case Bond::CGRDA:
+        case Bond::CRSDA:
             answer = prod ? Bond::AROMATIC : Bond::DOUBLE;
             arom = prod;
             dearom = false;
             break;
-        case Bond::CGRTN:
+        case Bond::CRSTN:
             answer = prod ? Bond::ZERO : Bond::TRIPLE;
             arom = false;
             dearom = false;
             break;
-        case Bond::CGRTS:
+        case Bond::CRSTS:
             answer = prod ? Bond::SINGLE : Bond::TRIPLE;
             arom = false;
             dearom = false;
             break;
-        case Bond::CGRTD:
+        case Bond::CRSTD:
             answer = prod ? Bond::DOUBLE : Bond::TRIPLE;
             arom = false;
             dearom = false;
             break;
-        case Bond::CGRTA:
+        case Bond::CRSTA:
             answer = prod ? Bond::AROMATIC : Bond::TRIPLE;
             arom = prod;
             dearom = false;
             break;
-        case Bond::CGRAN:
+        case Bond::CRSAN:
             answer = prod ? Bond::ZERO : Bond::AROMATIC;
             arom = false;
             dearom = prod;
             break;
-        case Bond::CGRAS:
+        case Bond::CRSAS:
             answer = prod ? Bond::SINGLE : Bond::AROMATIC;
             arom = false;
             dearom = prod;
             break;
-        case Bond::CGRAD:
+        case Bond::CRSAD:
             answer = prod ? Bond::DOUBLE : Bond::AROMATIC;
             arom = false;
             dearom = prod;
             break;
-        case Bond::CGRAT:
+        case Bond::CRSAT:
             answer = prod ? Bond::TRIPLE : Bond::AROMATIC;
             arom = false;
             dearom = prod;
@@ -402,7 +402,7 @@ Bond::BondType CGRReader::propose(const Bond::BondType &bt, bool &arom, bool &de
     return answer;
 }
     
-void map(RWMOL_SPTR mol, bool mapcgratoms, bool mapallatoms) {
+void map(RWMOL_SPTR mol, bool mapcrsatoms, bool mapallatoms) {
     // If asked to map all, map all => this is the
     // most specific solution.
     if (mapallatoms) {
@@ -412,36 +412,36 @@ void map(RWMOL_SPTR mol, bool mapcgratoms, bool mapallatoms) {
     }
     
     // Check if asked to map at least the reaction site.
-    else if (mapcgratoms) {
+    else if (mapcrsatoms) {
         const size_t num = mol->getNumAtoms();
-        bool* cgr = (bool*) std::malloc(num*sizeof(bool));
+        bool* crs = (bool*) std::malloc(num*sizeof(bool));
         for (int idx=0;idx<num;idx++) {
-            cgr[idx]=0;
+            crs[idx]=0;
         }
         for (Bond *bond : mol->bonds()) {
             switch(bond->getBondType()) {
-                case Bond::CGRNS:
-                case Bond::CGRND:
-                case Bond::CGRNT:
-                case Bond::CGRNA:
-                case Bond::CGRSN:
-                case Bond::CGRSD:
-                case Bond::CGRST:
-                case Bond::CGRSA:
-                case Bond::CGRDN:
-                case Bond::CGRDS:
-                case Bond::CGRDT:
-                case Bond::CGRDA:
-                case Bond::CGRTN:
-                case Bond::CGRTS:
-                case Bond::CGRTD:
-                case Bond::CGRTA:
-                case Bond::CGRAN:
-                case Bond::CGRAS:
-                case Bond::CGRAD:
-                case Bond::CGRAT:
-                    cgr[bond->getBeginAtomIdx()]=1;
-                    cgr[bond->getEndAtomIdx()]=1;
+                case Bond::CRSNS:
+                case Bond::CRSND:
+                case Bond::CRSNT:
+                case Bond::CRSNA:
+                case Bond::CRSSN:
+                case Bond::CRSSD:
+                case Bond::CRSST:
+                case Bond::CRSSA:
+                case Bond::CRSDN:
+                case Bond::CRSDS:
+                case Bond::CRSDT:
+                case Bond::CRSDA:
+                case Bond::CRSTN:
+                case Bond::CRSTS:
+                case Bond::CRSTD:
+                case Bond::CRSTA:
+                case Bond::CRSAN:
+                case Bond::CRSAS:
+                case Bond::CRSAD:
+                case Bond::CRSAT:
+                    crs[bond->getBeginAtomIdx()]=1;
+                    crs[bond->getEndAtomIdx()]=1;
                     break;
                 default:
                     // Ignore
@@ -451,32 +451,32 @@ void map(RWMOL_SPTR mol, bool mapcgratoms, bool mapallatoms) {
         // Map those atoms.        
         unsigned int mnum = 0;
         for (Atom *atom : mol->atoms()) {
-            if (cgr[atom->getIdx()]) {
+            if (crs[atom->getIdx()]) {
                 atom->setAtomMapNum(++mnum);
             }
         }
-        free(cgr);
+        free(crs);
     }    
 }
     
-std::string CGRReader::read(const std::string &cgrsmi, bool mapcgratoms, bool mapallatoms, bool can) {
+std::string CRSReader::read(const std::string &crssmi, bool mapcrsatoms, bool mapallatoms, bool can) {
     std::stringstream ss;
     ss << "";
     try {
-        RWMOL_SPTR molptr1(new RWMol(*RDKit::SmilesToMol(cgrsmi)));
-        RWMOL_SPTR molptr2(new RWMol(*RDKit::SmilesToMol(cgrsmi)));
+        RWMOL_SPTR molptr1(new RWMol(*RDKit::SmilesToMol(crssmi)));
+        RWMOL_SPTR molptr2(new RWMol(*RDKit::SmilesToMol(crssmi)));
         
         ss << "";
         if (molptr1 && molptr2) {
             
             // Apply the mapping as specified
-            map(molptr1, mapcgratoms, mapallatoms);
-            map(molptr2, mapcgratoms, mapallatoms);
+            map(molptr1, mapcrsatoms, mapallatoms);
+            map(molptr2, mapcrsatoms, mapallatoms);
             
             // Import two times the molecule: One goes to reagents one for more products
-            // For all CGR-bonds, we convert them to the starting type in reagents
+            // For all CRS-bonds, we convert them to the starting type in reagents
             // or the product type in products.
-            // TODO: Think about numbering the atoms around the CGR bonds.
+            // TODO: Think about numbering the atoms around the CRS bonds.
 
             // Do the reagent
             std::vector<Bond*> erase;
@@ -538,26 +538,26 @@ std::vector<unsigned int> getNeighborsPtr1(RWMOL_SPTR mol, Atom* atom) {
     
 bool number(Bond::BondType bt) {
     switch (bt) {
-       case Bond::CGRNS:
-        case Bond::CGRND:
-        case Bond::CGRNT:
-        case Bond::CGRNA:
-        case Bond::CGRSN:
-        case Bond::CGRSD:
-        case Bond::CGRST:
-        case Bond::CGRSA:
-        case Bond::CGRDN:
-        case Bond::CGRDS:
-        case Bond::CGRDT:
-        case Bond::CGRDA:
-        case Bond::CGRTN:
-        case Bond::CGRTS:
-        case Bond::CGRTD:
-        case Bond::CGRTA:
-        case Bond::CGRAN:
-        case Bond::CGRAS:
-        case Bond::CGRAD:
-        case Bond::CGRAT:          
+       case Bond::CRSNS:
+        case Bond::CRSND:
+        case Bond::CRSNT:
+        case Bond::CRSNA:
+        case Bond::CRSSN:
+        case Bond::CRSSD:
+        case Bond::CRSST:
+        case Bond::CRSSA:
+        case Bond::CRSDN:
+        case Bond::CRSDS:
+        case Bond::CRSDT:
+        case Bond::CRSDA:
+        case Bond::CRSTN:
+        case Bond::CRSTS:
+        case Bond::CRSTD:
+        case Bond::CRSTA:
+        case Bond::CRSAN:
+        case Bond::CRSAS:
+        case Bond::CRSAD:
+        case Bond::CRSAT:          
             return true;
         default:
             return false;
@@ -565,20 +565,20 @@ bool number(Bond::BondType bt) {
 }
  
     
-//! Method to convert CGRSmiles to SMARTS reaction site.
-std::string CGRReader::siteSmarts(const std::string &cgrsmiles, bool siteplusone) {
+//! Method to convert CRSSmiles to SMARTS reaction site.
+std::string CRSReader::siteSmarts(const std::string &crssmiles, bool siteplusone) {
         std::stringstream ss;
 
         //std::cout << "go:" << std::endl;
 
         // Define input and output and map all atoms remove sanitizedx
-        RWMOL_SPTR molptr1(new RWMol(*RDKit::SmilesToMol(cgrsmiles,0, false)));
+        RWMOL_SPTR molptr1(new RWMol(*RDKit::SmilesToMol(crssmiles,0, false)));
  
         if (molptr1) {
             //std::cout << "mol1 found!" << std::endl;
 
             /// this method try to sanitize the object molecule
-            // we deactivate some methods that can failed with CGR bonds
+            // we deactivate some methods that can failed with CRS bonds
             unsigned int sanitizeOps = MolOps::SANITIZE_ALL ^ MolOps::SANITIZE_KEKULIZE ^ MolOps::SANITIZE_PROPERTIES;
             unsigned int failed;
             
@@ -594,7 +594,7 @@ std::string CGRReader::siteSmarts(const std::string &cgrsmiles, bool siteplusone
             bool* keep = (bool*) std::malloc(num*sizeof(bool));
             for (unsigned int idx=0; idx<num; idx++) keep[idx]=0;
 
-            // Keep all atoms with a CGR-bond
+            // Keep all atoms with a CRS-bond
             // Keep all it's neighbors
             for (Bond* bond : molptr1->bonds()) {
                 const Bond::BondType bt = bond->getBondType();

@@ -24,8 +24,8 @@
 #include <list>
 #include <vector>
 
-/////////////////// CGR format validation ///////////////////////
-extern std::string validcgrs[20] = {
+/////////////////// CRS format validation ///////////////////////
+extern std::string validcrss[20] = {
     "{!-}","{!=}","{!#}","{!:}",
     "{-!}","{-=}","{-#}","{-:}",
     "{=!}","{=-}","{=#}","{=:}",
@@ -36,36 +36,36 @@ extern std::string validcgrs[20] = {
 // Define a method to check if known
 bool IsKnown(const std::string& bond) {
     for (int i =0; i<20;i++) {
-        if (bond == validcgrs[i]) return true;
+        if (bond == validcrss[i]) return true;
     }
     return false;
 }
 
-// Define a method to check for valid CGR
-bool IsValidCGR(const char* CGR) {
+// Define a method to check for valid CRS
+bool IsValidCRS(const char* CRS) {
     // Define the test criteria
     int open = 0;  // Check close vs open
     int close = 0; // Check close vs open
     int start = 0; // We need to cache the starting position
 
     // Run the tests
-    std::string cgr = std::string(CGR);
+    std::string crs = std::string(CRS);
     int i = 0;
-    while (CGR[i]!='\0') {
+    while (CRS[i]!='\0') {
         // Check we start a bond
-        if (CGR[i]=='{') {
+        if (CRS[i]=='{') {
             if (++open > 1) return false;
             start = i;
         }
 
         // Check we end a bond
-        if (CGR[i]=='}') {
+        if (CRS[i]=='}') {
            // Here we need to test => can never be bigger than open
         if (++close > open) return false;
         // Here we do test to make the spacing is correct
         if (i-start != 3) return false;
         // Now we test the characters explicitly
-        if (!IsKnown(cgr.substr(start,4))) return false;
+        if (!IsKnown(crs.substr(start,4))) return false;
         // All done, reset open/close to 0
         open = 0;
         close = 0;
@@ -77,8 +77,8 @@ bool IsValidCGR(const char* CGR) {
 }
 
 // Just a duplicate format for std::string to use the above
-bool IsValidCGRString(const std::string& cgr) {
-    return IsValidCGR(cgr.c_str());
+bool IsValidCRSString(const std::string& crs) {
+    return IsValidCRS(crs.c_str());
 }
 
 namespace RDKit {
@@ -154,9 +154,9 @@ public:
     }
 };
 
-///////////////// bond CGR type //////////////
+///////////////// bond CRS type //////////////
 // This may become something like
-const Bond::BondType getCGRBondType(const int bor, const int bop) {
+const Bond::BondType getCRSBondType(const int bor, const int bop) {
         if (bor == bop){
            switch(bor) {
               case 1:
@@ -174,30 +174,30 @@ const Bond::BondType getCGRBondType(const int bor, const int bop) {
         else {
             switch(bor) {
                 case 0:
-                      if (bop == 1) return  Bond::BondType::CGRNS;
-                      else if (bop == 2) return  Bond::BondType::CGRND;
-                      else if (bop == 3) return  Bond::BondType::CGRNT;
-                      else if (bop == 4) return  Bond::BondType::CGRNA;
+                      if (bop == 1) return  Bond::BondType::CRSNS;
+                      else if (bop == 2) return  Bond::BondType::CRSND;
+                      else if (bop == 3) return  Bond::BondType::CRSNT;
+                      else if (bop == 4) return  Bond::BondType::CRSNA;
                 case 1:
-                      if (bop == 0) return  Bond::BondType::CGRSN;
-                      else if (bop == 2) return  Bond::BondType::CGRSD;
-                      else if (bop == 3) return  Bond::BondType::CGRST;
-                      else if (bop == 4) return  Bond::BondType::CGRSA;
+                      if (bop == 0) return  Bond::BondType::CRSSN;
+                      else if (bop == 2) return  Bond::BondType::CRSSD;
+                      else if (bop == 3) return  Bond::BondType::CRSST;
+                      else if (bop == 4) return  Bond::BondType::CRSSA;
                 case 2:
-                      if (bop == 0) return  Bond::BondType::CGRDN;
-                      else if (bop == 1) return  Bond::BondType::CGRDS;
-                      else if (bop == 3) return  Bond::BondType::CGRDT;
-                      else if (bop == 4) return  Bond::BondType::CGRDA;
+                      if (bop == 0) return  Bond::BondType::CRSDN;
+                      else if (bop == 1) return  Bond::BondType::CRSDS;
+                      else if (bop == 3) return  Bond::BondType::CRSDT;
+                      else if (bop == 4) return  Bond::BondType::CRSDA;
                 case 3:
-                      if (bop == 0) return  Bond::BondType::CGRTN;
-                      else if (bop == 1) return  Bond::BondType::CGRTS;
-                      else if (bop == 2) return  Bond::BondType::CGRTD;
-                      else if (bop == 4) return  Bond::BondType::CGRTA;
+                      if (bop == 0) return  Bond::BondType::CRSTN;
+                      else if (bop == 1) return  Bond::BondType::CRSTS;
+                      else if (bop == 2) return  Bond::BondType::CRSTD;
+                      else if (bop == 4) return  Bond::BondType::CRSTA;
                 case 4:
-                      if (bop == 0) return  Bond::BondType::CGRAN;
-                      else if (bop == 1) return  Bond::BondType::CGRAS;
-                      else if (bop == 2) return  Bond::BondType::CGRAD;
-                      else if (bop == 3) return  Bond::BondType::CGRAT;
+                      if (bop == 0) return  Bond::BondType::CRSAN;
+                      else if (bop == 1) return  Bond::BondType::CRSAS;
+                      else if (bop == 2) return  Bond::BondType::CRSAD;
+                      else if (bop == 3) return  Bond::BondType::CRSAT;
                 default:
                       return Bond::BondType::ZERO;
              }
@@ -249,30 +249,30 @@ AdjMatrix* getInvolvedBonds (const int maxmapnum, const RDKit::ChemicalReaction 
 
 
     
-bool isCGRbond(Bond *bond){
+bool isCRSbond(Bond *bond){
       Bond::BondType BT = bond->getBondType();
 
       switch (BT){
-            case Bond::CGRSN :
-            case Bond::CGRSD :
-            case Bond::CGRST :
-            case Bond::CGRSA :
-            case Bond::CGRDN :
-            case Bond::CGRDS :
-            case Bond::CGRDA :
-            case Bond::CGRDT :
-            case Bond::CGRTN :
-            case Bond::CGRTS :
-            case Bond::CGRTA :
-            case Bond::CGRTD :
-            case Bond::CGRAN :
-            case Bond::CGRAS :
-            case Bond::CGRAD :
-            case Bond::CGRAT :
-            case Bond::CGRNS :
-            case Bond::CGRND :
-            case Bond::CGRNA :
-            case Bond::CGRNT :
+            case Bond::CRSSN :
+            case Bond::CRSSD :
+            case Bond::CRSST :
+            case Bond::CRSSA :
+            case Bond::CRSDN :
+            case Bond::CRSDS :
+            case Bond::CRSDA :
+            case Bond::CRSDT :
+            case Bond::CRSTN :
+            case Bond::CRSTS :
+            case Bond::CRSTA :
+            case Bond::CRSTD :
+            case Bond::CRSAN :
+            case Bond::CRSAS :
+            case Bond::CRSAD :
+            case Bond::CRSAT :
+            case Bond::CRSNS :
+            case Bond::CRSND :
+            case Bond::CRSNA :
+            case Bond::CRSNT :
                return true;
             default :
                return false;
@@ -283,7 +283,7 @@ bool isCGRbond(Bond *bond){
 
     
     
-////////////////////// CGR parts ////////////////////////////
+////////////////////// CRS parts ////////////////////////////
 int getMaxMapNum(ChemicalReaction &rxn) {
     // Get the highest number
     int maxmapnum = -1;
@@ -298,7 +298,7 @@ int getMaxMapNum(ChemicalReaction &rxn) {
     return maxmapnum;
 }
     
-std::shared_ptr<RWMol> getCGRmol(ChemicalReaction &rxn, bool charges) {
+std::shared_ptr<RWMol> getCRSmol(ChemicalReaction &rxn, bool charges) {
     bool aromaticity = false;
     const int maxmapnum = getMaxMapNum(rxn)+1;
     Row* atno = new Row(maxmapnum);
@@ -360,7 +360,7 @@ std::shared_ptr<RWMol> getCGRmol(ChemicalReaction &rxn, bool charges) {
    AdjMatrix* PBond = getInvolvedBonds ( maxmapnum, rxn, true);
 
    ///////////////////////////////////////////////////////////////////////
-   // Constructor CGR "RDKit molecule" only works for fully map objects //
+   // Constructor CRS "RDKit molecule" only works for fully map objects //
    ///////////////////////////////////////////////////////////////////////
     
    std::shared_ptr<RWMol> mol(new RWMol()); 
@@ -390,7 +390,7 @@ std::shared_ptr<RWMol> getCGRmol(ChemicalReaction &rxn, bool charges) {
           if (to > from){
              int boR = RBond->GetBO(from, to);
              int boP = PBond->GetBO(from, to);
-             Bond::BondType bot = getCGRBondType(boR, boP);
+             Bond::BondType bot = getCRSBondType(boR, boP);
              if (bot == Bond::BondType::ZERO) {
                 continue;
              }
@@ -450,7 +450,7 @@ void BFS(std::shared_ptr<RWMol> mol, std::vector<unsigned int> atidx, bool* impo
 }
 
 
-void addAtomRingCGRIdx(std::shared_ptr<RWMol> mol, bool* important) {
+void addAtomRingCRSIdx(std::shared_ptr<RWMol> mol, bool* important) {
     
     if( !mol->getRingInfo()->isInitialized() ) {
         RDKit::MolOps::findSSSR( *mol );
@@ -464,7 +464,7 @@ void addAtomRingCGRIdx(std::shared_ptr<RWMol> mol, bool* important) {
           bool ringChange = false;
           for (INT_VECT_CI bondIt = ringIt->begin(); bondIt != ringIt->end();
              ++bondIt) {
-              if (isCGRbond(mol->getBondWithIdx(*bondIt))){
+              if (isCRSbond(mol->getBondWithIdx(*bondIt))){
                   ringChange = true; 
                  // break;
               }
@@ -482,11 +482,11 @@ void addAtomRingCGRIdx(std::shared_ptr<RWMol> mol, bool* important) {
 
     
     
-std::shared_ptr<RWMol> getCGRsignature(ChemicalReaction &rxn, unsigned int radius = 1,
+std::shared_ptr<RWMol> getCRSsignature(ChemicalReaction &rxn, unsigned int radius = 1,
                                        bool charges = false) {
 
     // Construct the molecule
-    std::shared_ptr<RWMol>  mol = getCGRmol(rxn, charges);
+    std::shared_ptr<RWMol>  mol = getCRSmol(rxn, charges);
     
 
     // Define an array to figure out what's important
@@ -502,9 +502,9 @@ std::shared_ptr<RWMol> getCGRsignature(ChemicalReaction &rxn, unsigned int radiu
     // for the search of the relevant atoms
     std::vector<unsigned int> atidx;
     for (auto b: mol->bonds()) {
-          if (isCGRbond(b)){
+          if (isCRSbond(b)){
               
-          // The bond is a cgr-bond, define the atoms
+          // The bond is a crs-bond, define the atoms
           // as the first atoms for the neighbor search.
              int from = b->getBeginAtomIdx();
              int to = b->getEndAtomIdx();
@@ -528,7 +528,7 @@ std::shared_ptr<RWMol> getCGRsignature(ChemicalReaction &rxn, unsigned int radiu
     BFS(mol,atidx,important,radius);
     
     // inject the ring change two!
-    addAtomRingCGRIdx(mol,important);
+    addAtomRingCRSIdx(mol,important);
 
     // remove the atoms not identified as 'important'
     for(int i = n-1; i >=0; i--){
@@ -543,13 +543,13 @@ std::shared_ptr<RWMol> getCGRsignature(ChemicalReaction &rxn, unsigned int radiu
     return mol;
 }
 
-std::string getCGRwriter(ChemicalReaction &rxn, bool doRandom, unsigned int randomSeed, bool aromatize = true, bool signature = false, bool charges = false, int radius=1) {
+std::string getCRSwriter(ChemicalReaction &rxn, bool doRandom, unsigned int randomSeed, bool aromatize = true, bool signature = false, bool charges = false, int radius=1) {
 
     // Define the correct molecule for the output.
-    // Here we generate the full CGR molecule or the signature CGR molecule if asked for.
-    // The signature CGR defines a smaller molecule around the center of reaction only
+    // Here we generate the full CRS molecule or the signature CRS molecule if asked for.
+    // The signature CRS defines a smaller molecule around the center of reaction only
     // as specified by the radius.
-    std::shared_ptr<RWMol>  mol = signature ? getCGRsignature(rxn, radius, charges) : getCGRmol(rxn, charges);
+    std::shared_ptr<RWMol>  mol = signature ? getCRSsignature(rxn, radius, charges) : getCRSmol(rxn, charges);
    
     //// do random need a seed
     if (randomSeed > 0) {
@@ -568,7 +568,7 @@ std::string getCGRwriter(ChemicalReaction &rxn, bool doRandom, unsigned int rand
          unsigned int failed;
          try {
                /// this method try to sanitize the object molecule
-               // we deactivate some methods that can failed with CGR bonds
+               // we deactivate some methods that can failed with CRS bonds
                   unsigned int sanitizeOps = MolOps::SANITIZE_ALL ^
                           MolOps::SANITIZE_CLEANUP ^
                           MolOps::SANITIZE_PROPERTIES ^
@@ -593,8 +593,8 @@ std::string getCGRwriter(ChemicalReaction &rxn, bool doRandom, unsigned int rand
     return ss.str();
 }
 
-/////////////// cgr reader ///////////////////// 
-std::string  getCGRMolecule(RWMol *molR,const std::string cgr, bool canonical, bool setAtomMap) {
+/////////////// crs reader ///////////////////// 
+std::string  getCRSMolecule(RWMol *molR,const std::string crs, bool canonical, bool setAtomMap) {
         unsigned int failedR, failedP;
     // reset AtomMapNum
     if  (setAtomMap) {
@@ -615,7 +615,7 @@ std::string  getCGRMolecule(RWMol *molR,const std::string cgr, bool canonical, b
   std::shared_ptr<RWMol> molP(new RWMol(*molR));
     try {
        // this method try to sanitize the object molecule
-       // we deactivate some methods that can failed with CGR bonds
+       // we deactivate some methods that can failed with CRS bonds
               unsigned int sanitizeOps = MolOps::SANITIZE_ALL ^
                     MolOps::SANITIZE_CLEANUP ^
                     MolOps::SANITIZE_PROPERTIES ^
@@ -625,7 +625,7 @@ std::string  getCGRMolecule(RWMol *molR,const std::string cgr, bool canonical, b
               MolOps::sanitizeMol(*molP, failedP, sanitizeOps);
     }
     catch (MolSanitizeException &) {
-              BOOST_LOG(rdInfoLog) << "Issue to sanitize Mol from this cgr:"+cgr+"\n";
+              BOOST_LOG(rdInfoLog) << "Issue to sanitize Mol from this crs:"+crs+"\n";
     }
     
          std::set<unsigned int> keep;         
@@ -636,19 +636,19 @@ std::string  getCGRMolecule(RWMol *molR,const std::string cgr, bool canonical, b
               Bond *bondP = molP->getBondWithIdx(i);
               Bond::BondType BT = bond->getBondType();
               switch (BT){
-                  case Bond::CGRSN :  
+                  case Bond::CRSSN :  
                     bond->setBondType(Bond::SINGLE);
                     bondPrem.emplace_back(bond->getBeginAtomIdx(), bond->getEndAtomIdx());
                     keep.insert(bond->getBeginAtomIdx());
                     keep.insert(bond->getEndAtomIdx());
                     break;
-                  case Bond::CGRSD :
+                  case Bond::CRSSD :
                     bondP->setBondType(Bond::DOUBLE);
                     bond->setBondType(Bond::SINGLE);
                     keep.insert(bond->getBeginAtomIdx());
                     keep.insert(bond->getEndAtomIdx());
                     break;
-                  case Bond::CGRSA :
+                  case Bond::CRSSA :
                     bond->setBondType(Bond::SINGLE);
                     bondP->setBondType(Bond::AROMATIC);
                     bondP->getBeginAtom()->setIsAromatic(true);
@@ -658,25 +658,25 @@ std::string  getCGRMolecule(RWMol *molR,const std::string cgr, bool canonical, b
                     keep.insert(bond->getBeginAtomIdx());
                     keep.insert(bond->getEndAtomIdx());
                     break;
-                  case Bond::CGRST :
+                  case Bond::CRSST :
                     bondP->setBondType(Bond::TRIPLE);
                     bond->setBondType(Bond::SINGLE);
                     keep.insert(bond->getBeginAtomIdx());
                     keep.insert(bond->getEndAtomIdx());
                     break;
-                  case Bond::CGRDN :
+                  case Bond::CRSDN :
                     bond->setBondType(Bond::DOUBLE);      
                     bondPrem.emplace_back(bond->getBeginAtomIdx(), bond->getEndAtomIdx());
                     keep.insert(bond->getBeginAtomIdx());
                     keep.insert(bond->getEndAtomIdx());
                     break;
-                  case Bond::CGRDS :
+                  case Bond::CRSDS :
                     bond->setBondType(Bond::DOUBLE);
                     bondP->setBondType(Bond::SINGLE);
                     keep.insert(bond->getBeginAtomIdx());
                     keep.insert(bond->getEndAtomIdx());
                     break;
-                  case Bond::CGRDA :
+                  case Bond::CRSDA :
                     bond->setBondType(Bond::DOUBLE);
                     bondP->setBondType(Bond::AROMATIC);
                     bondP->getBeginAtom()->setIsAromatic(true);
@@ -686,25 +686,25 @@ std::string  getCGRMolecule(RWMol *molR,const std::string cgr, bool canonical, b
                     keep.insert(bond->getBeginAtomIdx());
                     keep.insert(bond->getEndAtomIdx());
                     break;
-                  case Bond::CGRDT :
+                  case Bond::CRSDT :
                     bondP->setBondType(Bond::TRIPLE);
                     bond->setBondType(Bond::DOUBLE);
                     keep.insert(bond->getBeginAtomIdx());
                     keep.insert(bond->getEndAtomIdx());
                     break;
-                  case Bond::CGRTN :
+                  case Bond::CRSTN :
                     bond->setBondType(Bond::TRIPLE);
                     bondPrem.emplace_back(bond->getBeginAtomIdx(), bond->getEndAtomIdx());
                     keep.insert(bond->getBeginAtomIdx());
                     keep.insert(bond->getEndAtomIdx());
                     break;
-                  case Bond::CGRTS :
+                  case Bond::CRSTS :
                     bond->setBondType(Bond::TRIPLE);
                     bondP->setBondType(Bond::SINGLE);
                     keep.insert(bond->getBeginAtomIdx());
                     keep.insert(bond->getEndAtomIdx());
                     break;
-                  case Bond::CGRTA :
+                  case Bond::CRSTA :
                     bond->setBondType(Bond::TRIPLE);
                     bondP->setBondType(Bond::AROMATIC);
                     bondP->getBeginAtom()->setIsAromatic(true);
@@ -714,13 +714,13 @@ std::string  getCGRMolecule(RWMol *molR,const std::string cgr, bool canonical, b
                     keep.insert(bond->getBeginAtomIdx());
                     keep.insert(bond->getEndAtomIdx());
                     break;
-                    case Bond::CGRTD :
+                    case Bond::CRSTD :
                     bond->setBondType(Bond::TRIPLE);
                     bondP->setBondType(Bond::DOUBLE);
                     keep.insert(bond->getBeginAtomIdx());
                     keep.insert(bond->getEndAtomIdx());
                     break;           
-                  case Bond::CGRAN :
+                  case Bond::CRSAN :
                     bond->setBondType(Bond::AROMATIC);
                     bondPrem.emplace_back(bond->getBeginAtomIdx(), bond->getEndAtomIdx());
                     bondP->getBeginAtom()->setIsAromatic(false);
@@ -730,7 +730,7 @@ std::string  getCGRMolecule(RWMol *molR,const std::string cgr, bool canonical, b
                     keep.insert(bond->getBeginAtomIdx());
                     keep.insert(bond->getEndAtomIdx());
                     break;
-                  case Bond::CGRAS :
+                  case Bond::CRSAS :
                     bond->setBondType(Bond::AROMATIC);
                     bondP->setBondType(Bond::SINGLE);
                     bondP->getBeginAtom()->setIsAromatic(false);
@@ -740,7 +740,7 @@ std::string  getCGRMolecule(RWMol *molR,const std::string cgr, bool canonical, b
                     keep.insert(bond->getBeginAtomIdx());
                     keep.insert(bond->getEndAtomIdx());
                     break;
-                  case Bond::CGRAD :
+                  case Bond::CRSAD :
                     bond->setBondType(Bond::AROMATIC);
                     bondP->setBondType(Bond::DOUBLE);
                     bondP->getBeginAtom()->setIsAromatic(false);
@@ -750,7 +750,7 @@ std::string  getCGRMolecule(RWMol *molR,const std::string cgr, bool canonical, b
                     keep.insert(bond->getBeginAtomIdx());
                     keep.insert(bond->getEndAtomIdx());
                     break;
-                  case Bond::CGRAT :
+                  case Bond::CRSAT :
                     bondP->setBondType(Bond::TRIPLE);
                     bond->setBondType(Bond::AROMATIC);
                     bondP->getBeginAtom()->setIsAromatic(false);
@@ -760,25 +760,25 @@ std::string  getCGRMolecule(RWMol *molR,const std::string cgr, bool canonical, b
                     keep.insert(bond->getBeginAtomIdx());
                     keep.insert(bond->getEndAtomIdx());
                     break;
-                  case Bond::CGRNS :
+                  case Bond::CRSNS :
                     bondRrem.emplace_back(bond->getBeginAtomIdx(), bond->getEndAtomIdx());
                     bondP->setBondType(Bond::SINGLE);
                     keep.insert(bond->getBeginAtomIdx());
                     keep.insert(bond->getEndAtomIdx());
                     break;
-                  case Bond::CGRND :
+                  case Bond::CRSND :
                     bondP->setBondType(Bond::DOUBLE);
                     bondRrem.emplace_back(bond->getBeginAtomIdx(), bond->getEndAtomIdx());
                     keep.insert(bond->getBeginAtomIdx());
                     keep.insert(bond->getEndAtomIdx());
                     break;
-                  case Bond::CGRNT :
+                  case Bond::CRSNT :
                     bondRrem.emplace_back(bond->getBeginAtomIdx(), bond->getEndAtomIdx());
                     bondP->setBondType(Bond::TRIPLE);
                     keep.insert(bond->getBeginAtomIdx());
                     keep.insert(bond->getEndAtomIdx());
                     break;
-                  case Bond::CGRNA :
+                  case Bond::CRSNA :
                     bondP->setBondType(Bond::AROMATIC);
                     bondP->getBeginAtom()->setIsAromatic(true);
                     bondP->getEndAtom()->setIsAromatic(true);
@@ -832,18 +832,18 @@ std::string  getCGRMolecule(RWMol *molR,const std::string cgr, bool canonical, b
     
     
     
-       // std::cout << "just before cgr from smile generator\n";
+       // std::cout << "just before crs from smile generator\n";
     // can remove radical at the end or at the beginning ...
     return  RDKit::MolToSmiles( *molR, true, false, -1, canonical )  + ">>" + RDKit::MolToSmiles( *molP,true, false, -1, canonical );
 }
     
 
 
-std::string CGRreader(RWMol *molR, const std::string cgr, bool canonical, bool setAtomMap) {
-  std::cout << cgr << " is valid: "<< IsValidCGRString( cgr) << "\n";
+std::string CRSreader(RWMol *molR, const std::string crs, bool canonical, bool setAtomMap) {
+  std::cout << crs << " is valid: "<< IsValidCRSString( crs) << "\n";
        
-    if (IsValidCGRString( cgr)){  
-         return getCGRMolecule(molR, cgr, canonical, setAtomMap);
+    if (IsValidCRSString( crs)){  
+         return getCRSMolecule(molR, crs, canonical, setAtomMap);
     }
     else {
          return "";
@@ -851,9 +851,9 @@ std::string CGRreader(RWMol *molR, const std::string cgr, bool canonical, bool s
 }
 
 
-std::string CGRwriter(const std::string smart, bool doRandom,  unsigned int randomSeed, bool aromatize, bool signature, bool charges, int radius){
+std::string CRSwriter(const std::string smart, bool doRandom,  unsigned int randomSeed, bool aromatize, bool signature, bool charges, int radius){
     std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction( smart));
-    return getCGRwriter( *rxn , doRandom , randomSeed, aromatize, signature, charges, radius );
+    return getCRSwriter( *rxn , doRandom , randomSeed, aromatize, signature, charges, radius );
 }
 
 }

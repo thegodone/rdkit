@@ -40,15 +40,15 @@ TEST_CASE("reactions", "[unittest][reactionclean]") {
 TEST_CASE("cgr", "[unittest][reactionclean]") {
   std::string sma = "[OH:1][CH:2]([CH2:7][O:8][CH3:9])[CH2:10][CH3:11].[C:3](=[O:4])([OH:5])[CH3:6]>>[O:1]([CH:2]([CH2:7][O:8][CH3:9])[CH2:10][CH3:11])[C:3](=[O:4])[CH3:6].[OH2:5]";
   SECTION("cgr basic") {
-    std::string cgr =  CondensedGraphRxn::CGRwriter(sma, false, 0, true, false, false, 0);
+    std::string cgr =  CondensedGraphRxn::CRSwriter(sma, false, 0, true, false, false, 0);
     CHECK(cgr == "CCC(COC)O{!-}C(C)(=O){-!}O");
   }
  SECTION("cgr signature radius 0") {
-    std::string cgr =  CondensedGraphRxn::CGRwriter(sma, false, 0, true, true, false, 0);
+    std::string cgr =  CondensedGraphRxn::CRSwriter(sma, false, 0, true, true, false, 0);
     CHECK(cgr == "O{!-}C{-!}O");
   }
  SECTION("cgr signature radius 1") {
-    std::string cgr =  CondensedGraphRxn::CGRwriter(sma, false, 0, true, true, false, 1);
+    std::string cgr =  CondensedGraphRxn::CRSwriter(sma, false, 0, true, true, false, 1);
     CHECK(cgr == "CO{!-}C(C)(=O){-!}O");
   }
 }
@@ -56,11 +56,29 @@ TEST_CASE("cgr", "[unittest][reactionclean]") {
 TEST_CASE("crs", "[unittest][reader]") {
   std::string crs = "CC{!-}CO";
   SECTION("crs reader") {
-    RWMol *molR;
+
+  RDKit::RWMol *molR;
+  std::string res;
+  try {
     molR = SmilesToMol(crs, 0, false);
-    std::string rxn =  CondensedGraphRxn::CGRreader(molR, crs, false, false);
-    std::cout << "rxn crs test\n" << rxn;
-    CHECK(rxn == "");
+  } catch (char *excp) {
+    std::cout << "Caught " << excp;
+    molR = nullptr;
+  }
+  catch (...) {
+        std::cout << "Default Exception\n";
+  }
+
+  if (molR) {
+    res = CondensedGraphRxn::CRSreader( molR , crs, false, false );
+    delete molR;
+  }
+  else {
+    res =  "CRS SmilesParse error";
+  }
+
+    std::cout << "rxn crs test\n" << res;
+    CHECK(res  == "");
   }
 }
 

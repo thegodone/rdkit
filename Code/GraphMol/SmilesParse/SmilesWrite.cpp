@@ -248,64 +248,64 @@ std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx, bool doKekule,
     case Bond::TRIPLE:
       res = "#";
       break;
-    case Bond::CGRSD:
+    case Bond::CRSSD:
       res = "{-=}";
       break;
-    case Bond::CGRST:
+    case Bond::CRSST:
       res = "{-#}";
       break;
-    case Bond::CGRSA:
+    case Bond::CRSSA:
       res = "{-:}";
       break;
-    case Bond::CGRSN:
+    case Bond::CRSSN:
       res = "{-!}";
       break;
-    case Bond::CGRNS:
+    case Bond::CRSNS:
       res = "{!-}";
       break;
-    case Bond::CGRDS:
+    case Bond::CRSDS:
       res = "{=-}";
       break;
-    case Bond::CGRDT:
+    case Bond::CRSDT:
       res = "{=#}";
       break;
-    case Bond::CGRDA:
+    case Bond::CRSDA:
       res = "{=:}";
       break;
-    case Bond::CGRDN:
+    case Bond::CRSDN:
       res = "{=!}";
       break;
-    case Bond::CGRND:
+    case Bond::CRSND:
       res = "{!=}";
       break;
-    case Bond::CGRTS:
+    case Bond::CRSTS:
       res = "{#-}";
       break;
-    case Bond::CGRTD:
+    case Bond::CRSTD:
       res = "{#=}";
       break;
-    case Bond::CGRTA:
+    case Bond::CRSTA:
       res = "{#:}";
       break;
-    case Bond::CGRTN:
+    case Bond::CRSTN:
       res = "{#!}";
       break;
-    case Bond::CGRNT:
+    case Bond::CRSNT:
       res = "{!#}";
       break;
-    case Bond::CGRAS:
+    case Bond::CRSAS:
       res = "{:-}";
       break;
-    case Bond::CGRAD:
+    case Bond::CRSAD:
       res = "{:=}";
       break;
-    case Bond::CGRAT:
+    case Bond::CRSAT:
       res = "{:#}";
       break;
-    case Bond::CGRAN:
+    case Bond::CRSAN:
       res = "{:!}";
       break;
-    case Bond::CGRNA:
+    case Bond::CRSNA:
       res = "{!:}";
       break;
     case Bond::AROMATIC:

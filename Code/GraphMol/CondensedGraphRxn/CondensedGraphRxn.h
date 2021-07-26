@@ -25,10 +25,10 @@ class ChemicalReaction;
 
 namespace CondensedGraphRxn {
 
-RDKIT_CONDENSEDGRAPHRXN_EXPORT std::string CGRwriter(const std::string smart, bool doRandom, unsigned int randomSeed
+RDKIT_CONDENSEDGRAPHRXN_EXPORT std::string CRSwriter(const std::string smart, bool doRandom, unsigned int randomSeed
 						      ,	bool aromatize, bool signature, bool charges, int radius);
 
-RDKIT_CONDENSEDGRAPHRXN_EXPORT std::string CGRreader(RWMol *molR, const std::string cgr, bool canonical, bool setAtomMap);
+RDKIT_CONDENSEDGRAPHRXN_EXPORT std::string CRSreader(RWMol *molR, const std::string crs, bool canonical, bool setAtomMap);
 
 RDKIT_CONDENSEDGRAPHRXN_EXPORT std::string RXNCleaning(std::string rxnsmart);
 
@@ -41,7 +41,6 @@ RDKIT_CONDENSEDGRAPHRXN_EXPORT bool getRXNCompTotal(std::string rxnsma, std::str
 RDKIT_CONDENSEDGRAPHRXN_EXPORT std::string setRXNCompAtomMaps(std::string rxnsma, std::string rxncoresma);
     
 RDKIT_CONDENSEDGRAPHRXN_EXPORT void transferMappedNum(ROMol *mol1, ROMol *mol2);
-
 
 RDKIT_CONDENSEDGRAPHRXN_EXPORT bool getRxnDirection(const ChemicalReaction *rxn);
 

@@ -171,64 +171,64 @@ double Bond::getBondTypeAsDouble() const {
     case AROMATIC:
       res = 1.5;
       break;
-    case CGRSD:
+    case CRSSD:
       res = 2.0;
       break;
-    case CGRST:
+    case CRSST:
       res = 3.0;
       break;
-    case CGRSA:
+    case CRSSA:
       res = 1.5;
       break;
-    case CGRSN:
+    case CRSSN:
       res = 0.0;
       break;
-    case CGRNS:
+    case CRSNS:
       res = 1.0;
       break;
-     case CGRDS:
+     case CRSDS:
       res = 1.0;
       break;
-    case CGRDT:
+    case CRSDT:
       res = 3.0;
       break;
-    case CGRDA:
+    case CRSDA:
       res = 1.5;
       break;
-    case CGRDN:
+    case CRSDN:
       res = 0.0;
       break;
-    case CGRND:
+    case CRSND:
       res = 2.0;
       break;
-    case CGRTS:
+    case CRSTS:
       res = 1.0;
       break;
-    case CGRTD:
+    case CRSTD:
       res = 2.0;
       break;
-    case CGRTA:
+    case CRSTA:
       res = 1.5;
       break;
-    case CGRTN:
+    case CRSTN:
       res = 0.0;
       break;
-    case CGRNT:
+    case CRSNT:
       res = 3.0;
       break;
-    case CGRAS:
+    case CRSAS:
       res = 1.0;
       break;
-    case CGRAD:
+    case CRSAD:
       res = 2.0;
       break;
-    case CGRAT:
+    case CRSAT:
       res = 3.0;
       break;
-    case CGRAN:
+    case CRSAN:
       res = 0.0;
       break;
-    case CGRNA:
+    case CRSNA:
       res = 1.5;
       break;
     case DATIVEONE:
@@ -455,64 +455,64 @@ uint8_t getTwiceBondType(const Bond &b) {
       return 0;
       break;
 		  
-    case Bond::CGRSD:
+    case Bond::CRSSD:
       return 4;
       break;
-    case Bond::CGRST:
+    case Bond::CRSST:
       return 6;
       break;
-    case Bond::CGRSA:
+    case Bond::CRSSA:
       return 3;
       break;
-    case Bond::CGRSN:
+    case Bond::CRSSN:
       return 0;
       break;
-    case Bond::CGRNS:
+    case Bond::CRSNS:
       return 2;
       break;
-    case Bond::CGRDS:
+    case Bond::CRSDS:
       return 2;
       break;
-    case Bond::CGRDT:
+    case Bond::CRSDT:
       return 6;
       break;
-    case Bond::CGRDA:
+    case Bond::CRSDA:
       return 3;
       break;
-    case Bond::CGRDN:
+    case Bond::CRSDN:
       return 0;
       break;
-    case Bond::CGRND:
+    case Bond::CRSND:
       return 4;
       break;
-    case Bond::CGRTS:
+    case Bond::CRSTS:
       return 2;
       break;
-    case Bond::CGRTD:
+    case Bond::CRSTD:
       return 4;
       break;
-    case Bond::CGRTA:
+    case Bond::CRSTA:
       return 3;
       break;
-    case Bond::CGRTN:
+    case Bond::CRSTN:
       return 0;
       break;
-    case Bond::CGRNT:
+    case Bond::CRSNT:
       return 6;
       break;
-    case Bond::CGRAS:
+    case Bond::CRSAS:
       return 2;
       break;
-    case Bond::CGRAD:
+    case Bond::CRSAD:
       return 4;
       break;
-    case Bond::CGRAT:
+    case Bond::CRSAT:
       return 6;
       break;
-    case Bond::CGRAN:
+    case Bond::CRSAN:
       return 0;
       break;
-    case Bond::CGRNA:
+    case Bond::CRSNA:
       return 3;
       break;
 		  

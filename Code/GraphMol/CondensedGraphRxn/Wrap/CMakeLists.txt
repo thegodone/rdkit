@@ -5,8 +5,8 @@ rdkit_python_extension(rdCondensedGraphRxn
 		       LINK_LIBRARIES CondensedGraphRxn
 GraphMol RDGeometryLib RDGeneral DataStructs ChemReactions) 
 
-rdkit_python_extension(rdFirCGR
-                       FirCGRPy.cpp
+rdkit_python_extension(rdFirCRS
+                       FirCRSPy.cpp
 		       DEST Chem/CondensedGraphRxn
 		       LINK_LIBRARIES CondensedGraphRxn
 GraphMol RDGeometryLib RDGeneral DataStructs ChemReactions) 

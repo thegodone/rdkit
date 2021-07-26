@@ -1,9 +1,9 @@
 /*
- * FirCGR.h defines the header file with classes
- * to convert reaction smarts to CGR-smiles and
+ * FirCRS.h defines the header file with classes
+ * to convert reaction smarts to CRS-smiles and
  * vice versa.
  *
- * This new CGR-SMILES format, proposed by 
+ * This new CRS-SMILES format, proposed by 
  * Firmenich/BigChem is the smallest and most
  * concise way to write reactions.
  *
@@ -13,7 +13,7 @@
  * introduction of flexible bonds to indicate the
  * modifications of a reaction.
  * 
- * Apart from the good learning nature, CGRs stand
+ * Apart from the good learning nature, CRSs stand
  * out for their easy reversibility, simply by putting
  * the bonds in the flexible bonds in the opposite order.
  * E.g. propyl ethionate: 
@@ -65,8 +65,8 @@ struct TmpBond {
     }
 };
 
-//! Define a class to write CGR
-class CGRWriter {
+//! Define a class to write CRS
+class CRSWriter {
 private:
     std::vector<TmpBond> getBonds(RWMOL_SPTR mol,std::map<int,int> m2i);
     Bond::BondType lookup(std::vector<TmpBond> list, TmpBond query);
@@ -74,37 +74,37 @@ private:
     std::vector<TmpBond> diff(std::vector<TmpBond> R, std::vector<TmpBond> P);
     RWMOL_SPTR copy(RWMOL_SPTR in);
 public:
-    CGRWriter();
-    virtual ~CGRWriter();
+    CRSWriter();
+    virtual ~CRSWriter();
     std::string write(const std::string &rxnsma, bool rnd=false, int root=-1);
 };
  
 //! Define a shared pointer for the writer
-typedef std::shared_ptr<CGRWriter> CGRW_SPTR;
+typedef std::shared_ptr<CRSWriter> CRSW_SPTR;
     
-//! Define a class to read CGR
-class CGRReader {
+//! Define a class to read CRS
+class CRSReader {
 private:
     Bond::BondType propose(const Bond::BondType &bt, bool &arom, bool &dearom, bool prod=false);
 public:
-    CGRReader();
-    virtual ~CGRReader();
-    std::string read(const std::string &cgrsmiles, bool mapcgratoms=true, bool mapallatoms=false, bool can=true);
-    std::string siteSmarts(const std::string &cgrsmiles, bool siteplusone=true);
+    CRSReader();
+    virtual ~CRSReader();
+    std::string read(const std::string &crssmiles, bool mapcrsatoms=true, bool mapallatoms=false, bool can=true);
+    std::string siteSmarts(const std::string &crssmiles, bool siteplusone=true);
 };
     
 //! Define a shared pointer for the reader
-typedef std::shared_ptr<CGRReader> CGRR_SPTR;
+typedef std::shared_ptr<CRSReader> CRSR_SPTR;
     
-static std::string CGR2SMA(const std::string &cgrsmi) {
-    CGRReader *r = new CGRReader();
-    const std::string res = r->read(cgrsmi);
+static std::string CRS2SMA(const std::string &crssmi) {
+    CRSReader *r = new CRSReader();
+    const std::string res = r->read(crssmi);
     delete r;
     return res;
 }
     
-static std::string SMA2CGR(const std::string &smarts) {
-    CGRWriter *w = new CGRWriter();
+static std::string SMA2CRS(const std::string &smarts) {
+    CRSWriter *w = new CRSWriter();
     const std::string res = w->write(smarts);
     delete w;
     return res;

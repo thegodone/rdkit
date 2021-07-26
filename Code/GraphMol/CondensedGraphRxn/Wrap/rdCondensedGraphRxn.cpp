@@ -31,32 +31,31 @@ std::string pyObjectToString(python::object input) {
   return std::string(ws.begin(), ws.end());
 }
 
-std::string CGRWriter(python::object ismart, bool doRandom , unsigned int randomSeed,
+std::string CRSWriter(python::object ismart, bool doRandom , unsigned int randomSeed,
 		bool aromatize, bool signature, bool charges, int radius)  {
   const std::string smart = pyObjectToString(ismart);
-  return CGRwriter( smart , doRandom, randomSeed, aromatize, signature, charges, radius);
+  return CRSwriter( smart , doRandom, randomSeed, aromatize, signature, charges, radius);
 }
 
-std::string CGRReader(python::object icgr, bool canonical, bool setAtomMap ) {
-  const std::string cgr = pyObjectToString(icgr);
+std::string CRSReader(python::object icrs, bool canonical, bool setAtomMap ) {
+  const std::string crs = pyObjectToString(icrs);
   RDKit::RWMol *molR;
   std::string res;
   try {
-    molR = SmilesToMol(cgr, 0, false);
+    molR = SmilesToMol(crs, 0, false);
   } catch (...) {
     molR = nullptr;
   }
   if (molR) {
-    res = CGRreader( molR , cgr, canonical, setAtomMap );
+    res = CRSreader( molR , crs, canonical, setAtomMap );
     delete molR;
   }
   else {
-    res =  "error";
+    res =  "CRS SmilesParse error";
   }
 
   return res;
 }
-
 
 std::string RxnCompleteMapping(python::object  ismiles, bool debug, bool addleavinggroups){	
 const std::string smiles = pyObjectToString(ismiles);
@@ -92,18 +91,18 @@ BOOST_PYTHON_MODULE(rdCondensedGraphRxn) {
   python::scope().attr("__doc__") =
       "Module containing functions for creating a Scaffold Network";
 
-  python::def("CGRwriter", &CGRWriter,
+  python::def("CRSwriter", &CRSWriter,
               (python::arg("smart"), python::arg("doRandom") = false,
 	       python::arg("randomSeed")= 0, python::arg("aromatize") = true,
 	       python::arg("signature") = false,
            python::arg("charges") = false,
                python::arg("radius") = 1),
-              "convert a rxnsmarts into a cgr");
+              "convert a rxnsmarts into a crs");
 
-   python::def("CGRreader", &CGRReader,
-              (python::arg("cgr"), python::arg("canonical") = true,
+   python::def("CRSreader", &CRSReader,
+              (python::arg("crs"), python::arg("canonical") = true,
 	       python::arg("setAtomMap") = true),
-              "convert a cgr into a rxnsmarts");
+              "convert a crs into a rxnsmarts");
 
       python::def("RxnCompleteMapping", &RxnCompleteMapping,
               (python::arg("smiles"), python::arg("debug")=false,
