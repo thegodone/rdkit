@@ -1264,15 +1264,13 @@ namespace RDKit {
             // step 1: Do reverse
             unsigned int maxmap = 0;
             getMaxMapNumList(rkeep, maxmap);
+            getMaxMapNumList(pkeep, maxmap);
             unsigned int newmaxmap = maxmap;
             mapAllAtoms(pkeep, newmaxmap);
 
-            // getMaxMapNumList(pkeep, maxmap); // this  line was commented why ?
             if (debug) {
                 // check data process
                 std::cout << "8: max map " << maxmap << std::endl;
-                std::cout << "8: max map new" << newmaxmap << std::endl;
-
             }
             
             
@@ -1282,7 +1280,6 @@ namespace RDKit {
             }
 
             // new order in python code inverse step 10 & 11
-
             
             addGroup(pdiff, conserved, rkeep, maxmap, debug);
 

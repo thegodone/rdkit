@@ -138,13 +138,13 @@ class TestCondensedGraphRxn(unittest.TestCase):
   def testCase2(self,display=True):
       # Check the forward/reverse case
       sma = "CC[CH:2](COC)[O:1][C:3](C)=[O:4]>>C[C:3]([OH:5])=[O:4].CC[CH:2]([OH:1])COC"
-      expt = "[O:1]([CH:2]([CH2:7][CH3:6])[CH2:8][O:9][CH3:10])[C:3](=[O:4])[CH3:11].[OH2:5]>>[C:3](=[O:4])([OH:5])[CH3:11].[OH:1][CH:2]([CH2:7][CH3:6])[CH2:8][O:9][CH3:10]"
+      expt = "[O:1]([CH:2]([CH2:8][CH3:7])[CH2:9][O:10][CH3:11])[C:3](=[O:4])[CH3:6].[OH2:5]>>[OH:1][CH:2]([CH2:8][CH3:7])[CH2:9][O:10][CH3:11].[C:3](=[O:4])([OH:5])[CH3:6]"
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
   
-  def testCase3(self,display=True):    
+  def testCase3(self,display=False):    
       # Check the SN2: The empty case
       sma = "[Cl:1][CH2:2]COc1ccccc1[CH2:3][Cl:4]>>[I:5][CH2:2]COc1ccccc1[CH2:3][I:6]"
-      expt = "[Cl:1][CH2:2][CH2:7][O:8][c:9]1[cH:10][cH:11][cH:12][cH:13][c:14]1[CH2:3][Cl:4].[IH:6].[IH:5]>>[CH2:2]([I:5])[CH2:7][O:8][c:9]1[cH:10][cH:11][cH:12][cH:13][c:14]1[CH2:3][I:6].[ClH:4].[ClH:1]"
+      expt = "[Cl:1][CH2:2][CH2:7][O:8][c:9]1[cH:10][cH:11][cH:12][cH:13][c:14]1[CH2:3][Cl:4].[IH:5].[IH:6]>>[CH2:2]([I:5])[CH2:7][O:8][c:9]1[cH:10][cH:11][cH:12][cH:13][c:14]1[CH2:3][I:6].[ClH:1].[ClH:4]"
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
 
   def testCase4(self,display=False):
@@ -171,10 +171,10 @@ class TestCondensedGraphRxn(unittest.TestCase):
       expt = "[cH:3]1[cH:6][cH:5][cH:4][cH:10][cH:9]1.[Cl:1][CH:2]([CH3:7])[CH3:8]>>[CH:2]([c:3]1[cH:6][cH:5][cH:4][cH:10][cH:9]1)([CH3:7])[CH3:8].[Cl-:1]"
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
       
-  def testCase8(self,display=True):
+  def testCase8(self,display=False):
       # Check Reductive amination
       sma = "[NH2:2][CH2:1]C1=CC=CC=C1.C[CH:5]1CCC[CH:6](C)[C:3]1=[O:4]>>C[CH:5]1CCC[CH:6](C)[CH:3]1[NH:2][CH2:1]C1=CC=CC=C1"
-      expt = "[CH2:1]([NH2:2])[c:12]1[cH:13][cH:14][cH:15][cH:16][cH:17]1.[C:3]1(=[O:4])[CH:5]([CH3:7])[CH2:8][CH2:9][CH2:10][CH:6]1[CH3:11]>>[CH2:1]([NH:2][CH:3]1[CH:5]([CH3:7])[CH2:8][CH2:9][CH2:10][CH:6]1[CH3:11])[c:12]1[cH:13][cH:14][cH:15][cH:16][cH:17]1.[OH2:4]"
+      expt = "[C:3]1(=[O:4])[CH:5]([CH3:7])[CH2:8][CH2:9][CH2:10][CH:6]1[CH3:11].[CH2:1]([NH2:2])[c:12]1[cH:13][cH:14][cH:15][cH:16][cH:17]1>>[CH2:1]([NH:2][CH:3]1[CH:5]([CH3:7])[CH2:8][CH2:9][CH2:10][CH:6]1[CH3:11])[c:12]1[cH:13][cH:14][cH:15][cH:16][cH:17]1.[OH2:4]"
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
       
   def testCase9(self,display=False):
@@ -221,10 +221,12 @@ class TestCondensedGraphRxn(unittest.TestCase):
       expt = "[CH:1]([C:3]#[N:5])([CH2:7][CH3:6])[NH2:8].[OH2:4].[OH2:2]>>[CH:1]([C:3](=[O:2])[OH:4])([CH2:7][CH3:6])[NH2:8].[NH3:5]"
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
       
-  def testCase16(self,display=True):
+  def testCase16(self,display=False):
       # Strecker step 1+2
       sma = "[NH3:1].[CH:4]#[N:5].C1CCCCC1C[CH:2]=[O:3]>>C1CCCCC1C[CH:2]([NH2:1])[C:4]([OH:7])=[O:6]"
       expt = "[CH:2](=[O:3])[CH2:14][CH:13]1[CH2:8][CH2:9][CH2:10][CH2:11][CH2:12]1.[OH2:7].[OH2:6].[CH:4]#[N:5].[NH3:1]>>[NH2:1][CH:2]([C:4](=[O:6])[OH:7])[CH2:14][CH:13]1[CH2:8][CH2:9][CH2:10][CH2:11][CH2:12]1.[NH3:5].[OH2:3]"
+      print('16:', CGR.RxnCompleteMapping(sma))
+
       self.assertEqual( CGR.RxnCompleteMapping(sma, debug=display), expt)
       
   def testCase17(self,display=False):
