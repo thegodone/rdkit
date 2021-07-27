@@ -675,7 +675,7 @@ namespace RDKit {
 
         void getAtomNbrs(Atom *atm, std::vector< Atom *> &nbrs) {
             ROMol::ADJ_ITER begin, end;
-            ROMol parent = atm->getOwningMol();
+            ROMol &parent = atm->getOwningMol();
             boost::tie(begin, end) = parent.getAtomNeighbors(atm);
             unsigned int atmidx = atm->getIdx();
 
