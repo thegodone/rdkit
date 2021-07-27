@@ -93,7 +93,7 @@ class TestCondensedGraphRxn(unittest.TestCase):
 
   def testCannotParse(self):
     crs = 'C{!-}OC(=O)CC1=C(B-!}Br)C=C(F)C=C1'
-    sma = 'error'
+    sma = 'CRS SmilesParse error'
     self.assertEqual (sma, CRS.CRSreader(crs))
 
   def testCanParse(self):
