@@ -78,7 +78,7 @@ TEST_CASE("crs", "[unittest][reader]") {
   }
 
     std::cout << "rxn crs test\n" << res;
-    CHECK(res  == "");
+    CHECK(res  == "CC.CO>>CCCO");
   }
 }
 
