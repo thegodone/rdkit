@@ -372,18 +372,18 @@ const Bond *ROMol::getBondBetweenAtoms(unsigned int idx1,
 }
 
 ROMol::ADJ_ITER_PAIR ROMol::getAtomNeighbors(Atom const *at) const {
-  //PRECONDITION(at, "no atom");
-  //PRECONDITION(at->hasOwningMol(), "atom not associated with a molecule");
-  //PRECONDITION(&at->getOwningMol() == this,
-  //             "atom not associated with this molecule");
+  PRECONDITION(at, "no atom");
+  PRECONDITION(at->hasOwningMol(), "atom not associated with a molecule");
+  PRECONDITION(&at->getOwningMol() == this,
+               "atom not associated with this molecule");
   return boost::adjacent_vertices(at->getIdx(), d_graph);
 };
 
 ROMol::OBOND_ITER_PAIR ROMol::getAtomBonds(Atom const *at) const {
-  //PRECONDITION(at, "no atom");
-  //PRECONDITION(at->hasOwningMol(), "atom not associated with a molecule");
-  //PRECONDITION(&at->getOwningMol() == this,
-  //             "atom not associated with this molecule");
+  PRECONDITION(at, "no atom");
+  PRECONDITION(at->hasOwningMol(), "atom not associated with a molecule");
+  PRECONDITION(&at->getOwningMol() == this,
+               "atom not associated with this molecule");
   return boost::out_edges(at->getIdx(), d_graph);
 }
 

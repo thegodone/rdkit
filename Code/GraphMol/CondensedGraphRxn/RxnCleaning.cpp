@@ -501,7 +501,7 @@ namespace RDKit {
 
         std::size_t atomNbrTypeInv(const Atom *atm, std::vector<uint16_t> &nbridx) {
             ROMol::ADJ_ITER begin, end;
-            ROMol parent = atm->getOwningMol();
+            const ROMol &parent = atm->getOwningMol();
             boost::tie(begin, end) = parent.getAtomNeighbors(atm);
             unsigned int atmidx = atm->getIdx();
             std::vector<NbrType> nbrs;
