@@ -186,7 +186,7 @@ double Bond::getBondTypeAsDouble() const {
     case CRSNS:
       res = 1.0;
       break;
-     case CRSDS:
+    case CRSDS:
       res = 1.0;
       break;
     case CRSDT:
@@ -254,36 +254,33 @@ double Bond::getValenceContrib(const Atom *atom) const {
   } else {
     res = getBondTypeAsDouble();
   }
+  return res;
 }
-    
+
 unsigned int Bond::getNumAtomMaps() const {
-    PRECONDITION(dp_mol != nullptr, "no owning molecule for bond");
-    unsigned int db = dp_mol->getAtomWithIdx(d_beginAtomIdx)->getAtomMapNum() > 0;
-    unsigned int de = dp_mol->getAtomWithIdx(d_endAtomIdx)->getAtomMapNum() > 0;
-    return db+de;
+  PRECONDITION(dp_mol != nullptr, "no owning molecule for bond");
+  unsigned int db = dp_mol->getAtomWithIdx(d_beginAtomIdx)->getAtomMapNum() > 0;
+  unsigned int de = dp_mol->getAtomWithIdx(d_endAtomIdx)->getAtomMapNum() > 0;
+  return db + de;
 }
 
-
- 
-std::map<unsigned int, unsigned int > Bond::getMappedAtomsNum( bool &mappedonly) const{
-  
+std::map<unsigned int, unsigned int> Bond::getMappedAtomsNum(
+    bool &mappedonly) const {
   PRECONDITION(dp_mol != nullptr, "no owning molecule for bond");
-  std::map<unsigned int, unsigned int > res;
+  std::map<unsigned int, unsigned int> res;
   unsigned int db = dp_mol->getAtomWithIdx(d_beginAtomIdx)->getAtomMapNum();
   unsigned int de = dp_mol->getAtomWithIdx(d_endAtomIdx)->getAtomMapNum();
   if (mappedonly) {
-	if (db>0 ){
-		res[db]  = d_beginAtomIdx ;
-	}
-	if (de>0 ){
-                res[de]  = d_endAtomIdx ;
-        }
- } 
- else {
-   res[d_beginAtomIdx] = db ;
-   res[d_endAtomIdx] = de;
- }
-
+    if (db > 0) {
+      res[db] = d_beginAtomIdx;
+    }
+    if (de > 0) {
+      res[de] = d_endAtomIdx;
+    }
+  } else {
+    res[d_beginAtomIdx] = db;
+    res[d_endAtomIdx] = de;
+  }
 
   return res;
 }
@@ -349,9 +346,9 @@ void Bond::setStereoAtoms(unsigned int bgnIdx, unsigned int endIdx) {
   atoms.push_back(endIdx);
 };
 
-std::string Bond::getBondTypeWithAtoms(bool withmapnum) const{
- PRECONDITION(dp_mol != nullptr, "no owning molecule for bond");
-std::stringstream ss;
+std::string Bond::getBondTypeWithAtoms(bool withmapnum) const {
+  PRECONDITION(dp_mol != nullptr, "no owning molecule for bond");
+  std::stringstream ss;
   unsigned int anb = dp_mol->getAtomWithIdx(d_beginAtomIdx)->getAtomicNum();
   unsigned int ane = dp_mol->getAtomWithIdx(d_endAtomIdx)->getAtomicNum();
   unsigned int bondtypeval;
@@ -359,49 +356,50 @@ std::stringstream ss;
     case UNSPECIFIED:
     case IONIC:
     case ZERO:
-      bondtypeval= 0;
+      bondtypeval = 0;
       break;
     case SINGLE:
-      bondtypeval= 1;
+      bondtypeval = 1;
       break;
     case DOUBLE:
-      bondtypeval= 2;
+      bondtypeval = 2;
       break;
     case TRIPLE:
       bondtypeval = 3;
       break;
     case QUADRUPLE:
-      bondtypeval= 4;
+      bondtypeval = 4;
       break;
     case QUINTUPLE:
-      bondtypeval= 5;
+      bondtypeval = 5;
       break;
     case HEXTUPLE:
-      bondtypeval= 6;
+      bondtypeval = 6;
       break;
-   case AROMATIC:
-      bondtypeval= 100;
+    case AROMATIC:
+      bondtypeval = 100;
       break;
-   default:
+    default:
       bondtypeval = 0;
-   }
- ss << std::setfill('0') << std::setw(3) << bondtypeval; // bondtype number
- ss << std::setfill('0') << std::setw(3) << std::min(anb,ane); // lower atom number
- ss << std::setfill('0') << std::setw(3) << std::max(anb,ane); // higher atom number
+  }
+  ss << std::setfill('0') << std::setw(3) << bondtypeval;  // bondtype number
+  ss << std::setfill('0') << std::setw(3)
+     << std::min(anb, ane);  // lower atom number
+  ss << std::setfill('0') << std::setw(3)
+     << std::max(anb, ane);  // higher atom number
 
-if (withmapnum) {
- unsigned int de = dp_mol->getAtomWithIdx(d_endAtomIdx)->getAtomMapNum();
- unsigned int db = dp_mol->getAtomWithIdx(d_beginAtomIdx)->getAtomMapNum();
- ss << std::setfill('0') << std::setw(3) << std::min(db,de); // lowe atom map number
- ss << std::setfill('0') << std::setw(3) << std::max(db,de); // higher atom map number
+  if (withmapnum) {
+    unsigned int de = dp_mol->getAtomWithIdx(d_endAtomIdx)->getAtomMapNum();
+    unsigned int db = dp_mol->getAtomWithIdx(d_beginAtomIdx)->getAtomMapNum();
+    ss << std::setfill('0') << std::setw(3)
+       << std::min(db, de);  // lowe atom map number
+    ss << std::setfill('0') << std::setw(3)
+       << std::max(db, de);  // higher atom map number
+  }
+
+  return ss.str();
 }
 
- return ss.str();
-
-}
-
-    
-    
 uint8_t getTwiceBondType(const Bond &b) {
   switch (b.getBondType()) {
     case Bond::UNSPECIFIED:
@@ -454,7 +452,7 @@ uint8_t getTwiceBondType(const Bond &b) {
     case Bond::HYDROGEN:
       return 0;
       break;
-		  
+
     case Bond::CRSSD:
       return 4;
       break;
@@ -515,9 +513,9 @@ uint8_t getTwiceBondType(const Bond &b) {
     case Bond::CRSNA:
       return 3;
       break;
-		  
     default:
       UNDER_CONSTRUCTION("Bad bond type");
+      return 0;
   }
 }
 };  // namespace RDKit
