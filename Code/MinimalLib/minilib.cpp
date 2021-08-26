@@ -1,6 +1,6 @@
 //
 //
-//  Copyright (C) 2019 Greg Landrum
+//  Copyright (C) 2019-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -26,6 +26,7 @@
 #include <GraphMol/Descriptors/Property.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
+#include <GraphMol/MolInterchange/MolInterchange.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 #include <GraphMol/Abbreviations/Abbreviations.h>
@@ -73,6 +74,10 @@ std::string JSMol::get_molblock() const {
 std::string JSMol::get_v3Kmolblock() const {
   if (!d_mol) return "";
   return MolToV3KMolBlock(*d_mol);
+}
+std::string JSMol::get_json() const {
+  if (!d_mol) return "";
+  return MolInterchange::MolToJSONData(*d_mol);
 }
 
 std::string JSMol::get_substruct_match(const JSMol &q) const {
@@ -127,6 +132,15 @@ std::string JSMol::get_morgan_fp(unsigned int radius,
   if (!d_mol) return "";
   auto fp = MorganFingerprints::getFingerprintAsBitVect(*d_mol, radius, fplen);
   std::string res = BitVectToText(*fp);
+  delete fp;
+  return res;
+}
+
+std::string JSMol::get_morgan_fp_as_binary_text(unsigned int radius,
+                                                unsigned int fplen) const {
+  if (!d_mol) return "";
+  auto fp = MorganFingerprints::getFingerprintAsBitVect(*d_mol, radius, fplen);
+  std::string res = BitVectToBinaryText(*fp);
   delete fp;
   return res;
 }
@@ -286,8 +300,7 @@ std::string JSMol::condense_abbreviations_from_defs(
 }
 
 std::string JSMol::generate_aligned_coords(const JSMol &templateMol,
-                                           bool useCoordGen,
-                                           bool allowRGroups,
+                                           bool useCoordGen, bool allowRGroups,
                                            bool acceptFailure) {
   std::string res;
   if (!d_mol || !templateMol.d_mol || !templateMol.d_mol->getNumConformers())
