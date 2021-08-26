@@ -5631,7 +5631,10 @@ void test57IntroductionOfNewChiralCenters() {
     TEST_ASSERT(prods.size() == 1);
     TEST_ASSERT(prods[0].size() == 1);
     BOOST_LOG(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
-    TEST_ASSERT(MolToSmiles(*prods[0][0], true) == "C[C@H](F)CCC[C@@H](C)Cl");
+    TEST_ASSERT(MolToSmiles(*prods[0][0],
+                            true) ==
+                "C[C@@H](Cl)C[CH2:5][CH2:4][C@@H:1]([F:2])[CH3:"
+                "3]");  //"C[C@H](F)CCC[C@@H](C)Cl");
 
     delete rxn;
   }
@@ -5667,7 +5670,10 @@ void test57IntroductionOfNewChiralCenters() {
     TEST_ASSERT(prods.size() == 1);
     TEST_ASSERT(prods[0].size() == 1);
     BOOST_LOG(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
-    TEST_ASSERT(MolToSmiles(*prods[0][0], true) == "C[C@H](F)CCC[C@@H](C)Cl");
+    TEST_ASSERT(MolToSmiles(*prods[0][0],
+                            true) ==
+                "C[C@@H](Cl)C[CH2:5][CH2:4][C@@H:1]([F:2])[CH3:"
+                "3]");  //"C[C@H](F)CCC[C@@H](C)Cl");
 
     delete rxn;
   }
@@ -7608,9 +7614,10 @@ void testGithub4114() {
 
 void testGithub4183() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Github #4183: Reading a rxn file in v3000 format that contains agents"
+  BOOST_LOG(rdInfoLog) << "Testing Github #4183: Reading a rxn file in v3000 "
+                          "format that contains agents"
                        << std::endl;
-  
+
   std::string rdbase = getenv("RDBASE");
   std::string fName;
   fName = rdbase + "/Code/GraphMol/ChemReactions/testData/v3k_with_agents.rxn";
@@ -7720,7 +7727,7 @@ int main() {
   testGithub4162();
   testGithub4114();
   testGithub4183();
-  
+
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return (0);
