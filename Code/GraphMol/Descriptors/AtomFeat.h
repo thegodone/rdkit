@@ -36,7 +36,7 @@ RDKIT_DESCRIPTORS_EXPORT void AtomFeatVect(const ROMol &,
                                            bool addchiral = false, 
     					   bool add3dfeatures = false, 
     					   bool emb = false, 
-    					   bool ori = false );
+    					   bool ori = true );
 }  // namespace Descriptors
 }  // namespace RDKit
 #endif

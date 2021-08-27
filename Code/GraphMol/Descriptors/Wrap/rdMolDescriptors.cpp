@@ -1701,7 +1701,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                python::arg("addchiral") = false,
                python::arg("add3dfeatures") = false,
 	       python::arg("emb") = false,
-	       python::arg("ori") = false),
+	       python::arg("ori") = true),
               docString.c_str());
 
   python::scope().attr("_CalcNumSpiroAtoms_version") =

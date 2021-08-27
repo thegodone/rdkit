@@ -47,10 +47,9 @@ std::vector<Atom::ChiralType> RS{Atom::CHI_UNSPECIFIED,
                                  Atom::CHI_TETRAHEDRAL_CCW, 
 				 Atom::CHI_OTHER};
 std::vector<std::string> Symbols{"B", "C",  "N", "O", "S", "F", "Si",
-                                 "P", "Cl", "Br", "I", "H"}; // 12
+                                 "P", "Cl", "Br", "I", "H"}; // [12 most representative atoms!]
 std::vector<Atom::HybridizationType> HS{Atom::SP, Atom::SP2, Atom::SP3,
                                         Atom::SP3D, Atom::SP3D2};
-
 
 
 void AtomFeatVectorori(const RDKit::Atom* atom, const ROMol* mol,
@@ -87,7 +86,7 @@ void AtomFeatVectorori(const RDKit::Atom* atom, const ROMol* mol,
   feats[indx] = (inlist ? 0 : 1);
   ++indx;
 
-  // one hot degree
+  // one hot degree (why 0) [0...6]
   int d = atom->getDegree();
   for (int i = 0; i < 7; i++) {
     feats[indx] = d == i;
@@ -101,21 +100,21 @@ void AtomFeatVectorori(const RDKit::Atom* atom, const ROMol* mol,
     ++indx;
   }
 
-  // one hot  Implicit Valence
+  // one hot  Implicit Valence [0...6]
   int IV = atom->getImplicitValence();
   for (int i = 0; i < 7; ++i) {
     feats[indx] = IV == i;
     ++indx;
   }
 
-  // one hot  getFormalCharge
+  // one hot  getFormalCharge [-1,0,1]
   int fc = atom->getFormalCharge();
   for (int i = -1; i < 2; i++) {
     feats[indx] = fc == i;
     ++indx;
   }
 
-  // get small mid ring size
+  // get small mid ring size [3...8]
   int atomid = atom->getIdx();
   for (unsigned int i = 3; i < 9; i++) {
     feats[indx] = mol->getRingInfo()->isAtomInRingOfSize(atomid, i);
@@ -131,7 +130,7 @@ void AtomFeatVectorori(const RDKit::Atom* atom, const ROMol* mol,
   feats[indx] = (atom->getIsAromatic());
   ++indx;
 
-  // one hot  Total NumH
+  // one hot  Total NumH [0...4]
   unsigned int toth = atom->getTotalNumHs(false);
   for (unsigned int i = 0; i < 5; ++i) {
     feats[indx] = toth == i;
