@@ -840,7 +840,7 @@ std::string  getCRSMolecule(RWMol *molR,const std::string crs, bool canonical, b
 
 
 std::string CRSreader(RWMol *molR, const std::string crs, bool canonical, bool setAtomMap) {
-  std::cout << crs << " is valid: "<< IsValidCRSString( crs) << "\n";
+ // std::cout << crs << " is valid: "<< IsValidCRSString( crs) << "\n";
        
     if (IsValidCRSString( crs)){  
          return getCRSMolecule(molR, crs, canonical, setAtomMap);
