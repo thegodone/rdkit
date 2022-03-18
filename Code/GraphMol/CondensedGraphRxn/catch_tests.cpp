@@ -40,15 +40,15 @@ TEST_CASE("reactions", "[unittest][reactionclean]") {
 TEST_CASE("cgr", "[unittest][reactionclean]") {
   std::string sma = "[OH:1][CH:2]([CH2:7][O:8][CH3:9])[CH2:10][CH3:11].[C:3](=[O:4])([OH:5])[CH3:6]>>[O:1]([CH:2]([CH2:7][O:8][CH3:9])[CH2:10][CH3:11])[C:3](=[O:4])[CH3:6].[OH2:5]";
   SECTION("cgr basic") {
-    std::string cgr =  CondensedGraphRxn::CRSwriter(sma, false, 0, true, false, false, 0);
+    std::string cgr =  CondensedGraphRxn::CRSwriter(sma, false, 0, true, false, false, 0, true);
     CHECK(cgr == "CCC(COC)O{!-}C(C)(=O){-!}O");
   }
  SECTION("cgr signature radius 0") {
-    std::string cgr =  CondensedGraphRxn::CRSwriter(sma, false, 0, true, true, false, 0);
+    std::string cgr =  CondensedGraphRxn::CRSwriter(sma, false, 0, true, true, false, 0, true);
     CHECK(cgr == "O{!-}C{-!}O");
   }
  SECTION("cgr signature radius 1") {
-    std::string cgr =  CondensedGraphRxn::CRSwriter(sma, false, 0, true, true, false, 1);
+    std::string cgr =  CondensedGraphRxn::CRSwriter(sma, false, 0, true, true, false, 1, true);
     CHECK(cgr == "CO{!-}C(C)(=O){-!}O");
   }
 }
