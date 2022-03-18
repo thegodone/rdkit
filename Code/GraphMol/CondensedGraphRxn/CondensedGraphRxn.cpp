@@ -483,7 +483,7 @@ void addAtomRingCRSIdx(std::shared_ptr<RWMol> mol, bool* important) {
     
     
 std::shared_ptr<RWMol> getCRSsignature(ChemicalReaction &rxn, unsigned int radius = 1,
-                                       bool charges = false) {
+                                       bool charges = false, bool addRingInfo = true) {
 
     // Construct the molecule
     std::shared_ptr<RWMol>  mol = getCRSmol(rxn, charges);
@@ -527,9 +527,11 @@ std::shared_ptr<RWMol> getCRSsignature(ChemicalReaction &rxn, unsigned int radiu
     // This method is recursive.
     BFS(mol,atidx,important,radius);
     
-    // inject the ring change two!
-    addAtomRingCRSIdx(mol,important);
-
+    if (addRingInfo) {
+        // inject the ring change too!
+    
+        addAtomRingCRSIdx(mol,important);
+    }
     // remove the atoms not identified as 'important'
     for(int i = n-1; i >=0; i--){
         if (important[i] == 0) {
@@ -543,13 +545,13 @@ std::shared_ptr<RWMol> getCRSsignature(ChemicalReaction &rxn, unsigned int radiu
     return mol;
 }
 
-std::string getCRSwriter(ChemicalReaction &rxn, bool doRandom, unsigned int randomSeed, bool aromatize = true, bool signature = false, bool charges = false, int radius=1) {
+std::string getCRSwriter(ChemicalReaction &rxn, bool doRandom, unsigned int randomSeed, bool aromatize = true, bool signature = false, bool charges = false, int radius=1, bool addRingInfo = true) {
 
     // Define the correct molecule for the output.
     // Here we generate the full CRS molecule or the signature CRS molecule if asked for.
     // The signature CRS defines a smaller molecule around the center of reaction only
     // as specified by the radius.
-    std::shared_ptr<RWMol>  mol = signature ? getCRSsignature(rxn, radius, charges) : getCRSmol(rxn, charges);
+    std::shared_ptr<RWMol>  mol = signature ? getCRSsignature(rxn, radius, charges, addRingInfo) : getCRSmol(rxn, charges);
    
     //// do random need a seed
     if (randomSeed > 0) {
@@ -851,9 +853,9 @@ std::string CRSreader(RWMol *molR, const std::string crs, bool canonical, bool s
 }
 
 
-std::string CRSwriter(const std::string smart, bool doRandom,  unsigned int randomSeed, bool aromatize, bool signature, bool charges, int radius){
+std::string CRSwriter(const std::string smart, bool doRandom,  unsigned int randomSeed, bool aromatize, bool signature, bool charges, int radius, bool addRingInfo){
     std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction( smart));
-    return getCRSwriter( *rxn , doRandom , randomSeed, aromatize, signature, charges, radius );
+    return getCRSwriter( *rxn , doRandom , randomSeed, aromatize, signature, charges, radius, addRingInfo );
 }
 
 }
