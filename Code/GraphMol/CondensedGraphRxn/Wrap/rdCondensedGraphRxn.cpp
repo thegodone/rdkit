@@ -32,9 +32,9 @@ std::string pyObjectToString(python::object input) {
 }
 
 std::string CRSWriter(python::object ismart, bool doRandom , unsigned int randomSeed,
-		bool aromatize, bool signature, bool charges, int radius)  {
+		bool aromatize, bool signature, bool charges, int radius, bool addRingInfo)  {
   const std::string smart = pyObjectToString(ismart);
-  return CRSwriter( smart , doRandom, randomSeed, aromatize, signature, charges, radius);
+  return CRSwriter( smart , doRandom, randomSeed, aromatize, signature, charges, radius, addRingInfo);
 }
 
 std::string CRSReader(python::object icrs, bool canonical, bool setAtomMap ) {
@@ -95,8 +95,9 @@ BOOST_PYTHON_MODULE(rdCondensedGraphRxn) {
               (python::arg("smart"), python::arg("doRandom") = false,
 	       python::arg("randomSeed")= 0, python::arg("aromatize") = true,
 	       python::arg("signature") = false,
-           python::arg("charges") = false,
-               python::arg("radius") = 1),
+               python::arg("charges") = false,
+               python::arg("radius") = 1,
+	       python::arg("addRingInfo") = true),
               "convert a rxnsmarts into a crs");
 
    python::def("CRSreader", &CRSReader,
