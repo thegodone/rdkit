@@ -26,7 +26,8 @@ class ChemicalReaction;
 namespace CondensedGraphRxn {
 
 RDKIT_CONDENSEDGRAPHRXN_EXPORT std::string CRSwriter(const std::string smart, bool doRandom, unsigned int randomSeed
-						      ,	bool aromatize, bool signature, bool charges, int radius);
+						     , bool aromatize, bool signature, bool charges, int radius,
+						     bool addRingInfo);
 
 RDKIT_CONDENSEDGRAPHRXN_EXPORT std::string CRSreader(RWMol *molR, const std::string crs, bool canonical, bool setAtomMap);
 
