@@ -298,7 +298,9 @@ ChemicalReaction *ReactionFromSmarts(const char *smarts, python::dict replDict,
         python::extract<std::string>(replDict.values()[i]);
   }
   ChemicalReaction *res;
-  res = RxnSmartsToChemicalReaction(smarts, &replacements, useSmiles, sanitize);
+  bool allowCXSmiles = true;
+  res = RxnSmartsToChemicalReaction(smarts, &replacements, useSmiles,
+                                    allowCXSmiles, sanitize);
   return res;
 }
 

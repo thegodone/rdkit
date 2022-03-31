@@ -174,7 +174,7 @@ class Vector {
   }
 
   //! L2 norm
-  inline TYPE normL2() const { return sqrt(this->normL2Sq()); }
+  inline TYPE normL2() const { return std::sqrt(this->normL2Sq()); }
 
   //! L1 norm
   inline TYPE normL1() const {

@@ -303,6 +303,7 @@ std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx, bool doKekule,
       break;
     case Bond::CRSNA:
       res = "{!:}";
+      break;
     case Bond::QUADRUPLE:
       res = "$";
       break;
