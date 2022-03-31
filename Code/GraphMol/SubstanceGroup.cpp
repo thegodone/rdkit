@@ -269,7 +269,7 @@ bool SubstanceGroupChecks::isValidConnectType(const std::string &type) {
 
 bool SubstanceGroupChecks::isSubstanceGroupIdFree(const ROMol &mol,
                                                   unsigned int id) {
-  auto match_sgroup = [&](const SubstanceGroup &sg) {
+  auto match_sgroup = [id](const SubstanceGroup &sg) {
     unsigned int storedId;
     return sg.getPropIfPresent("ID", storedId) && id == storedId;
   };
@@ -316,7 +316,9 @@ bool removedParentInHierarchy(
     const boost::dynamic_bitset<> &toRemove,
     const std::map<unsigned int, unsigned int> &indexLookup) {
   PRECONDITION(idx < sgs.size(), "cannot find SubstanceGroup");
-  if (toRemove[idx]) return true;
+  if (toRemove[idx]) {
+    return true;
+  }
 
   unsigned int parent;
   if (sgs[idx].getPropIfPresent("PARENT", parent)) {

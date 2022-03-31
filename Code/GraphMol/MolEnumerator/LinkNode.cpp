@@ -33,6 +33,12 @@ void LinkNodeOp::initFromMol() {
   if (!dp_mol) {
     return;
   }
+  d_variations.clear();
+  d_pointRanges.clear();
+  d_isotopeMap.clear();
+  if (!dp_mol->hasProp(common_properties::molFileLinkNodes)) {
+    return;
+  }
 
   if (!dp_mol->hasProp(detail::idxPropName)) {
     detail::preserveOrigIndices(*dp_mol);
@@ -57,9 +63,6 @@ void LinkNodeOp::initFromMol() {
   std::string attachSmarts = "";
   std::vector<std::string> linkEnums;
   std::vector<std::string> molEnums;
-  d_variations.clear();
-  d_pointRanges.clear();
-  d_isotopeMap.clear();
   for (auto node : nodes) {
     if (node.nBonds != 2) {
       UNDER_CONSTRUCTION(
@@ -148,7 +151,7 @@ std::unique_ptr<ROMol> LinkNodeOp::operator()(
     ROMOL_SPTR reactant(new ROMol(*res));
     std::vector<MOL_SPTR_VECT> ps;
     {
-      RDLog::BlockLogs blocker;
+      RDLog::LogStateSetter blocker;
       ps = rxn->runReactant(reactant, 0);
     }
     ASSERT_INVARIANT(!ps.empty(), "no products from reaction");

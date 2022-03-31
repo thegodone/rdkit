@@ -161,12 +161,9 @@ bool isReactionTemplateMoleculeAgent(const ROMol &mol, double agentThreshold) {
   unsigned numMappedAtoms = MolOps::getNumAtomsWithDistinctProperty(
       mol, common_properties::molAtomMapNumber);
   unsigned numAtoms = mol.getNumHeavyAtoms();
-  if (numAtoms > 0 &&
-      static_cast<double>(numMappedAtoms) / static_cast<double>(numAtoms) >=
-          agentThreshold) {
-    return false;
-  }
-  return true;
+  return !(numAtoms > 0u && static_cast<double>(numMappedAtoms) /
+                                    static_cast<double>(numAtoms) >=
+                                agentThreshold);
 }
 
 namespace {
@@ -193,9 +190,7 @@ std::pair<unsigned int, std::vector<int>> getNbrOrder(const Atom *atom1,
   std::vector<int> order;
   order.reserve(atom1->getDegree());
   unsigned nUnmapped = 0;
-  for (const auto &nbri : boost::make_iterator_range(
-           atom1->getOwningMol().getAtomNeighbors(atom1))) {
-    const auto &nbrAtom = atom1->getOwningMol()[nbri];
+  for (const auto nbrAtom : atom1->getOwningMol().atomNeighbors(atom1)) {
     if (nbrAtom->getAtomMapNum() > 0) {
       order.push_back(nbrAtom->getAtomMapNum());
     } else {

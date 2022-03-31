@@ -9,8 +9,8 @@
 //  of the RDKit source tree.
 
 #include "TautomerQuery.h"
-#include <boost/smart_ptr.hpp>
 #include <functional>
+#include <set>
 #include <utility>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolStandardize/Tautomer.h>
@@ -20,7 +20,6 @@
 #include <GraphMol/QueryBond.h>
 #include <GraphMol/Substruct/SubstructUtils.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
-
 // #define VERBOSE
 
 #ifdef VERBOSE
@@ -47,25 +46,25 @@ void removeTautomerDuplicates(std::vector<MatchVectType> &matches,
   //  Also, OELib returns the same results
   //
 
-  std::vector<boost::dynamic_bitset<>> seen;
+  std::set<boost::dynamic_bitset<>> seen;
   std::vector<MatchVectType> res;
-  for (size_t i = 0; i < matches.size(); i++) {
-    auto match = matches[i];
+  res.reserve(matches.size());
+  for (auto &&match : matches) {
     boost::dynamic_bitset<> val(nAtoms);
     for (const auto &ci : match) {
       val.set(ci.second);
     }
-    if (std::find(seen.begin(), seen.end(), val) == seen.end()) {
-      // it's something new
-      res.push_back(match);
-      seen.push_back(val);
+    auto pos = seen.lower_bound(val);
+    if (pos == seen.end() || *pos != val) {
+      res.push_back(std::move(match));
+      seen.insert(pos, std::move(val));
     } else if (matchingTautomers) {
-      int position = res.size();
+      auto position = res.size();
       matchingTautomers->erase(matchingTautomers->begin() + position);
     }
   }
-
-  matches = res;
+  res.shrink_to_fit();
+  matches = std::move(res);
 }
 
 }  // namespace
@@ -103,7 +102,9 @@ class TautomerQueryMatcher {
 #ifdef VERBOSE
           std::cout << "Got Match " << std::endl;
 #endif
-          if (d_matchingTautomers) d_matchingTautomers->push_back(tautomer);
+          if (d_matchingTautomers) {
+            d_matchingTautomers->push_back(tautomer);
+          }
         }
         return matchingTautomer;
       }
@@ -123,10 +124,6 @@ TautomerQuery::TautomerQuery(std::vector<ROMOL_SPTR> tautomers,
 
 TautomerQuery *TautomerQuery::fromMol(
     const ROMol &query, const std::string &tautomerTransformFile) {
-  auto tautomerFile = !tautomerTransformFile.empty()
-                          ? tautomerTransformFile
-                          : std::string(getenv("RDBASE")) +
-                                "/Data/MolStandardize/tautomerTransforms.in";
   auto tautomerParams = std::unique_ptr<MolStandardize::TautomerCatalogParams>(
       new MolStandardize::TautomerCatalogParams(tautomerTransformFile));
   MolStandardize::TautomerEnumerator tautomerEnumerator(

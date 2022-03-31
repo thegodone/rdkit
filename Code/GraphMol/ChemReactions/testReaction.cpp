@@ -7631,6 +7631,31 @@ void testGithub4183() {
   delete rxn;
 }
 
+void testGithub4410() {
+  BOOST_LOG(rdInfoLog) << "--------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Github #4410: wrong double bond stereochemistry"
+                       << std::endl;
+
+  const std::string reaction(
+      R"([N:4][C:6](/[Cl:9])=[C:7](\[Cl:10])[C:11]>>[Br:4][CX3:6](\[Cl:9])=[CX3:7](/[Cl:10])[C:11])");
+  std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(reaction));
+  TEST_ASSERT(rxn);
+  rxn->initReactantMatchers();
+
+  std::vector<ROMOL_SPTR> mol{R"(C\C(Cl)=C(\N)Cl)"_smiles};
+  auto prods = rxn->runReactants(mol);
+  TEST_ASSERT(prods.size() == 1);
+  TEST_ASSERT(prods[0].size() == 1);
+
+  auto dblBnd = prods[0][0]->getBondBetweenAtoms(1, 3);
+
+  TEST_ASSERT(dblBnd->getBondType() == Bond::DOUBLE);
+  TEST_ASSERT(dblBnd->getStereoAtoms() == std::vector<int>({2, 4}));
+  TEST_ASSERT(dblBnd->getStereo() == Bond::STEREOTRANS);
+
+  TEST_ASSERT(MolToSmiles(*prods[0][0]) == R"(C/C(Cl)=C(\Cl)Br)");
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -7727,6 +7752,7 @@ int main() {
   testGithub4162();
   testGithub4114();
   testGithub4183();
+  testGithub4410();
 
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";

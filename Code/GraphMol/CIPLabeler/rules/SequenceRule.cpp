@@ -49,11 +49,6 @@ const Sort *SequenceRule::getSorter() const {
 }
 
 int SequenceRule::recursiveCompare(const Edge *a, const Edge *b) const {
-  // pseudo atoms (atomic no. 0) match all
-  if (a->getEnd()->getAtomicNum() == 0 || b->getEnd()->getAtomicNum() == 0) {
-    return 0;
-  }
-
   int cmp = compare(a, b);
   if (cmp != 0) {
     return cmp;
@@ -165,5 +160,5 @@ bool SequenceRule::areUpEdges(Node *aNode, Node *bNode, Edge *aEdge,
   return false;
 }
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

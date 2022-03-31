@@ -104,6 +104,10 @@ Submodules
    rdkit.Chem.rdSLNParse
    rdkit.Chem.rdAbbreviations
    rdkit.Chem.rdDeprotect
+   rdkit.Chem.rdMolEnumerator
+   rdkit.Chem.rdCIPLabeler
+   rdkit.Chem.rdTautomerQuery
+   rdkit.Chem.rdEHTTools
 
 Module contents
 ---------------

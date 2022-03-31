@@ -95,7 +95,7 @@ if(RDK_SWIG_STATIC AND RDK_BUILD_SWIG_WRAPPERS)
   endif(NOT MSVC AND NOT RDK_INSTALL_STATIC_LIBS)
 endif()
 
-if(NOT (MSVC AND (NOT RDK_INSTALL_DLLS_MSVC)))
+if((NOT (MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))) AND NOT (WIN32 AND RDK_INSTALL_STATIC_LIBS))
   add_definitions(-DRDKIT_DYN_LINK)
 endif()
 
@@ -126,8 +126,8 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 
 #-------
 # Config variables:
-set(RDKit_Year "2021")
-set(RDKit_Month "09")
+set(RDKit_Year "2022")
+set(RDKit_Month "03")
 set(RDKit_Revision "1")
 set(RDKit_RevisionModifier "pre")
 set(RDKit_ABI "1")
@@ -348,7 +348,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     # We strip off the first word though (which will be the compiler name).
     execute_process(
         COMMAND
-        ${PYTHON_EXECUTABLE} -c "from distutils import sysconfig; print(sysconfig.get_config_var('LDSHARED').split(' ', 1)[1])"
+        ${PYTHON_EXECUTABLE} -c "from distutils import sysconfig; print(sysconfig.get_config_var('LDSHARED').lstrip().split(' ', 1)[1])"
         OUTPUT_VARIABLE PYTHON_LDSHARED
         OUTPUT_STRIP_TRAILING_WHITESPACE
      )
@@ -380,20 +380,18 @@ endif(RDK_BUILD_PYTHON_WRAPPERS)
 string(REGEX MATCH "clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER}")
 
 find_package(Eigen3)
-if(EIGEN3_FOUND)
+if(RDK_BUILD_DESCRIPTORS3D)
+  if(NOT EIGEN3_FOUND)
+    add_subdirectory(External/Eigen)
+  endif()
+  target_compile_definitions(rdkit_base INTERFACE "-DRDK_BUILD_DESCRIPTORS3D")
+endif()
+
+if(TARGET Eigen3::Eigen)
   target_compile_definitions(rdkit_base INTERFACE "-DRDK_HAS_EIGEN3")
   target_link_libraries(rdkit_base INTERFACE Eigen3::Eigen)
   set(RDK_HAS_EIGEN ON)
-endif(EIGEN3_FOUND)
-
-if(RDK_BUILD_DESCRIPTORS3D)
-  if(EIGEN3_FOUND)
-    target_compile_definitions(rdkit_base INTERFACE "-DRDK_BUILD_DESCRIPTORS3D")
-  else(EIGEN3_FOUND)
-    message("Eigen3 not found, some Mol descriptors will not be built.")
-    set(RDK_BUILD_DESCRIPTORS3D OFF)
-  endif(EIGEN3_FOUND)
-endif(RDK_BUILD_DESCRIPTORS3D)
+endif()
 
 if(RDK_BUILD_THREADSAFE_SSS)
   find_package (Threads)
@@ -606,6 +604,10 @@ set(CPACK_COMPONENT_DOCS_GROUP "Runtime")
 set(CPACK_COMPONENT_DEV_GROUP "Development")
 set(CPACK_COMPONENT_PYTHON_GROUP "Python")
 set(CPACK_COMPONENT_EXTRAS_GROUP "Extras")
+if(RDK_BUILD_PGSQL)
+  SET(CPACK_COMPONENTS_ALL ${CPACK_COMPONENTS_ALL} pgsql)
+  set(CPACK_COMPONENT_PGSQL_GROUP "PgSQL")
+endif()
 
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "RDKit")
 SET(CPACK_PACKAGE_VENDOR "rdkit.org")

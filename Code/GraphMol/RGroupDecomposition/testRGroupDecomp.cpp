@@ -98,8 +98,8 @@ void DUMP_RGROUP(RGroupRows::const_iterator &it, std::string &result) {
 
   for (const auto &rgroups : *it) {
     // rlabel:smiles
-    str << rgroups.first << "\t" << MolToSmiles(*rgroups.second.get(), true)
-        << "\t";
+    str << rgroups.first << ":" << MolToSmiles(*rgroups.second.get(), true)
+        << " ";
   }
   std::cerr << str.str() << std::endl;
   result = str.str();
@@ -198,7 +198,9 @@ void testGaBatch() {
 
   decomp.process();
   RGroupRows rows = decomp.getRGroupsAsRows();
-  bool isParallelGaEnabled = (sstrm.str().find("This RDKit build does not enable GA parallel runs") == std::string::npos);
+  bool isParallelGaEnabled =
+      (sstrm.str().find("This RDKit build does not enable GA parallel runs") ==
+       std::string::npos);
 #ifdef RDK_TEST_MULTITHREADED
   TEST_ASSERT(isParallelGaEnabled);
 #else
@@ -1280,11 +1282,11 @@ Cn1cnc2cc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4
   {
     std::cerr << "iterative" << std::endl;
     RGroupDecompositionParameters ps = RGroupDecompositionParameters();
-    ps.timeout = 1.0;
+    ps.timeout = 0.1;
     RGroupDecomposition decomp(*core, ps);
     bool ok = false;
+    int ndone = -1;
     try {
-      size_t ndone = 0;
       for (auto m : ms) {
         decomp.add(*m);
         ++ndone;
@@ -1293,6 +1295,7 @@ Cn1cnc2cc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4
       ok = true;
     }
     TEST_ASSERT(ok);
+    TEST_ASSERT(ndone >= 0);
   }
   {
     RGroupDecompositionParameters ps = RGroupDecompositionParameters();
@@ -1313,9 +1316,9 @@ Cn1cnc2cc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4
   {
     RGroupDecompositionParameters ps = RGroupDecompositionParameters();
 #ifdef NDEBUG
-    ps.timeout = 1.0;
-#else
     ps.timeout = 5.0;
+#else
+    ps.timeout = 25.0;
 #endif
     ps.matchingStrategy = RDKit::NoSymmetrization;
     std::cerr << "bulk, no symmetry" << std::endl;
@@ -1849,7 +1852,9 @@ void testMultipleCoreRelabellingIssues() {
       auto smiles = line.substr(pos + 1);
       std::shared_ptr<ROMol> mol(SmilesToMol(smiles));
       molecules.push_back(mol);
-      if (molecules.size() == 30) break;
+      if (molecules.size() == 30) {
+        break;
+      }
     }
   }
 
@@ -2455,6 +2460,308 @@ C[*:2]
   }
 }
 
+void testCoreWithAlsRecords() {
+  auto core = R"CTAB(
+  Mrv2008 11112113312D
+
+  6  6  6  0  0  0            999 V2000
+  -13.7277    2.6107    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  -14.4421    2.1982    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  -14.4421    1.3732    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  -13.7277    0.9607    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  -13.0132    1.3732    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  -13.0132    2.1982    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  2  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  2  0  0  0  0
+  5  6  1  0  0  0  0
+  1  6  2  0  0  0  0
+  1 F    2   6   7
+  2 F    2   6   7
+  3 F    2   6   7
+  4 F    2   6   7
+  5 F    2   6   7
+  6 F    2   6   7
+M  ALS   1  2 F C   N   
+M  ALS   2  2 F C   N   
+M  ALS   3  2 F C   N   
+M  ALS   4  2 F C   N   
+M  ALS   5  2 F C   N   
+M  ALS   6  2 F C   N   
+M  END
+)CTAB"_ctab;
+  TEST_ASSERT(core);
+
+  auto structure = "ClC1=CN=C(C=C1)N1CCCC1"_smiles;
+  RGroupDecomposition decomp(*core);
+  TEST_ASSERT(decomp.add(*structure) == 0);
+  decomp.process();
+  auto rows = decomp.getRGroupsAsRows();
+  auto core_out = rows[0]["Core"];
+  auto core_mol_block = MolToMolBlock(*rows[0]["Core"]);
+  auto pos = core_mol_block.find("ALS");
+  TEST_ASSERT(pos == std::string::npos);
+  std::string expected(
+      "Core:c1cc([*:2])ncc1[*:1] R1:Cl[*:1] R2:C1CCN([*:2])C1");
+  RGroupRows::const_iterator it = rows.begin();
+  CHECK_RGROUP(it, expected);
+}
+
+void testAlignOutputCoreToMolecule() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Test that output core is aligned to input molecule"
+                       << std::endl;
+  struct Helper {
+    static RDGeom::Point3D findPointForAtomNumber(const ROMol &mol,
+                                                  int atomNumber) {
+      for (const auto atom : mol.atoms()) {
+        if (atom->getAtomicNum() == atomNumber) {
+          return mol.getConformer().getAtomPos(atom->getIdx());
+        }
+      }
+      throw std::runtime_error("Can't find atom in molecule");
+    }
+  };
+
+  auto core = R"CTAB(
+  Mrv2008 11162112382D
+
+ 15 16  0  0  0  0            999 V2000
+  -13.4365    2.6419    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -13.0116    1.9347    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.1867    1.9491    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -11.7867    2.6706    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.2116    3.3778    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -13.0365    3.3634    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -10.9618    2.6850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -10.5619    3.4066    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.7370    3.4210    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -10.5369    1.9779    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.3121    4.1282    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.3370    2.6994    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -8.5121    2.6850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -8.0873    3.3922    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -8.4872    4.1138    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  3  4  2  0  0  0  0
+  5  6  2  0  0  0  0
+  4  5  1  0  0  0  0
+  2  3  1  0  0  0  0
+  1  6  1  0  0  0  0
+  4  7  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  7 10  2  0  0  0  0
+ 12 13  1  0  0  0  0
+ 13 14  2  0  0  0  0
+ 14 15  1  0  0  0  0
+ 11 15  2  0  0  0  0
+ 11  9  1  0  0  0  0
+  9 12  2  0  0  0  0
+M  END
+      )CTAB"_ctab;
+  auto mol = R"CTAB(
+  -OEChem-03051316302D
+  
+ 19 21  0     0  0  0  0  0  0999 V2000
+   -1.7593    5.0073    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6211    4.4999    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6183    3.4999    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7450    3.0022    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8744    3.5045    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8860    4.5096    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7423    2.0022    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6070    1.4999    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8750    1.5045    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8723    0.5045    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0013   -1.0057    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8697   -1.5068    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7364   -1.0079    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7377   -0.0022    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6056    0.5056    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4735   -0.0022    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4735   -1.0079    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6056   -1.5057    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  6  2  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  2  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  2  0  0  0  0
+  5  6  1  0  0  0  0
+  4  7  1  0  0  0  0
+  7  8  2  0  0  0  0
+  7  9  1  0  0  0  0
+  9 10  1  0  0  0  0
+ 10 15  2  0  0  0  0
+ 10 11  1  0  0  0  0
+ 11 12  2  0  0  0  0
+ 12 13  1  0  0  0  0
+ 13 14  2  0  0  0  0
+ 14 19  1  0  0  0  0
+ 14 15  1  0  0  0  0
+ 15 16  1  0  0  0  0
+ 16 17  2  0  0  0  0
+ 17 18  1  0  0  0  0
+ 18 19  2  0  0  0  0
+M  END
+)CTAB"_ctab;
+
+  RGroupRows rows;
+  RGroupDecomposition decomp(*core);
+  TEST_ASSERT(decomp.add(*mol) == 0);
+  decomp.process();
+  rows = decomp.getRGroupsAsRows();
+  TEST_ASSERT(rows.size() == 1)
+  auto coreOut = rows[0]["Core"];
+
+  for (int atomNumber = 7; atomNumber <= 8; atomNumber++) {
+    const auto &coreInPoint = Helper::findPointForAtomNumber(*core, atomNumber);
+    const auto &molInPoint = Helper::findPointForAtomNumber(*mol, atomNumber);
+    const auto &coreOutPoint =
+        Helper::findPointForAtomNumber(*coreOut, atomNumber);
+    TEST_ASSERT(fabs(coreInPoint.x - molInPoint.x) > 0.25);
+    TEST_ASSERT(fabs(coreOutPoint.x - molInPoint.x) < 1e-10);
+    TEST_ASSERT(fabs(coreInPoint.y - molInPoint.y) > 0.25);
+    TEST_ASSERT(fabs(coreOutPoint.y - molInPoint.y) < 1e-10);
+  }
+}
+
+void testWildcardInInput() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog)
+      << "Test that dummy atom in input molecule is handled correctly"
+      << std::endl;
+
+  auto core = R"CTAB(
+Mrv2008 12012115162D          
+
+  6  6  6  0  0  0            999 V2000
+  -21.0938  -16.9652    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  -21.8082  -17.3777    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  -21.8082  -18.2027    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  -21.0938  -18.6152    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  -20.3793  -18.2027    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  -20.3793  -17.3777    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  6  0  0  0  0
+  2  3  7  0  0  0  0
+  3  4  6  0  0  0  0
+  4  5  7  0  0  0  0
+  5  6  6  0  0  0  0
+  1  6  7  0  0  0  0
+  1 F    2   6   7
+  2 F    2   6   7
+  3 F    2   6   7
+  4 F    2   6   7
+  5 F    2   6   7
+  6 F    2   6   7
+M  ALS   1  2 F C   N   
+M  ALS   2  2 F C   N   
+M  ALS   3  2 F C   N   
+M  ALS   4  2 F C   N   
+M  ALS   5  2 F C   N   
+M  ALS   6  2 F C   N   
+M  END
+)CTAB"_ctab;
+
+  auto structure = "CC1CCN(C1)C1=CC(O*)=C(Cl)C=C1C#N"_smiles;
+  RGroupDecomposition decomp(*core);
+  TEST_ASSERT(decomp.add(*structure) == 0);
+  decomp.process();
+  auto rows = decomp.getRGroupsAsRows();
+  TEST_ASSERT(rows.size() == 1)
+  RGroupRows::const_iterator it = rows.begin();
+  std::string expected(
+      "Core:c1c([*:2])c([*:1])cc([*:4])c1[*:3] R1:Cl[*:1] R2:*O[*:2] "
+      "R3:CC1CCN([*:3])C1 R4:N#C[*:4]");
+  CHECK_RGROUP(it, expected);
+
+  structure = "CC1CCN(C1)C1=CC([*:2])=C(Cl)C=C1C#N"_smiles;
+  RGroupDecomposition decomp2(*core);
+  TEST_ASSERT(decomp2.add(*structure) == 0);
+  decomp2.process();
+  rows = decomp2.getRGroupsAsRows();
+  TEST_ASSERT(rows.size() == 1)
+  it = rows.begin();
+  expected =
+      "Core:c1c([*:2])c([*:1])cc([*:4])c1[*:3] R1:Cl[*:1] R2:*[*:2] "
+      "R3:CC1CCN([*:3])C1 R4:N#C[*:4]";
+  CHECK_RGROUP(it, expected);
+}
+
+void testDoNotChooseUnrelatedCores() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Test that later cores with more R-groups\n"
+                       << "are only chosen if superstructures of earlier\n"
+                       << "cores" << std::endl;
+  {
+    // 1st test, two unrelated cores:
+    // 1) 5 terms, 1 R-group
+    // 2) 6 terms, 3 R-groups
+    // dataset molecule can fit core 1 adding 1 non-user defined R label,
+    // and core 2 with no addition of R labels
+    ROMOL_SPTR core5Terms1RGroup = "[*:1]C1COCN1"_smiles;
+    ROMOL_SPTR core6Terms3RGroups = "[*:1]c1ccc([*:2])c([*:3])c1"_smiles;
+    std::vector<ROMOL_SPTR> cores{core5Terms1RGroup, core6Terms3RGroups};
+    auto m = "Cc1cc(ccc1F)C1NC(CO1)c1cccs1"_smiles;
+    // repeat the test twice, with cores in opposite orders
+    // in both cases core ordering should be honored and the first
+    // core (either 5-term of 6-term) should be chosen, even when adding
+    // R labels is required, as the 2 cores are not structurally related
+    for (unsigned int i = 0; i < 2; ++i) {
+      std::vector<ROMOL_SPTR> orderedCores{cores[i], cores[1 - i]};
+      RGroupDecomposition decomp(orderedCores);
+      TEST_ASSERT(decomp.add(*m) == 0);
+      TEST_ASSERT(decomp.process());
+      auto cols = decomp.getRGroupsAsColumns();
+      const auto &core = cols["Core"];
+      TEST_ASSERT(core.size() == 1);
+      TEST_ASSERT(
+          core.front()->getRingInfo()->atomRings().front().size() ==
+          orderedCores.front()->getRingInfo()->atomRings().front().size());
+    }
+  }
+  {
+    // 2nd test: two related cores:
+    // 1) 5 terms, 2 R-groups
+    // 2) 5 terms, 3 R-groups
+    // dataset molecule 1 has 1 substituent, fits both cores
+    // dataset molecule 2 has 2 substituents, fits both cores
+    // dataset molecule 3 has 3 substituents, fits core 2 with no need to add
+    // R labels
+    ROMOL_SPTR core5Terms2RGroups = "[*:1]C1COC([*:2])N1"_smiles;
+    ROMOL_SPTR core5Terms3RGroups = "[*:1]C1C([*:2])OC([*:3])N1"_smiles;
+    std::vector<ROMOL_SPTR> cores{core5Terms2RGroups, core5Terms3RGroups};
+    std::vector<ROMOL_SPTR> mols{"CC1NCCO1"_smiles, "CC1NC(F)CO1"_smiles,
+                                 "CC1NC(F)C(Cl)O1"_smiles};
+    // repeat the test twice, with cores in opposite orders
+    // Molecules (1) and (2) should always pick the first core
+    // in the order provided, though both cores could fit
+    // Molecule (3) should always pick the more specific core 2
+    for (unsigned int i = 0; i < 2; ++i) {
+      std::vector<ROMOL_SPTR> orderedCores{cores[i], cores[1 - i]};
+      RGroupDecomposition decomp(orderedCores);
+      int j = 0;
+      for (const auto &m : mols) {
+        TEST_ASSERT(decomp.add(*m) == j++);
+      }
+      TEST_ASSERT(decomp.process());
+      auto cols = decomp.getRGroupsAsColumns();
+      const auto &core = cols["Core"];
+      TEST_ASSERT(core.size() == 3);
+      TEST_ASSERT(MolToSmiles(*core.at(0)) ==
+                  MolToSmiles(*orderedCores.front()));
+      TEST_ASSERT(MolToSmiles(*core.at(1)) ==
+                  MolToSmiles(*orderedCores.front()));
+      TEST_ASSERT(MolToSmiles(*core.at(2)) == MolToSmiles(*core5Terms3RGroups));
+    }
+  }
+}
+
 int main() {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.debug");
@@ -2502,6 +2809,10 @@ int main() {
   testNoTempLabels();
   testNoSideChains();
   testDoNotAddUnnecessaryRLabels();
+  testCoreWithAlsRecords();
+  testAlignOutputCoreToMolecule();
+  testWildcardInInput();
+  testDoNotChooseUnrelatedCores();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;

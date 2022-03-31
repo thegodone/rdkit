@@ -126,9 +126,8 @@ unsigned int RWMol::addAtom(bool updateLabel) {
   return rdcast<unsigned int>(which);
 }
 
-void RWMol::replaceAtom(unsigned int idx, Atom *atom_pin, bool updateLabel,
+void RWMol::replaceAtom(unsigned int idx, Atom *atom_pin, bool,
                         bool preserveProps) {
-  RDUNUSED_PARAM(updateLabel);
   PRECONDITION(atom_pin, "bad atom passed to replaceAtom");
   URANGE_CHECK(idx, getNumAtoms());
   Atom *atom_p = atom_pin->copy();
@@ -139,7 +138,6 @@ void RWMol::replaceAtom(unsigned int idx, Atom *atom_pin, bool updateLabel,
     const bool replaceExistingData = false;
     atom_p->updateProps(*d_graph[vd], replaceExistingData);
   }
-  removeSubstanceGroupsReferencingAtom(*this, idx);
 
   const auto orig_p = d_graph[vd];
   delete orig_p;
@@ -151,6 +149,16 @@ void RWMol::replaceAtom(unsigned int idx, Atom *atom_pin, bool updateLabel,
       if (elem == orig_p) {
         elem = atom_p;
       }
+    }
+  }
+
+  // handle stereo group
+  for (auto &group : d_stereo_groups) {
+    auto atoms = group.getAtoms();
+    auto aiter = std::find(atoms.begin(), atoms.end(), orig_p);
+    if (aiter != atoms.end()) {
+      *aiter = atom_p;
+      group = StereoGroup(group.getGroupType(), std::move(atoms));
     }
   }
 };

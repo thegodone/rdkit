@@ -39,7 +39,9 @@ void addFingerprintToRGroupData(RGroupData *rgroupData) {
       // TODO- Handle multiple attachments differently?
       if (atom->getAtomicNum() == 0) {
         atom->setAtomicNum(5);
-        if (atom->getIsotope() > 0) atom->setIsotope(0);
+        if (atom->getIsotope() > 0) {
+          atom->setIsotope(0);
+        }
       }
     }
     try {
@@ -73,10 +75,10 @@ void FingerprintVarianceScoreData::modifyVarianceData(
     const std::vector<std::vector<RGroupMatch>> &matches,
     const std::set<int> &labels, bool add) {
   // For each label (group)
+  const auto &match = matches.at(matchNumber).at(permutationNumber);
   for (int l : labels) {
-    auto match = matches[matchNumber][permutationNumber].rgroups;
-    auto rg = match.find(l);
-    if (rg != match.end()) {
+    auto rg = match.rgroups.find(l);
+    if (rg != match.rgroups.end()) {
       auto rgroupData = rg->second;
       std::shared_ptr<VarianceDataForLabel> variableDataForLabel;
       auto df = labelsToVarianceData.find(l);
@@ -93,8 +95,7 @@ void FingerprintVarianceScoreData::modifyVarianceData(
       }
     }
   }
-  auto rgroupsMissing =
-      matches[matchNumber][permutationNumber].numberMissingUserRGroups;
+  auto rgroupsMissing = match.numberMissingUserRGroups;
   if (add) {
     numberOfMissingUserRGroups += rgroupsMissing;
     numberOfMolecules++;
@@ -136,7 +137,7 @@ double fingerprintVarianceScore(
   std::cerr << "Fingerprint Scoring permutation "
             << " num matches: " << matches.size() << std::endl;
 #endif
-
+  CHECK_INVARIANT(permutation.size() <= matches.size(), "");
   FingerprintVarianceScoreData fingerprintVarianceScoreData2;
   if (!fingerprintVarianceScoreData) {
     fingerprintVarianceScoreData = &fingerprintVarianceScoreData2;
@@ -160,8 +161,9 @@ double fingerprintVarianceScore(
     }
 
     for (size_t m = 0; m < permutation.size(); ++m) {  // for each molecule
-      auto rg = matches[m][permutation[m]].rgroups.find(l);
-      if (rg != matches[m][permutation[m]].rgroups.end()) {
+      const auto &match = matches[m].at(permutation[m]);
+      auto rg = match.rgroups.find(l);
+      if (rg != match.rgroups.end()) {
         auto rgroupData = rg->second;
         variableDataForLabel->addRgroupData(rgroupData.get());
       }
@@ -170,7 +172,8 @@ double fingerprintVarianceScore(
 
   size_t numberMissingRGroups = 0;
   for (size_t m = 0; m < permutation.size(); ++m) {  // for each molecule
-    numberMissingRGroups += matches[m][permutation[m]].numberMissingUserRGroups;
+    numberMissingRGroups +=
+        matches[m].at(permutation[m]).numberMissingUserRGroups;
   }
   fingerprintVarianceScoreData->numberOfMissingUserRGroups +=
       numberMissingRGroups;
@@ -190,11 +193,11 @@ double FingerprintVarianceScoreData::fingerprintVarianceGroupScore() {
       [](double sum,
          std::pair<int, std::shared_ptr<VarianceDataForLabel>> pair) {
         auto variance = pair.second->variance();
-        // perhaps here the variance should be weighted by occupancy- so that
-        // sparsely populated rgroups are penalized
+    // perhaps here the variance should be weighted by occupancy- so that
+    // sparsely populated rgroups are penalized
 
-        // e.g variance *= ((double) numberOfMolecules) /
-        // ((double)pair.second->numberFingerprints);
+    // e.g variance *= ((double) numberOfMolecules) /
+    // ((double)pair.second->numberFingerprints);
 #ifdef DEBUG
         std::cerr << variance << ',';
 #endif
@@ -265,7 +268,9 @@ void VarianceDataForLabel::removeRgroupData(RGroupData *rgroupData) {
 // calculate the mean variance for a bit counts array
 double VarianceDataForLabel::variance() const {
   auto lambda = [this](double sum, int bitCount) {
-    if (bitCount == 0) return sum;
+    if (bitCount == 0) {
+      return sum;
+    }
     // variance calculation because fingerprint is binary:
     // sum  == squared sum == bit count
     // ss = sqrSum - (sum * sum) / cnt;

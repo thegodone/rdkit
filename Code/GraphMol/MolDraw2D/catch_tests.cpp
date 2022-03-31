@@ -46,112 +46,173 @@ namespace {
 static const bool DELETE_WITH_GOOD_HASH = true;
 // The expected hash code for a file may be included in these maps, or
 // provided in the call to check_file_hash().
+// These values are for a build with FreeType, so expect them all to be
+// wrong when building without.
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
-    {"testAtomTags_1.svg", 2816838644U},
-    {"testAtomTags_2.svg", 479715142U},
-    {"testAtomTags_3.svg", 3742581890U},
-    {"contourMol_1.svg", 643828415U},
-    {"contourMol_2.svg", 2117685063U},
-    {"contourMol_3.svg", 2802682249U},
-    {"contourMol_4.svg", 2032744517U},
-    {"testDativeBonds_1.svg", 1288509407U},
-    {"testDativeBonds_2.svg", 2473279167U},
-    {"testDativeBonds_3.svg", 3551403428U},
-    {"testDativeBonds_2a.svg", 338608338U},
-    {"testDativeBonds_2b.svg", 1192512328U},
-    {"testDativeBonds_2c.svg", 1065957903U},
-    {"testDativeBonds_2d.svg", 1550552233U},
-    {"testZeroOrderBonds_1.svg", 3653276688U},
-    {"testFoundations_1.svg", 2316881138U},
-    {"testFoundations_2.svg", 3090026078U},
-    {"testTest_1.svg", 3090026078U},
-    {"testKekulizationProblems_1.svg", 3864409625U},
-    {"testAtomBondIndices_1.svg", 3577013093U},
-    {"testAtomBondIndices_2.svg", 3088602859U},
-    {"testAtomBondIndices_3.svg", 3676717031U},
-    {"testAtomBondIndices_4.svg", 2887221748U},
-    {"testAtomBondIndices_5.svg", 2447538404U},
-    {"testGithub3226_1.svg", 346364363U},
-    {"testGithub3226_2.svg", 3176042786U},
-    {"testGithub3226_3.svg", 4242253168U},
-    {"testGithub3369_1.svg", 3632291332U},
-    {"testIncludeRadicals_1a.svg", 86978196U},
-    {"testIncludeRadicals_1b.svg", 1886150469U},
-    {"testLegendsAndDrawing-1.svg", 1600882564U},
-    {"testGithub3577-1.svg", 1370578225U},
-    {"testHandDrawn-1.svg", 4111199347U},
-    {"testHandDrawn-2.svg", 4012723289U},
-    {"testHandDrawn-3.svg", 2383129377U},
-    {"testHandDrawn-4.svg", 2926689459U},
-    {"testHandDrawn-5a.svg", 4278270292U},
-    {"testHandDrawn-5b.svg", 1413631668U},
-    {"testBrackets-1a.svg", 1866285039U},
-    {"testBrackets-1b.svg", 1004032144U},
-    {"testBrackets-1c.svg", 1866285039U},
-    {"testBrackets-1d.svg", 1004032144U},
-    {"testBrackets-1e.svg", 2746654496U},
-    {"testBrackets-2a.svg", 3644629163U},
-    {"testBrackets-2b.svg", 2246882873U},
-    {"testBrackets-2c.svg", 3644629163U},
-    {"testBrackets-2d.svg", 2246882873U},
-    {"testBrackets-3a.svg", 1097544454U},
-    {"testBrackets-4a.svg", 795221854U},
-    {"testBrackets-4b.svg", 121671625U},
-    {"testBrackets-5a.svg", 1662252963U},
-    {"testSGroupData-1a.svg", 678378038U},
-    {"testSGroupData-1b.svg", 3984408386U},
-    {"testSGroupData-3a.svg", 1846217387U},
-    {"testSGroupData-2a.svg", 1179919474U},
-    {"testSGroupData-2b.svg", 1955475018U},
-    {"testSGroupData-3a.svg", 1846217387U},
-    {"testPositionVariation-1.svg", 3103806438U},
-    {"testPositionVariation-1b.svg", 297886280U},
-    {"testPositionVariation-2.svg", 634475796U},
-    {"testPositionVariation-3.svg", 3016244767U},
-    {"testPositionVariation-4.svg", 3568646926U},
-    {"testNoAtomLabels-1.svg", 3591526839U},
-    {"testQueryBonds-1a.svg", 4136415723U},
-    {"testQueryBonds-1b.svg", 582100110U},
-    {"testQueryBonds-1c.svg", 4137769878U},
-    {"testQueryBonds-2.svg", 1035280354U},
-    {"testLinkNodes-2-0.svg", 1164466138U},
-    {"testLinkNodes-2-30.svg", 2039328115U},
-    {"testLinkNodes-2-60.svg", 1845847033U},
-    {"testLinkNodes-2-90.svg", 1414987172U},
-    {"testLinkNodes-2-120.svg", 3049988619U},
-    {"testLinkNodes-2-150.svg", 2617902017U},
-    {"testLinkNodes-2-180.svg", 1877344463U},
-    {"testMolAnnotations-1.svg", 1528595256U},
-    {"testMolAnnotations-2a.svg", 564219453U},
-    {"testMolAnnotations-2b.svg", 3081985494U},
-    {"testMolAnnotations-2c.svg", 3984419931U},
-    {"testMolAnnotations-3a.svg", 3312386498U},
-    {"testMolAnnotations-3b.svg", 998067230U},
-    {"testMolAnnotations-3c.svg", 3806324920U},
-    {"testMolAnnotations-3d.svg", 3006706995U},
-    {"testMolAnnotations-4a.svg", 181181207U},
-    {"testLinkNodes-1-0.svg", 3016092158U},
-    {"testLinkNodes-1-30.svg", 3128578153U},
-    {"testLinkNodes-1-60.svg", 771018225U},
-    {"testLinkNodes-1-90.svg", 3134831159U},
-    {"testLinkNodes-1-120.svg", 2649296883U},
-    {"testLinkNodes-1-150.svg", 3953815697U},
-    {"testLinkNodes-1-180.svg", 4069297865U},
-    {"testGithub3744.svg", 1228490835U},
-    {"testAtomLists-1.svg", 3855928660U},
-    {"testAtomLists-2.svg", 1413737187U},
-    {"testIsoDummyIso.svg", 932401268U},
-    {"testNoIsoDummyIso.svg", 2201041942U},
-    {"testIsoNoDummyIso.svg", 1333151286U},
-    {"testNoIsoNoDummyIso.svg", 2147371130U},
-    {"testDeuteriumTritium.svg", 2083575745U},
-    {"testHydrogenBonds1.svg", 1224633130U},
-    {"testHydrogenBonds2.svg", 3056371259U},
-    {"testGithub3912.1.svg", 3644652967U},
-    {"testGithub3912.2.svg", 2868397535U},
-    {"testGithub2976.svg", 4285372032U},
-    {"testReactionCoords.svg", 1266050580U},
-    {"testAnnotationColors.svg", 3669978208U}};
+    {"testAtomTags_1.svg", 758653557U},
+    {"testAtomTags_2.svg", 1404202323U},
+    {"testAtomTags_3.svg", 1502891459U},
+    {"contourMol_1.svg", 3182387283U},
+    {"contourMol_2.svg", 1391972140U},
+    {"contourMol_3.svg", 2924226869U},
+    {"contourMol_4.svg", 2505505660U},
+    {"testDativeBonds_1.svg", 221028862U},
+    {"testDativeBonds_2.svg", 3778105012U},
+    {"testDativeBonds_3.svg", 1514383728U},
+    {"testDativeBonds_2a.svg", 2707752518U},
+    {"testDativeBonds_2b.svg", 2705796074U},
+    {"testDativeBonds_2c.svg", 2254149823U},
+    {"testDativeBonds_2d.svg", 2005943601U},
+    {"testZeroOrderBonds_1.svg", 582365640U},
+    {"testFoundations_1.svg", 224887173U},
+    {"testFoundations_2.svg", 3267131106U},
+    {"testTest_1.svg", 3267131106U},
+    {"testKekulizationProblems_1.svg", 2400077772U},
+    {"testAtomBondIndices_1.svg", 1911177499U},
+    {"testAtomBondIndices_2.svg", 1242142533U},
+    {"testAtomBondIndices_3.svg", 3503077013U},
+    {"testAtomBondIndices_4.svg", 505101730U},
+    {"testAtomBondIndices_5.svg", 216678044U},
+    {"testAtomBondIndices_6.svg", 3548449169U},
+    {"testGithub3226_1.svg", 4133242855U},
+    {"testGithub3226_2.svg", 1284710968U},
+    {"testGithub3226_3.svg", 3576515669U},
+    {"testGithub3369_1.svg", 3427946604U},
+    {"testIncludeRadicals_1a.svg", 2528551797U},
+    {"testIncludeRadicals_1b.svg", 3075507489U},
+    {"testLegendsAndDrawing-1.svg", 507104010U},
+    {"testGithub3577-1.svg", 3396617064U},
+    {"testHandDrawn-1.svg", 3735619026U},
+    {"testHandDrawn-2.svg", 1486085851U},
+    {"testHandDrawn-3.svg", 2338246554U},
+    {"testHandDrawn-4.svg", 1675229670U},
+    {"testHandDrawn-5a.svg", 3506479782U},
+    {"testHandDrawn-5b.svg", 1416355320U},
+    {"testBrackets-1a.svg", 4177217402U},
+    {"testBrackets-1b.svg", 326236098U},
+    {"testBrackets-1c.svg", 4177217402U},
+    {"testBrackets-1d.svg", 326236098U},
+    {"testBrackets-1e.svg", 3315056920U},
+    {"testBrackets-2a.svg", 99973183U},
+    {"testBrackets-2b.svg", 2970080980U},
+    {"testBrackets-2c.svg", 99973183U},
+    {"testBrackets-2d.svg", 2970080980U},
+    {"testBrackets-3a.svg", 3420234396U},
+    {"testBrackets-4a.svg", 2503277409U},
+    {"testBrackets-4b.svg", 3642264248U},
+    {"testBrackets-5a.svg", 2658328205U},
+    {"testSGroupData-1a.svg", 85295362U},
+    {"testSGroupData-1b.svg", 266947944U},
+    {"testSGroupData-3a.svg", 2917194552U},
+    {"testSGroupData-2a.svg", 2674491786U},
+    {"testSGroupData-2b.svg", 1043374999U},
+    {"testSGroupData-3a.svg", 2917194552U},
+    {"testPositionVariation-1.svg", 3747164807U},
+    {"testPositionVariation-1b.svg", 431391342U},
+    {"testPositionVariation-2.svg", 2598790992U},
+    {"testPositionVariation-3.svg", 3729075587U},
+    {"testPositionVariation-4.svg", 1108067269U},
+    {"testNoAtomLabels-1.svg", 684646985U},
+    {"testQueryBonds-1a.svg", 2738181855U},
+    {"testQueryBonds-1b.svg", 2040401048U},
+    {"testQueryBonds-1c.svg", 2047026108U},
+    {"testQueryBonds-2.svg", 187017791U},
+    {"testLinkNodes-2-0.svg", 1075968419U},
+    {"testLinkNodes-2-30.svg", 2946114571U},
+    {"testLinkNodes-2-60.svg", 459222785U},
+    {"testLinkNodes-2-90.svg", 1824183852U},
+    {"testLinkNodes-2-120.svg", 1813968296U},
+    {"testLinkNodes-2-150.svg", 2018864833U},
+    {"testLinkNodes-2-180.svg", 4098055961U},
+    {"testMolAnnotations-1.svg", 3644455962U},
+    {"testMolAnnotations-2a.svg", 2171709669U},
+    {"testMolAnnotations-2b.svg", 3176628370U},
+    {"testMolAnnotations-2c.svg", 2599683212U},
+    {"testMolAnnotations-3a.svg", 2177320081U},
+    {"testMolAnnotations-3b.svg", 2901914273U},
+    {"testMolAnnotations-3c.svg", 3200609195U},
+    {"testMolAnnotations-3d.svg", 944839085U},
+    {"testMolAnnotations-4a.svg", 606674354U},
+    {"testLinkNodes-1-0.svg", 1438620683U},
+    {"testLinkNodes-1-30.svg", 437416524U},
+    {"testLinkNodes-1-60.svg", 2479208702U},
+    {"testLinkNodes-1-90.svg", 197579058U},
+    {"testLinkNodes-1-120.svg", 2490429618U},
+    {"testLinkNodes-1-150.svg", 3088708815U},
+    {"testLinkNodes-1-180.svg", 2965553806U},
+    {"testGithub3744.svg", 2551850875U},
+    {"testAtomLists-1.svg", 2371311862U},
+    {"testAtomLists-2.svg", 1913642107U},
+    {"testIsoDummyIso.svg", 1431506277U},
+    {"testNoIsoDummyIso.svg", 4212560651U},
+    {"testIsoNoDummyIso.svg", 2329441786U},
+    {"testNoIsoNoDummyIso.svg", 1733251404U},
+    {"testDeuteriumTritium.svg", 2634768249U},
+    {"testHydrogenBonds1.svg", 2843283161U},
+    {"testHydrogenBonds2.svg", 3829372791U},
+    {"testGithub3912.1.svg", 3081580881U},
+    {"testGithub3912.2.svg", 1662866562U},
+    {"testGithub2976.svg", 716635560U},
+    {"testReactionCoords.svg", 258153716U},
+    {"testAnnotationColors.svg", 11788540U},
+    {"testGithub4323_1.svg", 1407816475U},
+    {"testGithub4323_2.svg", 2915352032U},
+    {"testGithub4323_3.svg", 2725419149U},
+    {"testGithub4323_4.svg", 3108996984U},
+    {"testGithub4238_1.svg", 3072374075U},
+    {"testGithub4508_1.svg", 4261373064U},
+    {"testGithub4508_1b.svg", 3090854313U},
+    {"testGithub4508_2.svg", 1114092U},
+    {"testGithub4508_2b.svg", 2711827082U},
+    {"testGithub4538.svg", 2194628460U},
+    {"testDarkMode.1.svg", 196650833U},
+    {"testMonochrome.1.svg", 1026689840U},
+    {"testMonochrome.2.svg", 2372276214U},
+    {"testAvalon.1.svg", 2220658203U},
+    {"testCDK.1.svg", 2319494973U},
+    {"testGithub4519_1.svg", 2772276044U},
+    {"testGithub4519_2.svg", 3326639754U},
+    {"testGithub4519_3.svg", 4206757259U},
+    {"testGithub4519_4.svg", 3436332962U},
+    {"testBaseFontSize.1a.svg", 3985093664U},
+    {"testBaseFontSize.1b.svg", 2606958576U},
+    {"testBaseFontSize.2a.svg", 1813461063U},
+    {"testBaseFontSize.2b.svg", 3124815325U},
+    {"testFlexiCanvas.1a.svg", 4203229062U},
+    {"testFlexiCanvas.1b.svg", 1952591508U},
+    {"testFlexiCanvas.1c.svg", 2165912813U},
+    {"testFlexiCanvas.1d.svg", 1964345717U},
+    {"testFlexiCanvas.2.svg", 2237869593U},
+    {"testSemiFlexiCanvas.1a.svg", 1387116588U},
+    {"testSemiFlexiCanvas.1b.svg", 4011474384U},
+    {"testSemiFlexiCanvas.1c.svg", 3129493597U},
+    {"testFlexiCanvas.3.svg", 1503902249U},
+    {"testFlexiCanvas.4a.svg", 428287035U},
+    {"testFlexiCanvas.4b.svg", 3643035210U},
+    {"testFlexiCanvas.4c.svg", 377546443U},
+    {"testFlexiCanvas.4d.svg", 2960126120U},
+    {"testFlexiCanvas.5a.svg", 948987396U},
+    {"testFlexiCanvas.5b.svg", 768214783U},
+    {"testFlexiCanvas.5c.svg", 1950949146U},
+    {"testFlexiCanvas.5d.svg", 4273629948U},
+    {"testFlexiCanvas.6a.svg", 1705496796U},
+    {"testFlexiCanvas.6b.svg", 1850606159U},
+    {"testFlexiCanvas.6c.svg", 1705496796U},
+    {"testFlexiCanvas.6d.svg", 1705496796U},
+    {"testFlexiCanvas.7a.svg", 1790658127U},
+    {"testFlexiCanvas.7b.svg", 1178964791U},
+    {"testFlexiCanvas.7c.svg", 1790658127U},
+    {"testFlexiCanvas.7d.svg", 1790658127U},
+    {"testGithub4764.sz1.svg", 2195931596U},
+    {"testGithub4764.sz2.svg", 3477099305U},
+    {"testGithub4764.sz3.svg", 3324176273U},
+    {"testDrawArc1.svg", 898508369U},
+    {"testMetalWedges.svg", 3741293579U},
+    {"testVariableLegend_1.svg", 2181678815U},
+    {"testVariableLegend_2.svg", 2392644674U},
+    {"testVariableLegend_3.svg", 2954965314U},
+    {"testGithub_5061.svg", 632991478U},
+};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -161,18 +222,24 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
 // better because the floats are all output to only 1 decimal place so there
 // is a much smaller chance of different systems producing different files.
 static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
-    {"testGithub3226_1.png", 459584719U},
-    {"testGithub3226_2.png", 1885164782U},
-    {"testGithub3226_3.png", 175334341U},
-    {"testPNGMetadata_1.png", 1040156718U},
-    {"testPNGMetadata_2.png", 452499970U},
-    {"testHandDrawn-1.png", 1656781517U},
-    {"testHandDrawn-2.png", 1191090506U},
-    {"testHandDrawn-3.png", 2579778653U},
-    {"testHandDrawn-4.png", 2660533685U},
-    {"testHandDrawn-5.png", 2787812269U},
-    {"testGithub4323_1.png", 2174252789U},
-    {"testGithub4323_3.png", 1026038713U}};
+    {"testGithub3226_1.png", 3932085076U},
+    {"testGithub3226_2.png", 2515387942U},
+    {"testGithub3226_3.png", 913109891U},
+    {"testPNGMetadata_1.png", 2398100960U},
+    {"testPNGMetadata_2.png", 1766095719U},
+    {"testHandDrawn-1.png", 1894099095U},
+    {"testHandDrawn-2.png", 2745741502U},
+    {"testHandDrawn-3.png", 1157236326U},
+    {"testHandDrawn-4.png", 1813349867U},
+    {"testHandDrawn-5.png", 3312994675U},
+    {"testGithub4323_1.png", 4185841490U},
+    {"testGithub4323_3.png", 2906371027U},
+    {"testFlexiCanvas.2a.png", 2356975333U},
+    {"testFlexiCanvas.2b.png", 3107706417U},
+    {"testGithub4764.sz1.png", 1677681492U},
+    {"testGithub4764.sz2.png", 468390008U},
+    {"testGithub4764.sz3.png", 552619356U},
+};
 
 std::hash_result_t hash_file(const std::string &filename) {
   std::ifstream ifs(filename, std::ios_base::binary);
@@ -227,6 +294,27 @@ TEST_CASE("prepareAndDrawMolecule", "[drawing]") {
     std::string text = drawer.getDrawingText();
     CHECK(text.find(">H</text>") != std::string::npos);
   }
+  SECTION("kekulize") {
+    auto m1 = "c1ccccc1"_smiles;
+    REQUIRE(m1);
+
+    {
+      MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+      MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      CHECK(text.find("stroke-dasharray") == std::string::npos);
+    }
+    {
+      MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+      MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, "", nullptr, nullptr,
+                                             nullptr, nullptr, nullptr, -1,
+                                             false);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      CHECK(text.find("stroke-dasharray") != std::string::npos);
+    }
+  }
 }
 
 TEST_CASE("tag atoms in SVG", "[drawing][SVG]") {
@@ -246,7 +334,7 @@ TEST_CASE("tag atoms in SVG", "[drawing][SVG]") {
     std::ofstream outs("testAtomTags_1.svg");
     outs << text;
     outs.close();
-    check_file_hash("testAtomTags_1.svg", 2816838644U);
+    check_file_hash("testAtomTags_1.svg");
 
     CHECK(text.find("<circle") != std::string::npos);
     CHECK(text.find("<circle") != std::string::npos);
@@ -531,11 +619,9 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     outs.close();
     check_file_hash("testDativeBonds_1.svg");
 
-    CHECK(
-        text.find(
-            "<path class='bond-0 atom-0 atom-1' d='M 126.1,100.0 L 86.0,100.0'"
-            " style='fill:none;fill-rule:evenodd;"
-            "stroke:#0000FF;") != std::string::npos);
+    CHECK(text.find("d='M 122.5,88.4 L 85.6,88.4' "
+                    "style='fill:none;fill-rule:evenodd;stroke:#0000FF") !=
+          std::string::npos);
   }
   SECTION("more complex") {
     auto m1 = "N->1[C@@H]2CCCC[C@H]2N->[Pt]11OC(=O)C(=O)O1"_smiles;
@@ -550,9 +636,9 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     outs.close();
     check_file_hash("testDativeBonds_2.svg");
 
-    CHECK(text.find("<path class='bond-7 atom-7 atom-8' d='M 101.3,79.4 "
-                    "L 95.7,87.2' style='fill:none;"
-                    "fill-rule:evenodd;stroke:#0000FF;") != std::string::npos);
+    CHECK(text.find("-8' d='M 101.1,79.8 L 95.8,87.1' "
+                    "style='fill:none;fill-rule:evenodd;stroke:#0000FF;") !=
+          std::string::npos);
   }
   SECTION("test colours") {
     // the dative bonds point the wrong way, but the point is to test
@@ -569,9 +655,11 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     outs.close();
     check_file_hash("testDativeBonds_3.svg");
 
-    CHECK(text.find("<path class='bond-2 atom-3 atom-4' d='M 53.3,140.7"
-                    " L 81.0,149.7' style='fill:none;"
-                    "fill-rule:evenodd;stroke:#0000FF;") != std::string::npos);
+    CHECK(
+        text.find(
+            "<path class='bond-2 atom-3 atom-4' d='M 50.4,140.6 L 77.9,149.5' "
+            "style='fill:none;fill-rule:evenodd;stroke:#0000FF;") !=
+        std::string::npos);
   }
   SECTION("dative series") {
     auto m1 = "N->1[C@@H]2CCCC[C@H]2N->[Pt]11OC(=O)C(=O)O1"_smiles;
@@ -723,7 +811,9 @@ TEST_CASE("bad DrawMolecules() when molecules are not kekulized",
 }
 TEST_CASE("draw atom/bond indices", "[drawing]") {
   auto m1 = "C[C@H](F)N"_smiles;
+  auto m2 = "C[C@@H](F)N"_smiles;
   REQUIRE(m1);
+  REQUIRE(m2);
   SECTION("foundations") {
     {
       MolDraw2DSVG drawer(250, 200, -1, -1, NO_FREETYPE);
@@ -808,6 +898,23 @@ TEST_CASE("draw atom/bond indices", "[drawing]") {
       CHECK(text.find(">f</text>") != std::string::npos);
       CHECK(text.find(">o</text>") != std::string::npos);
     }
+    {
+      // Make sure it works for solid wedges as well.
+      MolDraw2DSVG drawer(250, 200, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().addAtomIndices = true;
+      drawer.drawMolecule(*m2);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testAtomBondIndices_6.svg");
+      outs << text;
+      outs.close();
+      check_file_hash("testAtomBondIndices_6.svg");
+      CHECK(text.find(">1</text>") != std::string::npos);
+      // it only appears once though:
+      CHECK(text.find(">1</text>", text.find(">1</text>") + 1) ==
+            std::string::npos);
+      CHECK(text.find("1,(S)") == std::string::npos);
+    }
   }
 }
 
@@ -854,7 +961,7 @@ TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
       check_file_hash("testGithub3226_2.svg");
       std::vector<std::string> tkns;
       boost::algorithm::find_all(tkns, text, "bond-0");
-      CHECK(tkns.size() == 4);
+      CHECK(tkns.size() == 3);
     }
   }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
@@ -870,7 +977,7 @@ TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
 #endif
   SECTION("middle SVG") {
     {
-      MolDraw2DSVG drawer(250, 200);
+      MolDraw2DSVG drawer(300, 200);
       drawer.drawMolecule(*m1);
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
@@ -1115,7 +1222,7 @@ TEST_CASE("includeRadicals", "[options]") {
       outs << text;
       outs.close();
       check_file_hash("testIncludeRadicals_1a.svg");
-      CHECK(text.find("<path d='M") != std::string::npos);
+      CHECK(text.find("<path class='atom-0' d='M") != std::string::npos);
     }
     {
       MolDraw2DSVG drawer(250, 200, panelWidth, panelHeight, noFreeType);
@@ -1127,7 +1234,7 @@ TEST_CASE("includeRadicals", "[options]") {
       outs << text;
       outs.close();
       check_file_hash("testIncludeRadicals_1b.svg");
-      CHECK(text.find("<path d='M") == std::string::npos);
+      CHECK(text.find("<path class='atom-0' d='M") == std::string::npos);
     }
   }
 }
@@ -1157,9 +1264,9 @@ TEST_CASE("including legend in drawing results in offset drawing later",
     check_file_hash("testLegendsAndDrawing-1.svg");
 
     // make sure the polygon starts at a bond
-    CHECK(text.find("<path class='bond-0 atom-0 atom-1' d='M 322.0,140.0") !=
+    CHECK(text.find("<path class='bond-0 atom-0 atom-1' d='M 316.7,135.0") !=
           std::string::npos);
-    CHECK(text.find("<path d='M 322.0,140.0") != std::string::npos);
+    CHECK(text.find("<path d='M 316.7,135.0") != std::string::npos);
   }
 }
 
@@ -2425,7 +2532,6 @@ TEST_CASE("molecule annotations", "[extra]") {
   int panelHeight = -1;
   int panelWidth = -1;
   bool noFreeType = false;
-
   SECTION("basics") {
     auto m = "NCC(=O)O"_smiles;
     MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
@@ -3178,6 +3284,7 @@ TEST_CASE("Github #4238: prepareMolForDrawing and wavy bonds") {
     std::ofstream outs("testGithub4238_1.svg");
     outs << text;
     outs.flush();
+    check_file_hash("testGithub4238_1.svg");
   }
 }
 
@@ -3202,6 +3309,7 @@ TEST_CASE("Github #4323: support providing RGBA colors") {
     // legend
     CHECK(text.find("fill='#FF00FF4C'") != std::string::npos);
     CHECK(text.find("fill='#FF00FF'") == std::string::npos);
+    check_file_hash("testGithub4323_1.svg");
   }
   SECTION("without alpha") {
     MolDraw2DSVG drawer(200, 150);
@@ -3220,6 +3328,7 @@ TEST_CASE("Github #4323: support providing RGBA colors") {
     // legend
     CHECK(text.find("fill='#FF00FF4C'") == std::string::npos);
     CHECK(text.find("fill='#FF00FF'") != std::string::npos);
+    check_file_hash("testGithub4323_2.svg");
   }
 #endif
   SECTION("no FT with alpha") {
@@ -3239,6 +3348,7 @@ TEST_CASE("Github #4323: support providing RGBA colors") {
     // legend
     CHECK(text.find("fill:#FF00FF4C'") != std::string::npos);
     CHECK(text.find("fill:#FF00FF'") == std::string::npos);
+    check_file_hash("testGithub4323_3.svg");
   }
   SECTION("no FT without alpha") {
     MolDraw2DSVG drawer(200, 150, -1, -1, NO_FREETYPE);
@@ -3257,6 +3367,7 @@ TEST_CASE("Github #4323: support providing RGBA colors") {
     // legend
     CHECK(text.find("fill:#FF00FF4C'") == std::string::npos);
     CHECK(text.find("fill:#FF00FF'") != std::string::npos);
+    check_file_hash("testGithub4323_4.svg");
   }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
@@ -3281,3 +3392,1093 @@ TEST_CASE("Github #4323: support providing RGBA colors") {
   }
 #endif
 }
+
+TEST_CASE(
+    "Github #4508: SubstanceGroup labels sometimes overlap with atoms in image "
+    "generation") {
+  SECTION("Basics") {
+    auto mol = R"CTAB(
+  Mrv2114 09132120172D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 8 1 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C -0.5878 0.8085 0 0
+M  V30 2 C -1.9434 0.078 0 0
+M  V30 3 C -1.9884 -1.4614 0 0
+M  V30 4 C -0.6778 -2.2702 0 0
+M  V30 5 C 0.6778 -1.5394 0 0
+M  V30 6 C 0.7228 -0.0001 0 0
+M  V30 7 N -0.5428 2.3478 0 0
+M  V30 8 O 1.9884 -2.3479 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 6 1
+M  V30 7 1 1 7
+M  V30 8 1 5 8
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 7) FIELDNAME=UV FIELDINFO=nm -
+M  V30 FIELDDISP="    0.0000    0.0000    DRU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=340
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(mol);
+
+    {
+      MolDraw2DSVG drawer(300, 250);
+      drawer.drawMolecule(*mol, "data label with DRU");
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testGithub4508_1.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testGithub4508_1.svg");
+    }
+
+    // remove the sgroup-atom atom... the SGroup will not be drawn
+    auto &sgs = getSubstanceGroups(*mol);
+    REQUIRE(sgs.size() == 1);
+    sgs[0].setAtoms(std::vector<unsigned int>());
+    {
+      MolDraw2DSVG drawer(300, 250);
+      drawer.drawMolecule(*mol, "no data label drawn");
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testGithub4508_1b.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testGithub4508_1b.svg");
+    }
+  }
+  SECTION("Absolute") {
+    auto mol = R"CTAB(
+  Mrv2114 09132120172D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 8 1 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C -0.5878 0.8085 0 0
+M  V30 2 C -1.9434 0.078 0 0
+M  V30 3 C -1.9884 -1.4614 0 0
+M  V30 4 C -0.6778 -2.2702 0 0
+M  V30 5 C 0.6778 -1.5394 0 0
+M  V30 6 C 0.7228 -0.0001 0 0
+M  V30 7 N -0.5428 2.3478 0 0
+M  V30 8 O 1.9884 -2.3479 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 6 1
+M  V30 7 1 1 7
+M  V30 8 1 5 8
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 7) FIELDNAME=UV FIELDINFO=nm -
+M  V30 FIELDDISP="    0.0000    0.0000    DAU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=340
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(mol);
+
+    {
+      MolDraw2DSVG drawer(300, 250);
+      drawer.drawMolecule(*mol, "data label with DAU\n(expect odd placement)");
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testGithub4508_2.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testGithub4508_2.svg");
+    }
+
+    // remove the sgroup-atom atom... the SGroup will still be drawn
+    auto &sgs = getSubstanceGroups(*mol);
+    REQUIRE(sgs.size() == 1);
+    sgs[0].setAtoms(std::vector<unsigned int>());
+    {
+      MolDraw2DSVG drawer(300, 250);
+      drawer.drawMolecule(*mol,
+                          "DAU, no associated atom\n(expect odd placement)");
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testGithub4508_2b.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testGithub4508_2b.svg");
+    }
+  }
+}
+
+TEST_CASE("Github #4538 drawMolecules crash") {
+  auto m = "CCc1ccccc1"_smiles;
+  REQUIRE(m);
+  RDDepict::compute2DCoords(*m);
+  ROMol m1(*m);
+  ROMol m2(*m);
+  std::vector<ROMol *> mols{&m1, &m2};
+  SECTION("basics") {
+    MolDraw2DSVG drawer(500, 200, 250, 200);
+    drawer.drawOptions().prepareMolsBeforeDrawing = false;
+    drawer.drawMolecules(mols);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testGithub4538.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testGithub4538.svg");
+  }
+}
+
+TEST_CASE("dark mode mol drawing") {
+  SECTION("Basics") {
+    auto m =
+        "CS(=O)(=O)COC(=N)c1cc(Cl)cnc1[NH3+] |SgD:7:note:some extra text:=:::|"_smiles;
+    REQUIRE(m);
+    MolDraw2DSVG drawer(350, 300);
+    setDarkMode(drawer);
+    drawer.drawMolecule(*m, "dark mode!");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testDarkMode.1.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testDarkMode.1.svg");
+  }
+}
+TEST_CASE("monochrome mol drawing") {
+  SECTION("Basics") {
+    auto m =
+        "CS(=O)(=O)COC(=N)c1cc(Cl)cnc1[NH3+] |SgD:7:note:some extra text:=:::|"_smiles;
+    REQUIRE(m);
+    MolDraw2DSVG drawer(350, 300);
+    setMonochromeMode(drawer, DrawColour{0.1, 0.1, 0.6},
+                      DrawColour{0.75, 0.75, 0.75});
+    drawer.drawMolecule(*m, "monochrome");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testMonochrome.1.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testMonochrome.1.svg");
+  }
+  SECTION("Basics inverted") {
+    auto m =
+        "CS(=O)(=O)COC(=N)c1cc(Cl)cnc1[NH3+] |SgD:7:note:some extra text:=:::|"_smiles;
+    REQUIRE(m);
+    MolDraw2DSVG drawer(350, 300);
+    setMonochromeMode(drawer, DrawColour{0.75, 0.75, 0.75},
+                      DrawColour{0.1, 0.1, 0.6});
+    drawer.drawMolecule(*m, "monochrome");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testMonochrome.2.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testMonochrome.2.svg");
+  }
+}
+TEST_CASE("other palettes") {
+  auto m =
+      "CS(=O)(=O)COC(=N)c1c(I)c(Cl)c(Br)nc1[NH2+]CP(=O) |SgD:7:note:some extra text:=:::|"_smiles;
+  REQUIRE(m);
+  SECTION("Avalon") {
+    MolDraw2DSVG drawer(350, 300);
+    assignAvalonPalette(drawer.drawOptions().atomColourPalette);
+    drawer.drawMolecule(*m, "Avalon");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testAvalon.1.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testAvalon.1.svg");
+  }
+  SECTION("CDK") {
+    MolDraw2DSVG drawer(350, 300);
+    assignCDKPalette(drawer.drawOptions().atomColourPalette);
+    drawer.drawMolecule(*m, "CDK");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testCDK.1.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testCDK.1.svg");
+  }
+}
+
+TEST_CASE("SDD record parsing") {
+  auto mol = R"CTAB(
+  Mrv2008 11122110292D
+
+  6  6  0  0  0  0            999 V2000
+    9.3527    2.5661    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.6382    2.1536    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.6382    1.3286    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    9.3527    0.9161    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.0671    1.3286    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.0671    2.1536    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  2  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  2  0  0  0  0
+  5  6  1  0  0  0  0
+  1  6  2  0  0  0  0
+M  STY  1   1 DAT
+M  SLB  1   1   1
+M  SAL   1  1   1
+M  SDT   1 NAME
+M  SDD   1 -2345.1234-2345.1234    DR    ALL  1       0
+M  SED   1 Hello World
+M  END
+)CTAB"_ctab;
+  // SDD record has format
+  // M  SDD sss xxxxx.xxxxyyyyy.yyyy eeefgh i jjjkkk ll m noo
+  MolDraw2DSVG drawer(350, 300, -1, -1, 1);
+  drawer.drawMolecule(*mol);
+  drawer.finishDrawing();
+  auto text = drawer.getDrawingText();
+  std::string name("Hello World");
+  for (auto &c : name) {
+    std::stringstream ss;
+    ss << " >" << c << "</text>";
+    auto pos = text.find(ss.str());
+    CHECK(pos != std::string::npos);
+  }
+}
+
+TEST_CASE("Github #4519 bad placement of datafield labels") {
+  auto mol1 = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.000000 0.000000 0.000000 0
+M  V30 2 C 1.299038 0.750000 0.000000 0
+M  V30 3 C 2.598076 -0.000000 0.000000 0
+M  V30 4 C 1.299038 2.250000 0.000000 0
+M  V30 5 C 2.598076 3.000000 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 2 4
+M  V30 4 2 4 5
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(5 2 4 5 3 1) FIELDNAME="Lambda Max" FIELDINFO=nm -
+M  V30 FIELDDATA="2222"
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+  REQUIRE(mol1);
+
+  auto mol2 = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 8 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 N 3.000000 0.000000 0.000000 0
+M  V30 2 C 1.500000 0.000000 0.000000 0
+M  V30 3 C 0.750000 -1.299038 0.000000 0
+M  V30 4 C -0.750000 -1.299038 0.000000 0
+M  V30 5 C -1.500000 0.000000 0.000000 0
+M  V30 6 C -0.750000 1.299038 0.000000 0
+M  V30 7 O -1.500000 2.598076 0.000000 0
+M  V30 8 C 0.750000 1.299038 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 1 6 7
+M  V30 7 2 6 8
+M  V30 8 1 8 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 1) FIELDNAME=UV FIELDINFO=nm -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  0       0" -
+M  V30 FIELDDATA="340"
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+  REQUIRE(mol2);
+
+  auto mol3 = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.750000 -1.299038 0.000000 0
+M  V30 2 C 0.000000 0.000000 0.000000 0
+M  V30 3 C 1.500000 0.000000 0.000000 0
+M  V30 4 C 2.250000 1.299038 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 3) FIELDNAME=Stereo -
+M  V30 FIELDDATA="Cis"
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+  REQUIRE(mol3);
+
+  std::vector<std::string> legends = {
+      "datafield label bad placement1", "datafield label bad placement2",
+      "datafield label bad placement3"};  //  std::vector<std::string> legends =
+                                          //  {"datafield label bad
+                                          //  placement2"};
+  {
+    MolDraw2DSVG drawer(300, 250);
+    drawer.drawMolecule(*mol1, legends[0]);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub4519_1.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testGithub4519_1.svg");
+  }
+  {
+    MolDraw2DSVG drawer(300, 250);
+    drawer.drawMolecule(*mol2, legends[1]);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub4519_2.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testGithub4519_2.svg");
+  }
+  {
+    MolDraw2DSVG drawer(300, 250);
+    drawer.drawMolecule(*mol3, legends[2]);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub4519_3.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testGithub4519_3.svg");
+  }
+
+  {
+    std::vector<ROMol *> mols;
+    mols.push_back(mol1.get());
+    mols.push_back(mol2.get());
+    mols.push_back(mol3.get());
+    MolDraw2DSVG drawer(900, 250, 300, 250);
+    drawer.drawMolecules(mols, &legends);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub4519_4.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    check_file_hash("testGithub4519_4.svg");
+  }
+}
+
+TEST_CASE("changing baseFontSize") {
+  RDDepict::preferCoordGen = false;
+  auto mol1 =
+      "CC(C)C[C@H](NC(=O)[C@H](CCCCN)NC(=O)[C@H](CS)NC(=O)CNC(=O)[C@H](C)NC(=O)[C@H](CCCCN)NC(=O)[C@H](CC(C)C)NC(=O)CNC(=O)[C@H](C)NC(=O)[C@H](CS)NC(=O)[C@H](CCCCN)NC(=O)[C@H](C)NC(=O)[C@@H](NC(=O)[C@H](CS)NC(=O)CNC(=O)[C@H](C)NC(=O)[C@H](CCCCN)NC(=O)CNC(=O)[C@H](C)NC(=O)[C@H](CCCCN)NC(=O)[C@H](C)N)[C@@H](C)O)C(=O)O"_smiles;
+  REQUIRE(mol1);
+  MolDraw2DUtils::prepareMolForDrawing(*mol1);
+  auto mol2 = "C[C@H](N)C(=O)N[C@@H](CCCCN)C(=O)N[C@@H](C)C(=O)NCC(=O)O"_smiles;
+  REQUIRE(mol2);
+  MolDraw2DUtils::prepareMolForDrawing(*mol2);
+  SECTION("basics-large") {
+    MolDraw2DSVG drawer(350, 300, -1, -1, 1);
+    drawer.drawMolecule(*mol1);
+    drawer.finishDrawing();
+    CHECK(drawer.fontSize() == Approx(6.0).margin(0.1));
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testBaseFontSize.1a.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testBaseFontSize.1a.svg");
+  }
+  SECTION("increase size - large") {
+    // here we change the base font size, but it doesn't matter since the
+    // structure is big enough we end up stuck with the minimum font size.
+    MolDraw2DSVG drawer(350, 300, -1, -1, 1);
+    drawer.drawOptions().baseFontSize = 0.9;
+    drawer.drawMolecule(*mol1);
+    drawer.finishDrawing();
+    CHECK(drawer.fontSize() == Approx(5.5).margin(.1));
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testBaseFontSize.1b.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testBaseFontSize.1b.svg");
+  }
+  SECTION("basics-small") {
+    MolDraw2DSVG drawer(350, 300, -1, -1, 1);
+    drawer.drawMolecule(*mol2);
+    drawer.finishDrawing();
+    CHECK(drawer.fontSize() == Approx(14.0).margin(0.1));
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testBaseFontSize.2a.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testBaseFontSize.2a.svg");
+  }
+  SECTION("increase size - smaller") {
+    MolDraw2DSVG drawer(350, 300, -1, -1, 1);
+    drawer.drawOptions().baseFontSize = 0.9;
+    drawer.drawMolecule(*mol2);
+    drawer.finishDrawing();
+    CHECK(drawer.fontSize() == Approx(20.4).margin(0.1));
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testBaseFontSize.2b.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testBaseFontSize.2b.svg");
+  }
+}
+
+TEST_CASE("flexicanvas: set canvas size automatically") {
+  // note that these examples use Freetype if it's available.
+  auto mol1 = "CCN(CC)CCn1nc2c3ccccc3sc3c(CNS(C)(=O)=O)ccc1c32"_smiles;
+  REQUIRE(mol1);
+  MolDraw2DUtils::prepareMolForDrawing(*mol1);
+
+  auto mol2 = R"CTAB(
+  Mrv2108 11192104292D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 5 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -5.2 -1.4 0 0
+M  V30 2 O -5.2 -2.8 0 0
+M  V30 3 C -3.7 -1.4 0 0
+M  V30 4 C -3.7 -2.8 0 0 CFG=1
+M  V30 5 N -2.5994 -3.9839 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 1 3
+M  V30 3 1 2 4
+M  V30 4 1 3 4
+M  V30 5 1 4 5 CFG=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+  REQUIRE(mol2);
+  MolDraw2DUtils::prepareMolForDrawing(*mol2);
+  SECTION("fixed canvas") {
+    MolDraw2DSVG drawer(308, 223, -1, -1);
+    drawer.drawMolecule(*mol1);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testFlexiCanvas.1a.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testFlexiCanvas.1a.svg");
+  }
+  SECTION("flexicanvas1") {
+    MolDraw2DSVG drawer(-1, -1, -1, -1);
+    drawer.drawMolecule(*mol1);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testFlexiCanvas.1b.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testFlexiCanvas.1b.svg");
+  }
+  SECTION("flexicanvas1") {
+    MolDraw2DSVG drawer(-1, -1, -1, -1);
+    drawer.drawOptions().scalingFactor = 30;
+    drawer.drawOptions().baseFontSize = 0.6;
+    drawer.drawMolecule(*mol1);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testFlexiCanvas.1c.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testFlexiCanvas.1c.svg");
+  }
+  SECTION("flexicanvas1") {
+    MolDraw2DSVG drawer(-1, -1, -1, -1);
+    drawer.drawOptions().scalingFactor = 30;
+    drawer.drawOptions().fixedFontSize = 32;
+    drawer.drawMolecule(*mol1);
+    drawer.finishDrawing();
+    CHECK(drawer.fontSize() == Approx(32).margin(0.1));
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testFlexiCanvas.1d.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testFlexiCanvas.1d.svg");
+  }
+  SECTION("square") {
+    MolDraw2DSVG drawer(-1, -1, -1, -1);
+    drawer.drawOptions().baseFontSize = 0.8;
+    drawer.drawMolecule(*mol2);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testFlexiCanvas.2.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testFlexiCanvas.2.svg");
+  }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+  SECTION("square PNG no freetype") {
+    MolDraw2DCairo drawer(-1, -1, -1, -1, true);
+    drawer.drawOptions().baseFontSize = 0.8;
+    drawer.drawMolecule(*mol2);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testFlexiCanvas.2a.png");
+    outs << text;
+    outs.flush();
+    check_file_hash("testFlexiCanvas.2a.png");
+  }
+  SECTION("square PNG with freetype") {
+    MolDraw2DCairo drawer(-1, -1, -1, -1, false);
+    drawer.drawOptions().baseFontSize = 0.8;
+    drawer.drawMolecule(*mol2);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testFlexiCanvas.2b.png");
+    outs << text;
+    outs.flush();
+    check_file_hash("testFlexiCanvas.2b.png");
+  }
+#endif
+  // semiflexicanvas - with freetype
+  SECTION("semiflexicanvas1") {
+    MolDraw2DSVG drawer(308, -1, -1, -1, false);
+    drawer.drawOptions().scalingFactor = 30;
+    drawer.drawOptions().baseFontSize = 0.6;
+    drawer.drawMolecule(*mol1);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testSemiFlexiCanvas.1a.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testSemiFlexiCanvas.1a.svg");
+  }
+  SECTION("semiflexicanvas2") {
+    MolDraw2DSVG drawer(-1, 223, -1, -1, false);
+    drawer.drawOptions().scalingFactor = 30;
+    drawer.drawOptions().baseFontSize = 0.6;
+    drawer.drawMolecule(*mol1);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testSemiFlexiCanvas.1b.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testSemiFlexiCanvas.1b.svg");
+  }
+  SECTION("semiflexicanvas3") {
+    auto mol3 = "ON"_smiles;
+    REQUIRE(mol3);
+    MolDraw2DSVG drawer(-1, 150, -1, -1, false);
+    drawer.drawOptions().scalingFactor = 30;
+    drawer.drawOptions().baseFontSize = 0.6;
+    drawer.drawMolecule(*mol3);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testSemiFlexiCanvas.1c.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testSemiFlexiCanvas.1c.svg");
+  }
+  SECTION("reaction") {
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+        "[N:1]-[C:2]-[C:3](=[O:4])-[O:5].[N:6]-[C:7]-[C:8](=[O:9])-[O:10]>>[N:"
+        "1]1-[C:2]-[C:3](=[O:4])-[N:6]-[C:7]-[C:8]-1=[O:9].[O:5]=[O:10]"));
+    MolDraw2DSVG drawer(-1, -1, -1, -1, true);
+    drawer.drawReaction(*rxn);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testFlexiCanvas.3.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testFlexiCanvas.3.svg");
+  }
+  SECTION("data labels") {
+    auto mol1 = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.000000 0.000000 0.000000 0
+M  V30 2 C 1.299038 0.750000 0.000000 0
+M  V30 3 C 2.598076 -0.000000 0.000000 0
+M  V30 4 C 1.299038 2.250000 0.000000 0
+M  V30 5 C 2.598076 3.000000 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 2 4
+M  V30 4 2 4 5
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(5 2 4 5 3 1) FIELDNAME="Lambda Max" FIELDINFO=nm -
+M  V30 FIELDDATA="2222"
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(mol1);
+    {
+      MolDraw2DSVG drawer(-1, -1);
+      drawer.drawMolecule(*mol1);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.4a.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.4a.svg");
+    }
+    {
+      MolDraw2DSVG drawer(-1, -1);
+      drawer.drawMolecule(*mol1, "legendary");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.4b.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.4b.svg");
+    }
+    {
+      MolDraw2DSVG drawer(-1, -1);
+      drawer.drawMolecule(*mol1, "doubly\nlegendary");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.4c.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.4c.svg");
+    }
+    {
+      MolDraw2DSVG drawer(-1, -1);
+      drawer.drawOptions().legendFraction = 0.25;
+      drawer.drawOptions().legendFontSize = 32;
+      drawer.drawMolecule(*mol1, "Hugely\nLegendary");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.4d.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.4d.svg");
+    }
+  }
+  SECTION("including legends") {
+    // add an atomNote so that we can compare font sizes
+    mol1->getAtomWithIdx(0)->setProp(common_properties::atomNote, "n1");
+    {
+      MolDraw2DSVG drawer(-1, -1);
+      drawer.drawMolecule(*mol1, "legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.5a.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.5a.svg");
+    }
+    {
+      MolDraw2DSVG drawer(-1, -1);
+      drawer.drawMolecule(*mol1, "legend\nwith two lines");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.5b.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.5b.svg");
+    }
+    {
+      MolDraw2DSVG drawer(-1, -1);
+      drawer.drawOptions().scalingFactor = 45;
+      drawer.drawMolecule(*mol1, "legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.5c.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.5c.svg");
+    }
+    {
+      MolDraw2DSVG drawer(-1, -1);
+      drawer.drawOptions().scalingFactor = 10;
+      drawer.drawMolecule(*mol1, "legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.5d.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.5d.svg");
+    }
+  }
+
+  SECTION("partially flexicanvas (height) + legends") {
+    // add an atomNote so that we can compare font sizes
+    mol1->getAtomWithIdx(0)->setProp(common_properties::atomNote, "n1");
+    {
+      MolDraw2DSVG drawer(-1, 200);
+      drawer.drawMolecule(*mol1, "legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.6a.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.6a.svg");
+    }
+    {
+      MolDraw2DSVG drawer(-1, 200);
+      drawer.drawMolecule(*mol1, "legend\nwith two lines");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.6b.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.6b.svg");
+    }
+    {
+      MolDraw2DSVG drawer(-1, 200);
+      drawer.drawOptions().scalingFactor = 45;
+      drawer.drawMolecule(*mol1, "legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.6c.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.6c.svg");
+    }
+    {
+      MolDraw2DSVG drawer(-1, 200);
+      drawer.drawOptions().scalingFactor = 10;
+      drawer.drawMolecule(*mol1, "legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.6d.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.6d.svg");
+    }
+  }
+
+  SECTION("partially flexicanvas (width) + legends") {
+    // add an atomNote so that we can compare font sizes
+    mol1->getAtomWithIdx(0)->setProp(common_properties::atomNote, "n1");
+    {
+      MolDraw2DSVG drawer(300, -1);
+      drawer.drawMolecule(*mol1, "legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.7a.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.7a.svg");
+    }
+    {
+      MolDraw2DSVG drawer(300, -1);
+      drawer.drawMolecule(*mol1, "legend\nwith two lines");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.7b.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.7b.svg");
+    }
+    {
+      MolDraw2DSVG drawer(300, -1);
+      drawer.drawOptions().scalingFactor = 45;
+      drawer.drawMolecule(*mol1, "legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.7c.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.7c.svg");
+    }
+    {
+      MolDraw2DSVG drawer(300, -1);
+      drawer.drawOptions().scalingFactor = 10;
+      drawer.drawMolecule(*mol1, "legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.7d.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.7d.svg");
+    }
+  }
+}
+
+TEST_CASE("Github #4764") {
+  SECTION("basics") {
+    auto mol = "c1ccccc1-C1CCCCC1"_smiles;
+    REQUIRE(mol);
+    std::vector<int> highlights{6, 7, 8, 9, 10, 11};
+    {
+      MolDraw2DSVG drawer(200, 150);
+      drawer.drawMolecule(*mol, "highlight", &highlights);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testGithub4764.sz1.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testGithub4764.sz1.svg");
+    }
+    {
+      MolDraw2DSVG drawer(400, 350);
+      drawer.drawMolecule(*mol, "highlight", &highlights);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testGithub4764.sz2.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testGithub4764.sz2.svg");
+    }
+    {
+      MolDraw2DSVG drawer(800, 700);
+      drawer.drawMolecule(*mol, "highlight", &highlights);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testGithub4764.sz3.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testGithub4764.sz3.svg");
+    }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    {
+      MolDraw2DCairo drawer(200, 150);
+      drawer.drawMolecule(*mol, "highlight", &highlights);
+      drawer.finishDrawing();
+      drawer.writeDrawingText("testGithub4764.sz1.png");
+      check_file_hash("testGithub4764.sz1.png");
+    }
+    {
+      MolDraw2DCairo drawer(400, 350);
+      drawer.drawMolecule(*mol, "highlight", &highlights);
+      drawer.finishDrawing();
+      drawer.writeDrawingText("testGithub4764.sz2.png");
+      check_file_hash("testGithub4764.sz2.png");
+    }
+    {
+      MolDraw2DCairo drawer(800, 700);
+      drawer.drawMolecule(*mol, "highlight", &highlights);
+      drawer.finishDrawing();
+      drawer.writeDrawingText("testGithub4764.sz3.png");
+      check_file_hash("testGithub4764.sz3.png");
+    }
+#endif
+    // check_file_hash("testGithub4538.svg");
+  }
+}
+
+TEST_CASE("drawArc starting from wrong angle") {
+  SECTION("basics") {
+    auto mol = R"CTAB(
+     RDKit          2D
+
+  9  9  0  0  0  0  0  0  0  0999 V2000
+   -1.2135   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0000   -1.5844    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2135   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500    0.7238    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500    0.7238    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6317    1.9374    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6401   -1.1663    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    2.6401   -1.1663    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    1.6317    1.9374    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  2  0
+  3  4  1  0
+  4  5  1  0
+  5  6  1  0
+  5  1  2  0
+  1  7  1  0
+  3  8  1  0
+  4  9  1  0
+M  END)CTAB"_ctab;
+    REQUIRE(mol);
+    {
+      MolDraw2DSVG drawer(400, 350);
+      drawer.drawOptions().noAtomLabels = true;
+      drawer.drawMolecule(*mol, "drawArc");
+      drawer.setFillPolys(false);
+      drawer.setColour({1, 0, 0});
+      drawer.drawArc(mol->getConformer().getAtomPos(3), 0.3, -72, 54);
+      drawer.drawArc(mol->getConformer().getAtomPos(0), 0.3, -162, -36);
+      drawer.drawArc(mol->getConformer().getAtomPos(4), 0.3, 126, 252);
+      drawer.drawArc(mol->getConformer().getAtomPos(2), 0.3, -18, 108);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testDrawArc1.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testDrawArc1.svg");
+    }
+  }
+}
+
+TEST_CASE("wedged bonds to metals drawn in the wrong direction") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+  Mrv2108 01092205442D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 F 10.6667 -0.75 0 0
+M  V30 2 Pt 10.6667 -2.29 0 0 CFG=1
+M  V30 3 Cl 12.2067 -2.29 0 0
+M  V30 4 C 10.6667 -3.83 0 0
+M  V30 5 O 9.1267 -2.29 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4 CFG=1
+M  V30 4 1 2 5 CFG=3
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    m->getBondWithIdx(2)->setBondDir(Bond::BondDir::BEGINWEDGE);
+    m->getBondWithIdx(3)->setBondDir(Bond::BondDir::BEGINDASH);
+    MolDraw2DSVG drawer(250, 200);
+    assignBWPalette(drawer.drawOptions().atomColourPalette);
+    drawer.drawMolecule(*m, "check wedges");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testMetalWedges.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testMetalWedges.svg");
+  }
+}
+
+TEST_CASE("vary proportion of panel for legend", "[drawing]") {
+  SECTION("basics") {
+    auto m1 = "C1N[C@@H]2OCC12"_smiles;
+    REQUIRE(m1);
+    // These look a bit pants with NO_FREETYPE=true, but much better with
+    // Freetype.
+    {
+      // default legend
+      MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+      MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, "default legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testVariableLegend_1.svg");
+      outs << text;
+      outs.flush();
+      CHECK(text.find("<text x='34.5' y='195.0' class='legend' "
+                      "style='font-size:16px;") != std::string::npos);
+      check_file_hash("testVariableLegend_1.svg");
+    }
+    {
+      // 1/4 of panel
+      MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().legendFraction = 0.25;
+      drawer.drawOptions().legendFontSize = 32;
+      MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, "massive legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testVariableLegend_2.svg");
+      outs << text;
+      outs.flush();
+      CHECK(text.find("<text x='1.6' y='195.0' class='legend' "
+                      "style='font-size:31px;") != std::string::npos);
+      check_file_hash("testVariableLegend_2.svg");
+    }
+    {
+      // tiny
+      MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().legendFraction = 0.05;
+      MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, "small legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testVariableLegend_3.svg");
+      outs << text;
+      outs.flush();
+      CHECK(text.find("<text x='84.7' y='195.0' class='legend' "
+                      "style='font-size:6px;") != std::string::npos);
+      check_file_hash("testVariableLegend_3.svg");
+    }
+  }
+}
+
+TEST_CASE(
+    "Github 5061 - draw reaction with no reagents and scaleBondWidth true") {
+  SECTION("basics") {
+    std::string data = R"RXN($RXN
+
+  Mrv16425    091201171606
+
+  0  1
+$MOL
+
+  Mrv1642509121716062D
+
+  2  1  0  0  0  0            999 V2000
+    3.5357    0.0000    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+    2.7107    0.0000    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+M  RGP  2   1   1   2   2
+
+
+M  END)RXN";
+    {
+      std::unique_ptr<ChemicalReaction> rxn{RxnBlockToChemicalReaction(data)};
+      MolDraw2DSVG drawer(450, 200);
+      drawer.drawOptions().scaleBondWidth = true;
+      drawer.drawReaction(*rxn);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testGithub_5061.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testGithub_5061.svg");
+    }
+  }
+}
+
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+TEST_CASE("drawing doesn't destroy reaction properties", "[drawing]") {
+  auto rxn = "[CH3:1][OH:2]>>[CH2:1]=[OH0:2]"_rxnsmarts;
+  REQUIRE(rxn);
+  MolDraw2DCairo drawer(400, 200);
+  bool highlightByReactant = true;
+  drawer.drawReaction(*rxn, highlightByReactant);
+  drawer.finishDrawing();
+  auto png = drawer.getDrawingText();
+  std::unique_ptr<ChemicalReaction> rxn2{PNGStringToChemicalReaction(png)};
+  REQUIRE(rxn2);
+  CHECK(rxn->getReactants()[0]->getAtomWithIdx(0)->getAtomMapNum() == 1);
+  CHECK(rxn->getReactants()[0]->getAtomWithIdx(1)->getAtomMapNum() == 2);
+  CHECK(rxn2->getReactants()[0]->getAtomWithIdx(0)->getAtomMapNum() == 1);
+  CHECK(rxn2->getReactants()[0]->getAtomWithIdx(1)->getAtomMapNum() == 2);
+}
+#endif

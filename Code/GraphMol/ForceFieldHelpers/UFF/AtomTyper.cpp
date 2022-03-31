@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -391,10 +390,9 @@ std::string getAtomLabel(const Atom *atom) {
 
 // ---------------------------------------------------------------
 std::pair<AtomicParamVect, bool> getAtomTypes(const ROMol &mol,
-                                              const std::string &paramData) {
-  RDUNUSED_PARAM(paramData);
+                                              const std::string &) {
   bool foundAll = true;
-  ParamCollection *params = ParamCollection::getParams();
+  auto params = ParamCollection::getParams();
 
   AtomicParamVect paramVect;
   paramVect.resize(mol.getNumAtoms());
@@ -421,17 +419,17 @@ std::pair<AtomicParamVect, bool> getAtomTypes(const ROMol &mol,
 
 bool getUFFBondStretchParams(const ROMol &mol, unsigned int idx1,
                              unsigned int idx2, UFFBond &uffBondStretchParams) {
-  ParamCollection *params = ParamCollection::getParams();
+  auto params = ParamCollection::getParams();
   unsigned int idx[2] = {idx1, idx2};
   AtomicParamVect paramVect(2);
   unsigned int i;
   const Bond *bond = mol.getBondBetweenAtoms(idx1, idx2);
-  bool res = (bond ? true : false);
+  bool res = bond != nullptr;
   for (i = 0; res && (i < 2); ++i) {
     const Atom *atom = mol.getAtomWithIdx(idx[i]);
     std::string atomKey = Tools::getAtomLabel(atom);
     paramVect[i] = (*params)(atomKey);
-    res = (paramVect[i] ? true : false);
+    res = paramVect[i] != nullptr;
   }
   if (res) {
     double bondOrder = bond->getBondTypeAsDouble();
@@ -446,7 +444,7 @@ bool getUFFBondStretchParams(const ROMol &mol, unsigned int idx1,
 bool getUFFAngleBendParams(const ROMol &mol, unsigned int idx1,
                            unsigned int idx2, unsigned int idx3,
                            UFFAngle &uffAngleBendParams) {
-  ParamCollection *params = ParamCollection::getParams();
+  auto params = ParamCollection::getParams();
   unsigned int idx[3] = {idx1, idx2, idx3};
   AtomicParamVect paramVect(3);
   unsigned int i;
@@ -455,13 +453,13 @@ bool getUFFAngleBendParams(const ROMol &mol, unsigned int idx1,
   for (i = 0; res && (i < 3); ++i) {
     if (i < 2) {
       bond[i] = mol.getBondBetweenAtoms(idx[i], idx[i + 1]);
-      res = (bond[i] ? true : false);
+      res = bond[i] != nullptr;
     }
     if (res) {
       const Atom *atom = mol.getAtomWithIdx(idx[i]);
       std::string atomKey = Tools::getAtomLabel(atom);
       paramVect[i] = (*params)(atomKey);
-      res = (paramVect[i] ? true : false);
+      res = paramVect[i] != nullptr;
     }
   }
   if (res) {
@@ -478,7 +476,7 @@ bool getUFFAngleBendParams(const ROMol &mol, unsigned int idx1,
 bool getUFFTorsionParams(const ROMol &mol, unsigned int idx1, unsigned int idx2,
                          unsigned int idx3, unsigned int idx4,
                          UFFTor &uffTorsionParams) {
-  ParamCollection *params = ParamCollection::getParams();
+  auto params = ParamCollection::getParams();
   unsigned int idx[4] = {idx1, idx2, idx3, idx4};
   AtomicParamVect paramVect(2);
   unsigned int i;
@@ -489,7 +487,7 @@ bool getUFFTorsionParams(const ROMol &mol, unsigned int idx1, unsigned int idx2,
   bool hasSP2 = false;
   for (i = 0; res && (i < 4); ++i) {
     if (i < 3) {
-      res = (mol.getBondBetweenAtoms(idx[i], idx[i + 1]) ? true : false);
+      res = mol.getBondBetweenAtoms(idx[i], idx[i + 1]) != nullptr;
     }
     const Atom *atom = mol.getAtomWithIdx(idx[i]);
     if ((i == 1) || (i == 2)) {
@@ -498,7 +496,7 @@ bool getUFFTorsionParams(const ROMol &mol, unsigned int idx1, unsigned int idx2,
       hyb[j] = atom->getHybridization();
       std::string atomKey = Tools::getAtomLabel(atom);
       paramVect[j] = (*params)(atomKey);
-      res = (paramVect[j] ? true : false);
+      res = paramVect[j] != nullptr;
     } else if (atom->getHybridization() == Atom::SP2) {
       hasSP2 = true;
     }
@@ -591,7 +589,7 @@ bool getUFFInversionParams(const ROMol &mol, unsigned int idx1,
     isBoundToSP2O = (isBoundToSP2O && (at2AtomicNum == 6));
     boost::tuple<double, double, double, double> invCoeffForceCon =
         UFF::Utils::calcInversionCoefficientsAndForceConstant(at2AtomicNum,
-                                                         isBoundToSP2O);
+                                                              isBoundToSP2O);
     uffInversionParams.K = boost::tuples::get<0>(invCoeffForceCon);
   }
   return res;
@@ -600,7 +598,7 @@ bool getUFFInversionParams(const ROMol &mol, unsigned int idx1,
 bool getUFFVdWParams(const ROMol &mol, unsigned int idx1, unsigned int idx2,
                      UFFVdW &uffVdWParams) {
   bool res = true;
-  ParamCollection *params = ParamCollection::getParams();
+  auto params = ParamCollection::getParams();
   unsigned int idx[2] = {idx1, idx2};
   AtomicParamVect paramVect(2);
   unsigned int i;
@@ -608,13 +606,15 @@ bool getUFFVdWParams(const ROMol &mol, unsigned int idx1, unsigned int idx2,
     const Atom *atom = mol.getAtomWithIdx(idx[i]);
     std::string atomKey = Tools::getAtomLabel(atom);
     paramVect[i] = (*params)(atomKey);
-    res = (paramVect[i] ? true : false);
+    res = paramVect[i] != nullptr;
   }
   if (res) {
-    uffVdWParams.x_ij = UFF::Utils::calcNonbondedMinimum(paramVect[0], paramVect[1]);
-    uffVdWParams.D_ij = UFF::Utils::calcNonbondedDepth(paramVect[0], paramVect[1]);
+    uffVdWParams.x_ij =
+        UFF::Utils::calcNonbondedMinimum(paramVect[0], paramVect[1]);
+    uffVdWParams.D_ij =
+        UFF::Utils::calcNonbondedDepth(paramVect[0], paramVect[1]);
   }
   return res;
 }
-}
-}
+}  // namespace UFF
+}  // namespace RDKit

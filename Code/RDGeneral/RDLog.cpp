@@ -1,6 +1,5 @@
-// $Id$
 //
-// Copyright (C)  2005-2010 Greg Landrum and Rational Discovery LLC
+// Copyright (C)  2005-2022 Greg Landrum and other RDKit contributors
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -23,7 +22,37 @@ RDLogger rdInfoLog = nullptr;
 RDLogger rdErrorLog = nullptr;
 RDLogger rdWarningLog = nullptr;
 RDLogger rdStatusLog = nullptr;
+namespace RDLog {
 
+LogStateSetter::LogStateSetter() {
+  std::vector<RDLogger> allLogs = {rdAppLog,   rdDebugLog,   rdInfoLog,
+                                   rdErrorLog, rdWarningLog, rdStatusLog};
+  for (auto i = 0u; i < allLogs.size(); ++i) {
+    if (allLogs[i] && allLogs[i]->df_enabled) {
+      d_origState |= 1 << i;
+      allLogs[i]->df_enabled = false;
+    }
+  }
+}
+
+LogStateSetter::LogStateSetter(RDLoggerList toEnable) : LogStateSetter() {
+  for (auto &log : toEnable) {
+    if (log) {
+      log->df_enabled = true;
+    }
+  }
+}
+
+LogStateSetter::~LogStateSetter() {
+  std::vector<RDLogger> allLogs = {rdAppLog,   rdDebugLog,   rdInfoLog,
+                                   rdErrorLog, rdWarningLog, rdStatusLog};
+  for (auto i = 0u; i < allLogs.size(); ++i) {
+    if (allLogs[i]) {
+      allLogs[i]->df_enabled = d_origState & 1 << i;
+    }
+  }
+}
+}  // namespace RDLog
 namespace boost {
 namespace logging {
 
@@ -76,31 +105,21 @@ void disable_logs(const std::string &arg) {
   }
 };
 
-bool is_log_enabled(RDLogger log) {
-  if (log && log.get() != nullptr) {
-    if( log->df_enabled ) {
-      return true;
-    }
-  }
-  return false;
-}
+bool is_log_enabled(RDLogger log) { return log && log->df_enabled; }
 
-void get_log_status(std::ostream &ss,
-		    const std::string &name,
-		    RDLogger log) {
+void get_log_status(std::ostream &ss, const std::string &name, RDLogger log) {
   ss << name << ":";
-  if (log && log.get() != nullptr) {
-    if( log->df_enabled ) {
+  if (log) {
+    if (log->df_enabled) {
       ss << "enabled";
-    }
-    else {
+    } else {
       ss << "disabled";
     }
   } else {
     ss << "unitialized";
   }
 }
-  
+
 std::string log_status() {
   std::stringstream ss;
   get_log_status(ss, "rdApp.debug", rdDebugLog);
@@ -112,24 +131,25 @@ std::string log_status() {
   get_log_status(ss, "rdApp.error", rdErrorLog);
   return ss.str();
 }
-  
+
 }  // namespace logging
 }  // namespace boost
 
 namespace RDLog {
 void InitLogs() {
   rdDebugLog = std::make_shared<boost::logging::rdLogger>(&std::cerr);
+  rdDebugLog->df_enabled = false;
   rdInfoLog = std::make_shared<boost::logging::rdLogger>(&std::cout);
+  rdInfoLog->df_enabled = false;
   rdWarningLog = std::make_shared<boost::logging::rdLogger>(&std::cerr);
   rdErrorLog = std::make_shared<boost::logging::rdLogger>(&std::cerr);
 }
+
 std::ostream &toStream(std::ostream &logstrm) {
+  char buffer[16];
   time_t t = time(nullptr);
-  tm details = *localtime(&t);
-  logstrm << "[" << std::setw(2) << std::setfill('0') << details.tm_hour << ":"
-          << std::setw(2) << std::setfill('0') << details.tm_min << ":"
-          << std::setw(2) << std::setfill('0') << int(details.tm_sec) << "] ";
-  return logstrm;
+  strftime(buffer, 16, "[%T] ", localtime(&t));
+  return logstrm << buffer;
 }
 }  // namespace RDLog
 
@@ -200,11 +220,11 @@ void InitLogs() {
 #endif
 
 namespace RDLog {
-  
+
 BlockLogs::BlockLogs() {
   auto logs = {rdDebugLog, rdInfoLog, rdWarningLog, rdErrorLog};
-  for(auto log: logs) {
-    if(log != nullptr && is_log_enabled(log)) {
+  for (auto log : logs) {
+    if (log != nullptr && is_log_enabled(log)) {
       log->df_enabled = false;
       logs_to_reenable.push_back(log);
     }
@@ -212,10 +232,11 @@ BlockLogs::BlockLogs() {
 }
 
 BlockLogs::~BlockLogs() {
-  for(auto log : logs_to_reenable) {
-    if(log != nullptr && log.get() != nullptr)
+  for (auto log : logs_to_reenable) {
+    if (log != nullptr && log.get() != nullptr) {
       log->df_enabled = true;
+    }
   }
 }
 
-}
+}  // namespace RDLog

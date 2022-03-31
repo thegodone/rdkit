@@ -43,7 +43,9 @@ namespace RDKit {
 
 namespace {
 std::string getArgName(const boost::shared_ptr<FilterMatcherBase> &arg) {
-  if (arg.get()) return arg->getName();
+  if (arg.get()) {
+    return arg->getName();
+  }
   return "<nullmatcher>";
 }
 }  // namespace
@@ -186,8 +188,8 @@ class RDKIT_FILTERCATALOG_EXPORT Not : public FilterMatcherBase {
 
   //! Constructs a Noter
   //! true if arg1 is false (note, never returns matches
-  //  from getMatches since a false internal match matches
-  //  nothing!
+  /// from getMatches since a false internal match matches
+  /// nothing!
   Not(const FilterMatcherBase &arg1)
       : FilterMatcherBase("Not"), arg1(arg1.copy()) {}
 
@@ -403,8 +405,11 @@ class RDKIT_FILTERCATALOG_EXPORT ExclusionList : public FilterMatcherBase {
   }
 
   bool isValid() const override {
-    for (size_t i = 0; i < d_offPatterns.size(); ++i)
-      if (!d_offPatterns[i]->isValid()) return false;
+    for (size_t i = 0; i < d_offPatterns.size(); ++i) {
+      if (!d_offPatterns[i]->isValid()) {
+        return false;
+      }
+    }
     return true;
   }
 

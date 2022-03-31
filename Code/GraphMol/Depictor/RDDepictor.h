@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -80,7 +80,7 @@ RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoords(
     int sampleSeed = 0, bool permuteDeg4Nodes = false, bool forceRDKit = false);
 
 //! \brief Compute the 2D coordinates such the interatom distances
-//   mimic those in a distance matrix
+///  mimic those in a distance matrix
 /*!
 
   This function generates 2D coordinates such that the inter-atom
@@ -138,7 +138,7 @@ RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoordsMimicDistMat(
     int sampleSeed = 25, bool permuteDeg4Nodes = true, bool forceRDKit = false);
 
 //! \brief Compute 2D coordinates where a piece of the molecule is
-//   constrained to have the same coordinates as a reference.
+///  constrained to have the same coordinates as a reference.
 /*!
   This function generates a depiction for a molecule where a piece of the
   molecule is constrained to have the same coordinates as a reference.
@@ -179,7 +179,7 @@ RDKIT_DEPICTOR_EXPORT RDKit::MatchVectType generateDepictionMatching2DStructure(
     bool allowOptionalAttachments = false);
 
 //! \brief Compute 2D coordinates where a piece of the molecule is
-//   constrained to have the same coordinates as a reference.
+///  constrained to have the same coordinates as a reference.
 /*!
   This function generates a depiction for a molecule where a piece of the
   molecule is constrained to have the same coordinates as a reference.
@@ -209,7 +209,7 @@ RDKIT_DEPICTOR_EXPORT void generateDepictionMatching2DStructure(
     bool forceRDKit = false);
 
 //! \brief Generate a 2D depiction for a molecule where all or part of
-//   it mimics the coordinates of a 3D reference structure.
+///  it mimics the coordinates of a 3D reference structure.
 /*!
   Generates a depiction for a molecule where a piece of the molecule
   is constrained to have coordinates similar to those of a 3D reference
@@ -236,6 +236,49 @@ RDKIT_DEPICTOR_EXPORT void generateDepictionMatching3DStructure(
     RDKit::ROMol &mol, const RDKit::ROMol &reference, int confId = -1,
     RDKit::ROMol *referencePattern = nullptr, bool acceptFailure = false,
     bool forceRDKit = false);
+
+//! \brief Rotate the 2D depiction such that the majority of bonds have a
+//! 30-degree angle with the X axis.
+/*!
+
+  ARGUMENTS:
+  \param mol - the molecule to be rotated
+  \param confId - (optional) the id of the reference conformation to use
+*/
+
+RDKIT_DEPICTOR_EXPORT void straightenDepiction(RDKit::ROMol &mol,
+                                               int confId = -1);
+
+//! \brief Normalizes the 2D depiction.
+/*!
+  If canonicalize is != 0, the depiction is subjected to a canonical
+  transformation such that its main axis is aligned along the X axis
+  (canonicalize >0, the default) or the Y axis (canonicalize <0).
+  If canonicalize is 0, no canonicalization takes place.
+  If scaleFactor is <0.0 (the default) the depiction is scaled such
+  that bond lengths conform to RDKit standards. The applied scaling
+  factor is returned.
+
+  ARGUMENTS:
+  \param mol          - the molecule to be normalized
+  \param confId       - (optional) the id of the reference conformation to use
+  \param canonicalize - (optional) if != 0, a canonical transformation is
+                        applied: if >0 (the default), the main molecule axis is
+                        aligned to the X axis, if <0 to the Y axis.
+                        If 0, no canonical transformation is applied.
+  \param scaleFactor  - (optional) if >0.0, the scaling factor to apply. The
+                        default (-1.0) means that the depiction is automatically
+                        scaled such that bond lengths are the standard RDKit
+                        ones.
+  RETURNS:
+
+  \return the applied scaling factor.
+*/
+
+RDKIT_DEPICTOR_EXPORT double normalizeDepiction(RDKit::ROMol &mol,
+                                                int confId = -1,
+                                                int canonicalize = 1,
+                                                double scaleFactor = -1.0);
 };  // namespace RDDepict
 
 #endif

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2014 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -101,10 +101,15 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   //! construct an Atom with a particular atomic number
   explicit Atom(unsigned int num);
   //! construct an Atom with a particular symbol (looked up in the
-  // PeriodicTable)
+  /// PeriodicTable)
   explicit Atom(const std::string &what);
   Atom(const Atom &other);
   Atom &operator=(const Atom &other);
+  // NOTE: the move methods are somewhat fraught for atoms associated with
+  // molecules since the molecule will still be pointing to the original object
+  Atom(Atom &&other) = default;
+  Atom &operator=(Atom &&other) = default;
+
   virtual ~Atom();
 
   //! makes a copy of this Atom and returns a pointer to it.
@@ -272,6 +277,8 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   // This method can be used to distinguish query atoms from standard atoms:
   virtual bool hasQuery() const { return false; }
 
+  virtual std::string getQueryType() const {return "";}
+
   //! NOT CALLABLE
   virtual void setQuery(QUERYATOM_QUERY *what);
 
@@ -420,23 +427,23 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
 };
 
 //! Set the atom's MDL integer RLabel
-//   Setting to 0 clears the rlabel.  Rlabel must be in the range [0..99]
+///  Setting to 0 clears the rlabel.  Rlabel must be in the range [0..99]
 RDKIT_GRAPHMOL_EXPORT void setAtomRLabel(Atom *atm, int rlabel);
 RDKIT_GRAPHMOL_EXPORT int getAtomRLabel(const Atom *atm);
 
 //! Set the atom's MDL atom alias
-//   Setting to an empty string clears the alias
+///  Setting to an empty string clears the alias
 RDKIT_GRAPHMOL_EXPORT void setAtomAlias(Atom *atom, const std::string &alias);
 RDKIT_GRAPHMOL_EXPORT std::string getAtomAlias(const Atom *atom);
 
 //! Set the atom's MDL atom value
-//   Setting to an empty string clears the value
-//   This is where recursive smarts get stored in MolBlock Queries
+///  Setting to an empty string clears the value
+///  This is where recursive smarts get stored in MolBlock Queries
 RDKIT_GRAPHMOL_EXPORT void setAtomValue(Atom *atom, const std::string &value);
 RDKIT_GRAPHMOL_EXPORT std::string getAtomValue(const Atom *atom);
 
 //! Sets the supplemental label that will follow the atom when writing
-//   smiles strings.
+///  smiles strings.
 RDKIT_GRAPHMOL_EXPORT void setSupplementalSmilesLabel(Atom *atom,
                                                       const std::string &label);
 RDKIT_GRAPHMOL_EXPORT std::string getSupplementalSmilesLabel(const Atom *atom);
@@ -446,7 +453,10 @@ RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &target,
                                                const RDKit::Atom &at);
 
 namespace RDKit {
-//! returns whether or not the atom is to the left of C
+//! returns true if the atom is to the left of C
 RDKIT_GRAPHMOL_EXPORT bool isEarlyAtom(int atomicNum);
+//! returns true if the atom is aromatic or has an aromatic bond
+RDKIT_GRAPHMOL_EXPORT bool isAromaticAtom(const Atom &atom);
+
 }  // namespace RDKit
 #endif

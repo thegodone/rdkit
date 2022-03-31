@@ -26,8 +26,8 @@ class ROMol;
 namespace MolStandardize {
 
 //! The CleanupParameters structure defines the default parameters for the
-// cleanup process and also allows the user to customize the process by changing
-// the parameters.
+/// cleanup process and also allows the user to customize the process by
+/// changing the parameters.
 /*!
 
   <b>Notes:</b>
@@ -70,6 +70,12 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT CleanupParameters {
   bool tautomerReassignStereo{
       true};  //! Whether enumerate() should call assignStereochemistry
               //! on all generated tautomers (defaults to true)
+  bool largestFragmentChooserUseAtomCount{
+      true};  //! Whether LargestFragmentChooser should use atom
+              //! count as main criterion before MW (defaults to true)
+  bool largestFragmentChooserCountHeavyAtomsOnly{
+      false};  //! Whether LargestFragmentChooser should only count
+               //! heavy atoms (defaults to false)
   std::vector<std::pair<std::string, std::string>> normalizationData;
   std::vector<std::pair<std::string, std::string>> fragmentData;
   std::vector<std::tuple<std::string, std::string, std::string>> acidbaseData;
@@ -85,9 +91,9 @@ RDKIT_MOLSTANDARDIZE_EXPORT void updateCleanupParamsFromJSON(
     CleanupParameters &params, const std::string &json);
 
 //! The cleanup function is equivalent to the
-// molvs.Standardizer().standardize(mol) function. It calls the same steps,
-// namely: RemoveHs, RDKit SanitizeMol, MetalDisconnector, Normalizer,
-// Reionizer, RDKit AssignStereochemistry.
+/// molvs.Standardizer().standardize(mol) function. It calls the same steps,
+/// namely: RemoveHs, RDKit SanitizeMol, MetalDisconnector, Normalizer,
+/// Reionizer, RDKit AssignStereochemistry.
 RDKIT_MOLSTANDARDIZE_EXPORT RWMol *cleanup(
     const RWMol *mol,
     const CleanupParameters &params = defaultCleanupParameters);
@@ -118,14 +124,14 @@ RDKIT_MOLSTANDARDIZE_EXPORT RWMol *canonicalTautomer(
     const CleanupParameters &params = defaultCleanupParameters);
 
 //! Returns the tautomer parent of a given molecule. The fragment parent is the
-// standardized canonical tautomer of the molecule
+/// standardized canonical tautomer of the molecule
 RDKIT_MOLSTANDARDIZE_EXPORT RWMol *tautomerParent(
     const RWMol &mol,
     const CleanupParameters &params = defaultCleanupParameters,
     bool skipStandardize = false);
 
 //! Returns the fragment parent of a given molecule. The fragment parent is the
-// largest organic covalent unit in the molecule.
+/// largest organic covalent unit in the molecule.
 RDKIT_MOLSTANDARDIZE_EXPORT RWMol *fragmentParent(
     const RWMol &mol,
     const CleanupParameters &params = defaultCleanupParameters,
@@ -158,8 +164,8 @@ RDKIT_MOLSTANDARDIZE_EXPORT RWMol *superParent(
     bool skip_standardize = false);
 
 //! Convenience function for quickly standardizing a single SMILES string.
-// Returns a standardized canonical SMILES string given a SMILES string.
-// This is the equivalent of calling cleanup() on each of the molecules
+/// Returns a standardized canonical SMILES string given a SMILES string.
+/// This is the equivalent of calling cleanup() on each of the molecules
 RDKIT_MOLSTANDARDIZE_EXPORT std::string standardizeSmiles(
     const std::string &smiles);
 
