@@ -806,14 +806,15 @@ bool _atomListQueryHelper(const T query) {
     return true;
   }
   if (query->getDescription() == "AtomOr") {
-    for (const auto child : boost::make_iterator_range(query->beginChildren(),
-                                                       query->endChildren())) {
+    for (const auto &child : boost::make_iterator_range(query->beginChildren(),
+                                                        query->endChildren())) {
       if (!_atomListQueryHelper(child)) {
         return false;
       }
     }
+    return true;
   }
-  return true;
+  return false;
 }
 }  // namespace
 bool isAtomListQuery(const Atom *a) {
@@ -855,10 +856,10 @@ void getAtomListQueryVals(const Atom::QUERYATOM_QUERY *q,
         vals.push_back(static_cast<ATOM_EQUALS_QUERY *>(child.get())->getVal());
       } else if (descr == "AtomType") {
         auto v = static_cast<ATOM_EQUALS_QUERY *>(child.get())->getVal();
-        // aromatic AtomType queries subtract 1000 from the atomic number;
+        // aromatic AtomType queries add 1000 to the atomic number;
         // correct for that:
-        if (v < 0) {
-          v += 1000;
+        if (v >= 1000) {
+          v -= 1000;
         }
         vals.push_back(v);
       }
@@ -889,11 +890,7 @@ bool isComplexQuery(const Atom *a) {
     if (_complexQueryHelper(a->getQuery(), hasAtNum)) {
       return true;
     }
-    if (hasAtNum) {
-      return false;
-    } else {
-      return true;
-    }
+    return !hasAtNum;
   }
 
   return true;
@@ -902,7 +899,7 @@ bool isAtomAromatic(const Atom *a) {
   PRECONDITION(a, "bad atom");
   bool res = false;
   if (!a->hasQuery()) {
-    res = a->getIsAromatic();
+    res = isAromaticAtom(*a);
   } else {
     std::string descr = a->getQuery()->getDescription();
     if (descr == "AtomAtomicNum") {
@@ -941,18 +938,20 @@ bool isAtomAromatic(const Atom *a) {
 
 namespace QueryOps {
 namespace {
-void completeQueryAndChildren(ATOM_EQUALS_QUERY *query, Atom *tgt,
+void completeQueryAndChildren(Atom::QUERYATOM_QUERY *query, Atom *tgt,
                               unsigned int magicVal) {
   PRECONDITION(query, "no query");
   PRECONDITION(tgt, "no atom");
-  if (static_cast<unsigned int>(query->getVal()) == magicVal) {
-    int tgtVal = query->getDataFunc()(tgt);
-    query->setVal(tgtVal);
+  auto eqQuery = dynamic_cast<ATOM_EQUALS_QUERY *>(query);
+  if (eqQuery) {
+    if (static_cast<unsigned int>(eqQuery->getVal()) == magicVal) {
+      int tgtVal = eqQuery->getDataFunc()(tgt);
+      eqQuery->setVal(tgtVal);
+    }
   }
   for (auto childIt = query->beginChildren(); childIt != query->endChildren();
        ++childIt) {
-    completeQueryAndChildren((ATOM_EQUALS_QUERY *)(childIt->get()), tgt,
-                             magicVal);
+    completeQueryAndChildren(childIt->get(), tgt, magicVal);
   }
 }
 }  // namespace
@@ -960,8 +959,7 @@ void completeMolQueries(RWMol *mol, unsigned int magicVal) {
   PRECONDITION(mol, "bad molecule");
   for (auto atom : mol->atoms()) {
     if (atom->hasQuery()) {
-      auto *query = static_cast<ATOM_EQUALS_QUERY *>(atom->getQuery());
-      completeQueryAndChildren(query, atom, magicVal);
+      completeQueryAndChildren(atom->getQuery(), atom, magicVal);
     }
   }
 }
@@ -984,9 +982,8 @@ Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom) {
 }
 
 void finalizeQueryFromDescription(
-    Queries::Query<int, Atom const *, true> *query, Atom const *owner) {
+    Queries::Query<int, Atom const *, true> *query, Atom const *) {
   std::string descr = query->getDescription();
-  RDUNUSED_PARAM(owner);
 
   if (boost::starts_with(descr, "range_")) {
     descr = descr.substr(6);
@@ -1074,8 +1071,7 @@ void finalizeQueryFromDescription(
 }
 
 void finalizeQueryFromDescription(
-    Queries::Query<int, Bond const *, true> *query, Bond const *owner) {
-  RDUNUSED_PARAM(owner);
+    Queries::Query<int, Bond const *, true> *query, Bond const *) {
   std::string descr = query->getDescription();
   Queries::Query<int, Bond const *, true> *tmpQuery;
   if (descr == "BondRingSize") {

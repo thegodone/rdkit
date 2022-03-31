@@ -1,4 +1,6 @@
 //
+//  Copyright (C) 2020-2022 David Cosgrove and other RDKit contributors
+//
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -13,8 +15,9 @@
 
 namespace RDKit {
 
-std::string DrawColourToSVG(const RDKit::DrawColour &col);
+std::string DrawColourToSVG(const DrawColour &col);
 
+namespace MolDraw2D_detail {
 // ****************************************************************************
 DrawTextFTSVG::DrawTextFTSVG(double max_fnt_sz, double min_fnt_sz,
                              const std::string &font_file, std::ostream &oss,
@@ -29,10 +32,10 @@ double DrawTextFTSVG::extractOutline() {
 
   oss_ << "<path ";
   if (!d_active_class_.empty()) {
-    oss_ << " class='" << d_active_class_ << "'"
+    oss_ << "class='" << d_active_class_ << "'"
          << " d='";
   } else {
-    oss_ << " d='";
+    oss_ << "d='";
   }
 
   double adv = DrawTextFT::extractOutline();
@@ -45,8 +48,8 @@ double DrawTextFTSVG::extractOutline() {
 int DrawTextFTSVG::MoveToFunctionImpl(const FT_Vector *to) {
   double dx, dy;
   fontPosToDrawPos(to->x, to->y, dx, dy);
-  oss_ << "M " << MolDraw2D_detail::formatDouble(dx)
-       << ' ' << MolDraw2D_detail::formatDouble(dy) << std::endl;
+  oss_ << "M " << MolDraw2D_detail::formatDouble(dx) << ' '
+       << MolDraw2D_detail::formatDouble(dy) << std::endl;
 
   return 0;
 }
@@ -55,8 +58,8 @@ int DrawTextFTSVG::MoveToFunctionImpl(const FT_Vector *to) {
 int DrawTextFTSVG::LineToFunctionImpl(const FT_Vector *to) {
   double dx, dy;
   fontPosToDrawPos(to->x, to->y, dx, dy);
-  oss_ << "L " << MolDraw2D_detail::formatDouble(dx)
-       << ' ' << MolDraw2D_detail::formatDouble(dy) << std::endl;
+  oss_ << "L " << MolDraw2D_detail::formatDouble(dx) << ' '
+       << MolDraw2D_detail::formatDouble(dy) << std::endl;
 
   return 0;
 }
@@ -70,11 +73,10 @@ int DrawTextFTSVG::ConicToFunctionImpl(const FT_Vector *control,
   double dx, dy;
   fontPosToDrawPos(to->x, to->y, dx, dy);
 
-  oss_ << "Q " << MolDraw2D_detail::formatDouble(controlX)
-       << ' ' << MolDraw2D_detail::formatDouble(controlY)
-       << ", " << MolDraw2D_detail::formatDouble(dx)
-       << ' ' << MolDraw2D_detail::formatDouble(dy)
-       << std::endl;
+  oss_ << "Q " << MolDraw2D_detail::formatDouble(controlX) << ' '
+       << MolDraw2D_detail::formatDouble(controlY) << ", "
+       << MolDraw2D_detail::formatDouble(dx) << ' '
+       << MolDraw2D_detail::formatDouble(dy) << std::endl;
 
   return 0;
 }
@@ -92,13 +94,14 @@ int DrawTextFTSVG::CubicToFunctionImpl(const FT_Vector *controlOne,
   fontPosToDrawPos(to->x, to->y, dx, dy);
 
   oss_ << "C " << MolDraw2D_detail::formatDouble(controlOneX) << ' '
-       << MolDraw2D_detail::formatDouble(controlOneY)
-       << ", " << MolDraw2D_detail::formatDouble(controlTwoX)
-       << ' ' << MolDraw2D_detail::formatDouble(controlTwoY)
-       << ", " << MolDraw2D_detail::formatDouble(dx)
-       << ' ' << MolDraw2D_detail::formatDouble(dy) << std::endl;
+       << MolDraw2D_detail::formatDouble(controlOneY) << ", "
+       << MolDraw2D_detail::formatDouble(controlTwoX) << ' '
+       << MolDraw2D_detail::formatDouble(controlTwoY) << ", "
+       << MolDraw2D_detail::formatDouble(dx) << ' '
+       << MolDraw2D_detail::formatDouble(dy) << std::endl;
 
   return 0;
 }
 
+}  // namespace MolDraw2D_detail
 }  // namespace RDKit

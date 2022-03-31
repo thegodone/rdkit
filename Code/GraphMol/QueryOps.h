@@ -84,7 +84,7 @@ static inline int queryAtomTotalDegree(Atom const *at) {
 //! D and T are treated as "non-hydrogen" here
 static inline int queryAtomNonHydrogenDegree(Atom const *at) {
   int res = 0;
-  for (const auto &nbri :
+  for (const auto nbri :
        boost::make_iterator_range(at->getOwningMol().getAtomNeighbors(at))) {
     const auto nbr = at->getOwningMol()[nbri];
     if (nbr->getAtomicNum() != 1 || nbr->getIsotope() > 1) {
@@ -97,7 +97,7 @@ static inline int queryAtomNonHydrogenDegree(Atom const *at) {
 //! D and T are not treated as heavy atoms here
 static inline int queryAtomHeavyAtomDegree(Atom const *at) {
   int heavyDegree = 0;
-  for (const auto &nbri :
+  for (const auto nbri :
        boost::make_iterator_range(at->getOwningMol().getAtomNeighbors(at))) {
     const auto nbr = at->getOwningMol()[nbri];
     if (nbr->getAtomicNum() > 1) {
@@ -141,12 +141,11 @@ static inline void parseAtomType(int val, int &atomic_num, bool &aromatic) {
     atomic_num = val;
   }
 }
-static inline bool getAtomTypeIsAromatic(int val) {
-  if (val > 1000) return true;
-  return false;
-}
+static inline bool getAtomTypeIsAromatic(int val) { return val > 1000; }
 static inline int getAtomTypeAtomicNum(int val) {
-  if (val > 1000) return val - 1000;
+  if (val > 1000) {
+    return val - 1000;
+  }
   return val;
 }
 

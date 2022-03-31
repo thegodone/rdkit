@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -44,19 +44,18 @@ void embedFusedSystems(const RDKit::ROMol &mol,
   RDKit::INT_INT_VECT_MAP neighMap;
   RingUtils::makeRingNeighborMap(arings, neighMap);
 
-  RDKit::INT_VECT fused;
-  size_t cnrs = arings.size();
+  auto cnrs = arings.size();
   boost::dynamic_bitset<> fusDone(cnrs);
-  size_t curr = 0;
 
+  auto curr = 0u;
   while (curr < cnrs) {
     // embed all ring and fused ring systems
-    fused.resize(0);
+    RDKit::INT_VECT fused;
     RingUtils::pickFusedRings(curr, neighMap, fused, fusDone);
     RDKit::VECT_INT_VECT frings;
     frings.reserve(fused.size());
-    for (RDKit::INT_VECT_CI rid = fused.begin(); rid != fused.end(); ++rid) {
-      frings.push_back(arings[*rid]);
+    for (auto rid : fused) {
+      frings.push_back(arings.at(rid));
     }
     EmbeddedFrag efrag(&mol, frings);
     efrag.setupNewNeighs();
@@ -76,22 +75,21 @@ void embedFusedSystems(const RDKit::ROMol &mol,
 
 void embedCisTransSystems(const RDKit::ROMol &mol,
                           std::list<EmbeddedFrag> &efrags) {
-  for (RDKit::ROMol::ConstBondIterator cbi = mol.beginBonds();
-       cbi != mol.endBonds(); ++cbi) {
+  for (auto bond : mol.bonds()) {
     // check if this bond is in a cis/trans double bond
     // and it is not a ring bond
-    if (((*cbi)->getBondType() == RDKit::Bond::DOUBLE)  // this is a double bond
-        && ((*cbi)->getStereo() >
+    if ((bond->getBondType() == RDKit::Bond::DOUBLE)  // this is a double bond
+        && (bond->getStereo() >
             RDKit::Bond::STEREOANY)  // and has stereo chemistry specified
-        && (!(*cbi)->getOwningMol().getRingInfo()->numBondRings(
-               (*cbi)->getIdx()))) {  // not in a ring
-      if ((*cbi)->getStereoAtoms().size() != 2) {
+        && (!bond->getOwningMol().getRingInfo()->numBondRings(
+               bond->getIdx()))) {  // not in a ring
+      if (bond->getStereoAtoms().size() != 2) {
         BOOST_LOG(rdWarningLog)
             << "WARNING: bond found with stereo spec but no stereo atoms"
             << std::endl;
         continue;
       }
-      EmbeddedFrag efrag(*cbi);
+      EmbeddedFrag efrag(bond);
       efrag.setupNewNeighs();
       efrags.push_back(efrag);
     }
@@ -103,14 +101,12 @@ RDKit::INT_LIST getNonEmbeddedAtoms(const RDKit::ROMol &mol,
   RDKit::INT_LIST res;
   boost::dynamic_bitset<> done(mol.getNumAtoms());
   for (const auto &efrag : efrags) {
-    const INT_EATOM_MAP &oatoms = efrag.GetEmbeddedAtoms();
+    const auto &oatoms = efrag.GetEmbeddedAtoms();
     for (const auto &oatom : oatoms) {
       done[oatom.first] = 1;
     }
   }
-  for (RDKit::ROMol::ConstAtomIterator ai = mol.beginAtoms();
-       ai != mol.endAtoms(); ai++) {
-    int aid = (*ai)->getIdx();
+  for (auto aid = 0u; aid < mol.getNumAtoms(); ++aid) {
     if (!done[aid]) {
       res.push_back(aid);
     }
@@ -125,7 +121,7 @@ std::list<EmbeddedFrag>::iterator _findLargestFrag(
     std::list<EmbeddedFrag> &efrags) {
   std::list<EmbeddedFrag>::iterator mfri;
   int msiz = 0;
-  for (auto efri = efrags.begin(); efri != efrags.end(); efri++) {
+  for (auto efri = efrags.begin(); efri != efrags.end(); ++efri) {
     if ((!efri->isDone()) && (efri->Size() > msiz)) {
       msiz = efri->Size();
       mfri = efri;
@@ -147,10 +143,10 @@ void _shiftCoords(std::list<EmbeddedFrag> &efrags) {
     efrag.computeBox();
   }
   auto eri = efrags.begin();
-  double xmax = eri->getBoxPx();
-  double xmin = eri->getBoxNx();
-  double ymax = eri->getBoxPy();
-  double ymin = eri->getBoxNy();
+  auto xmax = eri->getBoxPx();
+  auto xmin = eri->getBoxNx();
+  auto ymax = eri->getBoxPy();
+  auto ymin = eri->getBoxNy();
 
   ++eri;
   while (eri != efrags.end()) {
@@ -159,10 +155,10 @@ void _shiftCoords(std::list<EmbeddedFrag> &efrags) {
     if (xmax + xmin > ymax + ymin) {
       xshift = false;
     }
-    double xn = eri->getBoxNx();
-    double xp = eri->getBoxPx();
-    double yn = eri->getBoxNy();
-    double yp = eri->getBoxPy();
+    auto xn = eri->getBoxNx();
+    auto xp = eri->getBoxPx();
+    auto yn = eri->getBoxNy();
+    auto yp = eri->getBoxPy();
     RDGeom::Point2D shift(0.0, 0.0);
     if (xshift) {
       shift.x = xmax + xn + 1.0;
@@ -178,6 +174,11 @@ void _shiftCoords(std::list<EmbeddedFrag> &efrags) {
     ++eri;
   }
 }
+
+// we do not use std::copysign as we need a tolerance
+double copySign(double to, double from, double tol) {
+  return (from < -tol ? -fabs(to) : fabs(to));
+}
 }  // namespace DepictorLocal
 
 void computeInitialCoords(RDKit::ROMol &mol,
@@ -185,7 +186,7 @@ void computeInitialCoords(RDKit::ROMol &mol,
                           std::list<EmbeddedFrag> &efrags) {
   RDKit::INT_VECT atomRanks;
   atomRanks.resize(mol.getNumAtoms());
-  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+  for (auto i = 0u; i < mol.getNumAtoms(); ++i) {
     atomRanks[i] = getAtomDepictRank(mol.getAtomWithIdx(i));
   }
   RDKit::VECT_INT_VECT arings;
@@ -216,7 +217,7 @@ void computeInitialCoords(RDKit::ROMol &mol,
   DepictorLocal::embedCisTransSystems(mol, efrags);
   // now get the atoms that are not yet embedded in either a cis/trans system
   // or a ring system (or simply the first atom)
-  RDKit::INT_LIST nratms = DepictorLocal::getNonEmbeddedAtoms(mol, efrags);
+  auto nratms = DepictorLocal::getNonEmbeddedAtoms(mol, efrags);
   std::list<EmbeddedFrag>::iterator mri;
   if (preSpec) {
     // if the user specified coordinates on some of the atoms use that as
@@ -231,11 +232,10 @@ void computeInitialCoords(RDKit::ROMol &mol,
     if (mri == efrags.end()) {
       // we are out of embedded fragments, if there are any
       // non embedded atoms use them to start a fragment
-      int mrank, rank;
-      mrank = static_cast<int>(RDKit::MAX_INT);
-      RDKit::INT_LIST_I nri, mnri;
-      for (nri = nratms.begin(); nri != nratms.end(); nri++) {
-        rank = atomRanks[*nri];
+      auto mrank = static_cast<int>(RDKit::MAX_INT);
+      RDKit::INT_LIST_I mnri;
+      for (auto nri = nratms.begin(); nri != nratms.end(); ++nri) {
+        auto rank = atomRanks.at(*nri);
         rank *= mol.getNumAtoms();
         // use the atom index as well so that we at least
         // get reproducible depictions in cases where things
@@ -250,7 +250,7 @@ void computeInitialCoords(RDKit::ROMol &mol,
       nratms.erase(mnri);
       efrags.push_back(efrag);
       mri = efrags.end();
-      mri--;
+      --mri;
     }
     mri->markDone();
     mri->expandEfrag(nratms, efrags);
@@ -266,14 +266,11 @@ unsigned int copyCoordinate(RDKit::ROMol &mol, std::list<EmbeddedFrag> &efrags,
   auto *conf = new RDKit::Conformer(mol.getNumAtoms());
   conf->set3D(false);
   std::list<EmbeddedFrag>::iterator eri;
-  for (eri = efrags.begin(); eri != efrags.end(); eri++) {
-    const INT_EATOM_MAP &eatoms = eri->GetEmbeddedAtoms();
-    INT_EATOM_MAP_CI eai;
-    for (eai = eatoms.begin(); eai != eatoms.end(); eai++) {
-      int aid = eai->first;
-      RDGeom::Point2D cr = eai->second.loc;
+  for (const auto &efrag : efrags) {
+    for (const auto &eai : efrag.GetEmbeddedAtoms()) {
+      const auto &cr = eai.second.loc;
       RDGeom::Point3D fcr(cr.x, cr.y, 0.0);
-      conf->setAtomPos(aid, fcr);
+      conf->setAtomPos(eai.first, fcr);
     }
   }
   unsigned int confId = 0;
@@ -317,7 +314,7 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
     if (coordMap) {
       params.coordMap = *coordMap;
     }
-    unsigned int cid = RDKit::CoordGen::addCoords(mol, &params);
+    auto cid = RDKit::CoordGen::addCoords(mol, &params);
     return cid;
   };
 #endif
@@ -325,49 +322,50 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
   std::list<EmbeddedFrag> efrags;
   computeInitialCoords(mol, coordMap, efrags);
 
-  std::list<EmbeddedFrag>::iterator eri;
+#if 1
   // perform random sampling here to improve the density
-  for (eri = efrags.begin(); eri != efrags.end(); eri++) {
+  for (auto &eri : efrags) {
     // either sample the 2D space by randomly flipping rotatable
     // bonds in the structure or flip only bonds along the shortest
     // path between colliding atoms - don't do both
     if ((nSamples > 0) && (nFlipsPerSample > 0)) {
-      eri->randomSampleFlipsAndPermutations(nFlipsPerSample, nSamples,
-                                            sampleSeed, nullptr, 0.0,
-                                            permuteDeg4Nodes);
+      eri.randomSampleFlipsAndPermutations(nFlipsPerSample, nSamples,
+                                           sampleSeed, nullptr, 0.0,
+                                           permuteDeg4Nodes);
     } else {
-      eri->removeCollisionsBondFlip();
+      eri.removeCollisionsBondFlip();
     }
   }
-  for (eri = efrags.begin(); eri != efrags.end(); eri++) {
+  for (auto &eri : efrags) {
     // if there are any remaining collisions
-    eri->removeCollisionsOpenAngles();
-    eri->removeCollisionsShortenBonds();
+    eri.removeCollisionsOpenAngles();
+    eri.removeCollisionsShortenBonds();
   }
   if (!coordMap || !coordMap->size()) {
     if (canonOrient && efrags.size()) {
       // if we do not have any prespecified coordinates - canonicalize
       // the orientation of the fragment so that the longest axes fall
       // along the x-axis etc.
-      for (eri = efrags.begin(); eri != efrags.end(); eri++) {
-        eri->canonicalizeOrientation();
+      for (auto &eri : efrags) {
+        eri.canonicalizeOrientation();
       }
     }
   }
   DepictorLocal::_shiftCoords(efrags);
+#endif
   // create a conformation on the molecule and copy the coordinates
-  unsigned int cid = copyCoordinate(mol, efrags, clearConfs);
+  auto cid = copyCoordinate(mol, efrags, clearConfs);
 
   // special case for a single-atom coordMap template
   if ((coordMap) && (coordMap->size() == 1)) {
-    RDKit::Conformer &conf = mol.getConformer(cid);
+    auto &conf = mol.getConformer(cid);
     auto cRef = coordMap->begin();
-    RDGeom::Point3D confPos = conf.getAtomPos(cRef->first);
-    RDGeom::Point2D refPos = cRef->second;
+    const auto &confPos = conf.getAtomPos(cRef->first);
+    auto refPos = cRef->second;
     refPos.x -= confPos.x;
     refPos.y -= confPos.y;
-    for (unsigned int i = 0; i < conf.getNumAtoms(); ++i) {
-      confPos = conf.getAtomPos(i);
+    for (auto i = 0u; i < conf.getNumAtoms(); ++i) {
+      auto confPos = conf.getAtomPos(i);
       confPos.x += refPos.x;
       confPos.y += refPos.y;
       conf.setAtomPos(i, confPos);
@@ -422,9 +420,7 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
 unsigned int compute2DCoordsMimicDistMat(
     RDKit::ROMol &mol, const DOUBLE_SMART_PTR *dmat, bool canonOrient,
     bool clearConfs, double weightDistMat, unsigned int nFlipsPerSample,
-    unsigned int nSamples, int sampleSeed, bool permuteDeg4Nodes,
-    bool forceRDKit) {
-  RDUNUSED_PARAM(forceRDKit);
+    unsigned int nSamples, int sampleSeed, bool permuteDeg4Nodes, bool) {
   // storage for pieces of a molecule/s that are embedded in 2D
   std::list<EmbeddedFrag> efrags;
   computeInitialCoords(mol, nullptr, efrags);
@@ -432,23 +428,21 @@ unsigned int compute2DCoordsMimicDistMat(
   // now perform random flips of rotatable bonds so that we can sample the space
   // and try to mimic the distances in dmat
   std::list<EmbeddedFrag>::iterator eri;
-  for (eri = efrags.begin(); eri != efrags.end(); eri++) {
-    eri->randomSampleFlipsAndPermutations(nFlipsPerSample, nSamples, sampleSeed,
-                                          dmat, weightDistMat,
-                                          permuteDeg4Nodes);
+  for (auto &eri : efrags) {
+    eri.randomSampleFlipsAndPermutations(nFlipsPerSample, nSamples, sampleSeed,
+                                         dmat, weightDistMat, permuteDeg4Nodes);
   }
   if (canonOrient && efrags.size()) {
     // canonicalize the orientation of the fragment so that the
     // longest axes fall along the x-axis etc.
-    for (eri = efrags.begin(); eri != efrags.end(); eri++) {
-      eri->canonicalizeOrientation();
+    for (auto &eri : efrags) {
+      eri.canonicalizeOrientation();
     }
   }
 
   DepictorLocal::_shiftCoords(efrags);
   // create a conformation on the molecule and copy the coordinates
-  unsigned int cid = copyCoordinate(mol, efrags, clearConfs);
-  return cid;
+  return copyCoordinate(mol, efrags, clearConfs);
 }
 
 //! \brief Compute 2D coordinates where a piece of the molecule is
@@ -474,7 +468,7 @@ void generateDepictionMatching2DStructure(
       throw RDDepict::DepictException(
           "Molecule atom index in refMatchVect out of range");
     }
-    RDGeom::Point3D pt3 = conf.getAtomPos(mv.first);
+    const auto &pt3 = conf.getAtomPos(mv.first);
     RDGeom::Point2D pt2(pt3.x, pt3.y);
     coordMap[mv.second] = pt2;
   }
@@ -576,7 +570,7 @@ void generateDepictionMatching3DStructure(RDKit::ROMol &mol,
                                           int confId,
                                           RDKit::ROMol *referencePattern,
                                           bool acceptFailure, bool forceRDKit) {
-  unsigned int num_ats = mol.getNumAtoms();
+  auto num_ats = mol.getNumAtoms();
   if (!referencePattern && reference.getNumAtoms() < num_ats) {
     if (acceptFailure) {
       RDDepict::compute2DCoords(mol);
@@ -633,5 +627,136 @@ void generateDepictionMatching3DStructure(RDKit::ROMol &mol,
 
   RDDepict::compute2DCoordsMimicDistMat(mol, &dmat, false, true, 0.5, 3, 100,
                                         25, true, forceRDKit);
+}
+
+void straightenDepiction(RDKit::ROMol &mol, int confId) {
+  constexpr double RAD2DEG = 180. / M_PI;
+  constexpr double DEG2RAD = M_PI / 180.;
+  constexpr double INCR_DEG = 30.;
+  constexpr double HALF_INCR_DEG = 0.5 * INCR_DEG;
+  constexpr double TOL_DEG = 5.0;
+  constexpr double ALMOST_ZERO = 1.e-5;
+  auto &conf = mol.getConformer(confId);
+  auto &pos = conf.getPositions();
+  std::unordered_map<int, std::pair<unsigned int, double>> thetaBins;
+  std::vector<double> thetaValues;
+  thetaValues.reserve(mol.getNumBonds());
+  for (const auto b : mol.bonds()) {
+    auto bi = b->getBeginAtomIdx();
+    auto ei = b->getEndAtomIdx();
+    auto bv = pos.at(bi) - pos.at(ei);
+    bv.x = (bv.x < 0.) ? std::min(-ALMOST_ZERO, bv.x)
+                       : std::max(ALMOST_ZERO, bv.x);
+    auto theta = RAD2DEG * atan(bv.y / bv.x);
+    auto d_theta = fmod(-theta, INCR_DEG);
+    if (fabs(d_theta) > HALF_INCR_DEG) {
+      d_theta -= DepictorLocal::copySign(INCR_DEG, d_theta, ALMOST_ZERO);
+    }
+    int thetaKey = static_cast<int>(
+        d_theta + DepictorLocal::copySign(0.5, d_theta, ALMOST_ZERO));
+    auto it = thetaBins.find(thetaKey);
+    if (it == thetaBins.end()) {
+      it = thetaBins.emplace(thetaKey, std::make_pair(0U, 0.0)).first;
+    }
+    ++it->second.first;
+    it->second.second += d_theta;
+    thetaValues.push_back(theta);
+  }
+  unsigned int maxCount = 0;
+  double d_thetaMin = 0.;
+  for (const auto &it : thetaBins) {
+    const auto count = it.second.first;
+    const auto d_thetaAvg = it.second.second / static_cast<double>(count);
+    if (count > maxCount ||
+        (count == maxCount && fabs(d_thetaAvg) < fabs(d_thetaMin))) {
+      maxCount = count;
+      d_thetaMin = d_thetaAvg;
+    }
+  }
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-lambda-capture"
+#endif
+  unsigned int n30 =
+      std::count_if(thetaValues.begin(), thetaValues.end(),
+                    [d_thetaMin, INCR_DEG, TOL_DEG](double theta) {
+                      theta += d_thetaMin;
+                      return (fabs(fmod(theta, INCR_DEG)) < TOL_DEG);
+                    });
+  unsigned int n60 = std::count_if(
+      thetaValues.begin(), thetaValues.end(),
+      [d_thetaMin, INCR_DEG, TOL_DEG, ALMOST_ZERO](double theta) {
+        theta += d_thetaMin;
+        return (fabs(fmod(theta, INCR_DEG)) < TOL_DEG &&
+                !(abs(static_cast<int>(
+                      theta / INCR_DEG +
+                      DepictorLocal::copySign(0.5, theta, ALMOST_ZERO))) %
+                  2));
+      });
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+  bool shouldRotate = (n60 > n30 / 2);
+  if (shouldRotate) {
+    d_thetaMin -= DepictorLocal::copySign(INCR_DEG, d_thetaMin, ALMOST_ZERO);
+  }
+  d_thetaMin *= DEG2RAD;
+  RDGeom::Transform3D trans;
+  trans.SetRotation(d_thetaMin, RDGeom::Z_Axis);
+  MolTransforms::transformConformer(conf, trans);
+}
+
+double normalizeDepiction(RDKit::ROMol &mol, int confId, int canonicalize,
+                          double scaleFactor) {
+  auto &conf = mol.getConformer(confId);
+  if (scaleFactor < 0.0) {
+    constexpr double RDKIT_BOND_LEN = 1.5;
+    int mostCommonBondLengthInt = -1;
+    unsigned int maxCount = 0;
+    std::unordered_map<int, unsigned int> binnedBondLengths;
+    for (const auto b : mol.bonds()) {
+      int bondLength =
+          static_cast<int>(MolTransforms::getBondLength(
+                               conf, b->getBeginAtomIdx(), b->getEndAtomIdx()) *
+                               10.0 +
+                           0.5);
+      auto it = binnedBondLengths.find(bondLength);
+      if (it == binnedBondLengths.end()) {
+        it = binnedBondLengths.emplace(bondLength, 0U).first;
+      }
+      ++it->second;
+      if (it->second > maxCount) {
+        maxCount = it->second;
+        mostCommonBondLengthInt = it->first;
+      }
+    }
+    if (!binnedBondLengths.empty()) {
+      double mostCommonBondLength =
+          static_cast<double>(mostCommonBondLengthInt) * 0.1;
+      scaleFactor = RDKIT_BOND_LEN / mostCommonBondLength;
+    }
+  }
+  std::unique_ptr<RDGeom::Transform3D> canonTrans;
+  if (canonicalize) {
+    auto ctd = MolTransforms::computeCentroid(conf);
+    canonTrans.reset(MolTransforms::computeCanonicalTransform(conf, &ctd));
+    if (canonicalize < 0) {
+      RDGeom::Transform3D rotate90;
+      rotate90.SetRotation(0., 1., RDGeom::Point3D(0., 0., 1.));
+      *canonTrans *= rotate90;
+    }
+  }
+  if (scaleFactor > 0. && fabs(scaleFactor - 1.0) > 1.e-5) {
+    RDGeom::Transform3D trans;
+    trans.setVal(0, 0, scaleFactor);
+    trans.setVal(1, 1, scaleFactor);
+    if (canonTrans) {
+      trans *= *canonTrans;
+    }
+    MolTransforms::transformConformer(conf, trans);
+  } else if (canonTrans) {
+    MolTransforms::transformConformer(conf, *canonTrans);
+  }
+  return scaleFactor;
 }
 }  // namespace RDDepict

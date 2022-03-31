@@ -30,6 +30,22 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+
+// PostgreSQL 14 on Windows uses a hack to redefine the stat struct
+// The hack assumes that sys/stat.h will be imported for the first
+// time by win32_port.h, which is not necessarily the case
+// So we need to set the stage for the hack or it will fail
+#ifdef _WIN32
+#define fstat microsoft_native_fstat
+#define stat microsoft_native_stat
+#include <sys/stat.h>
+#ifdef __MINGW32__
+#ifndef HAVE_GETTIMEOFDAY
+#define HAVE_GETTIMEOFDAY 1
+#endif
+#endif
+#endif
+
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/ChemReactions/ReactionPickler.h>
@@ -74,6 +90,12 @@
 
 #ifdef RDK_BUILD_MOLINTERCHANGE_SUPPORT
 #include <GraphMol/MolInterchange/MolInterchange.h>
+#endif
+
+// see above comment on the PostgreSQL hack
+#ifdef _WIN32
+#undef fstat
+#undef stat
 #endif
 
 #include "rdkit.h"
@@ -161,17 +183,28 @@ extern "C" Mol *deconstructROMol(CROMol data) {
 }
 
 extern "C" CROMol parseMolText(char *data, bool asSmarts, bool warnOnFail,
-                               bool asQuery) {
+                               bool asQuery, bool sanitize) {
   RWMol *mol = nullptr;
 
   try {
     if (!asSmarts) {
       if (!asQuery) {
-        mol = SmilesToMol(data);
+        SmilesParserParams ps;
+        ps.sanitize = sanitize;
+        mol = SmilesToMol(data, ps);
+        if (mol && !sanitize) {
+          mol->updatePropertyCache(false);
+          unsigned int failedOp;
+          unsigned int ops = MolOps::SANITIZE_ALL ^
+                             MolOps::SANITIZE_PROPERTIES ^
+                             MolOps::SANITIZE_KEKULIZE;
+          MolOps::sanitizeMol(*mol, failedOp, ops);
+        }
       } else {
         mol = SmilesToMol(data, 0, false);
         if (mol != nullptr) {
-          MolOps::sanitizeMol(*mol);
+          mol->updatePropertyCache(false);
+          MolOps::setAromaticity(*mol);
           MolOps::mergeQueryHs(*mol);
         }
       }
@@ -222,8 +255,10 @@ extern "C" CROMol parseMolCTAB(char *data, bool keepConformer, bool warnOnFail,
     if (!asQuery) {
       mol = MolBlockToMol(data);
     } else {
-      mol = MolBlockToMol(data, true, false);
+      mol = MolBlockToMol(data, false, false);
       if (mol != nullptr) {
+        mol->updatePropertyCache(false);
+        MolOps::setAromaticity(*mol);
         MolOps::mergeQueryHs(*mol);
       }
     }
@@ -352,7 +387,11 @@ extern "C" char *makeMolText(CROMol data, int *len, bool asSmarts,
         StringData = MolToCXSmiles(*mol);
       }
     } else {
-      StringData = MolToSmarts(*mol, false);
+      if (!cxSmiles) {
+        StringData = MolToSmarts(*mol, false);
+      } else {
+        StringData = MolToCXSmarts(*mol);
+      }
     }
   } catch (...) {
     ereport(
@@ -367,14 +406,18 @@ extern "C" char *makeMolText(CROMol data, int *len, bool asSmarts,
 }
 
 extern "C" char *makeCtabText(CROMol data, int *len,
-                              bool createDepictionIfMissing) {
+                              bool createDepictionIfMissing, bool useV3000) {
   auto *mol = (ROMol *)data;
 
   try {
     if (createDepictionIfMissing && mol->getNumConformers() == 0) {
       RDDepict::compute2DCoords(*mol);
     }
-    StringData = MolToMolBlock(*mol);
+    if (!useV3000) {
+      StringData = MolToMolBlock(*mol);
+    } else {
+      StringData = MolToV3KMolBlock(*mol);
+    }
   } catch (...) {
     ereport(WARNING,
             (errcode(ERRCODE_WARNING),
@@ -539,23 +582,34 @@ extern "C" int molcmp(CROMol i, CROMol a) {
   return smi1 == smi2 ? 0 : (smi1 < smi2 ? -1 : 1);
 }
 
-extern "C" int MolSubstruct(CROMol i, CROMol a) {
+extern "C" int MolSubstruct(CROMol i, CROMol a, bool useChirality) {
   auto *im = (ROMol *)i;
   auto *am = (ROMol *)a;
   RDKit::SubstructMatchParameters params;
-  params.useChirality = getDoChiralSSS();
-  params.useEnhancedStereo = getDoEnhancedStereoSSS();
+  if (useChirality) {
+    params.useChirality = true;
+    params.useEnhancedStereo = true;
+  } else {
+    params.useChirality = getDoChiralSSS();
+    params.useEnhancedStereo = getDoEnhancedStereoSSS();
+  }
   params.maxMatches = 1;
   auto matchVect = RDKit::SubstructMatch(*im, *am, params);
   return static_cast<int>(matchVect.size());
 }
 
-extern "C" int MolSubstructCount(CROMol i, CROMol a, bool uniquify) {
+extern "C" int MolSubstructCount(CROMol i, CROMol a, bool uniquify,
+                                 bool useChirality) {
   auto *im = (ROMol *)i;
   auto *am = (ROMol *)a;
   RDKit::SubstructMatchParameters params;
-  params.useChirality = getDoChiralSSS();
-  params.useEnhancedStereo = getDoEnhancedStereoSSS();
+  if (useChirality) {
+    params.useChirality = true;
+    params.useEnhancedStereo = true;
+  } else {
+    params.useChirality = getDoChiralSSS();
+    params.useEnhancedStereo = getDoEnhancedStereoSSS();
+  }
   params.uniquify = uniquify;
   auto matchVect = RDKit::SubstructMatch(*im, *am, params);
   return static_cast<int>(matchVect.size());
@@ -571,7 +625,9 @@ extern "C" int MolSubstructCount(CROMol i, CROMol a, bool uniquify) {
   }
 MOLDESCR(FractionCSP3, RDKit::Descriptors::calcFractionCSP3, double)
 MOLDESCR(TPSA, RDKit::Descriptors::calcTPSA, double)
+MOLDESCR(LabuteASA, RDKit::Descriptors::calcLabuteASA, double)
 MOLDESCR(AMW, RDKit::Descriptors::calcAMW, double)
+MOLDESCR(ExactMW, RDKit::Descriptors::calcExactMW, double)
 MOLDESCR(HBA, RDKit::Descriptors::calcLipinskiHBA, int)
 MOLDESCR(HBD, RDKit::Descriptors::calcLipinskiHBD, int)
 MOLDESCR(NumHeteroatoms, RDKit::Descriptors::calcNumHeteroatoms, int)
@@ -592,6 +648,9 @@ MOLDESCR(NumAliphaticCarbocycles,
 MOLDESCR(NumSaturatedCarbocycles,
          RDKit::Descriptors::calcNumSaturatedCarbocycles, int)
 MOLDESCR(NumHeterocycles, RDKit::Descriptors::calcNumHeterocycles, int)
+MOLDESCR(NumSpiroAtoms, RDKit::Descriptors::calcNumSpiroAtoms, int)
+MOLDESCR(NumBridgeheadAtoms, RDKit::Descriptors::calcNumBridgeheadAtoms, int)
+MOLDESCR(NumAmideBonds, RDKit::Descriptors::calcNumAmideBonds, int)
 
 MOLDESCR(NumRotatableBonds, RDKit::Descriptors::calcNumRotatableBonds, int)
 MOLDESCR(Chi0v, RDKit::Descriptors::calcChi0v, double)
@@ -607,9 +666,8 @@ MOLDESCR(Chi4n, RDKit::Descriptors::calcChi4n, double)
 MOLDESCR(Kappa1, RDKit::Descriptors::calcKappa1, double)
 MOLDESCR(Kappa2, RDKit::Descriptors::calcKappa2, double)
 MOLDESCR(Kappa3, RDKit::Descriptors::calcKappa3, double)
+MOLDESCR(HallKierAlpha, RDKit::Descriptors::calcHallKierAlpha, double)
 MOLDESCR(Phi, RDKit::Descriptors::calcPhi, double)
-MOLDESCR(NumSpiroAtoms, RDKit::Descriptors::calcNumSpiroAtoms, int)
-MOLDESCR(NumBridgeheadAtoms, RDKit::Descriptors::calcNumBridgeheadAtoms, int)
 
 extern "C" double MolLogP(CROMol i) {
   double logp, mr;
@@ -937,8 +995,12 @@ extern "C" bytea *makeLowSparseFingerPrint(CSfp data, int numInts) {
 #endif
     }
 
-    if (s[n].low == 0 || s[n].low > iterV) s[n].low = iterV;
-    if (s[n].high < iterV) s[n].high = iterV;
+    if (s[n].low == 0 || s[n].low > iterV) {
+      s[n].low = iterV;
+    }
+    if (s[n].high < iterV) {
+      s[n].high = iterV;
+    }
   }
 
   return res;
@@ -967,8 +1029,9 @@ extern "C" void countOverlapValues(bytea *sign, CSfp data, int numBits,
   } else {
     /* Assume, sign has only true bits */
     for (iter = v->getNonzeroElements().begin();
-         iter != v->getNonzeroElements().end(); iter++)
+         iter != v->getNonzeroElements().end(); iter++) {
       *sum += iter->second;
+    }
 
     *overlapSum = *sum;
     *overlapN = v->getNonzeroElements().size();
@@ -1002,9 +1065,10 @@ extern "C" void countLowOverlapValues(bytea *sign, CSfp data, int numInts,
 
   for (n = 0; n < numInts; n++) {
     *keySum += s[n].low;
-    if (s[n].low != s[n].high)
-      *keySum += s[n].high; /* there is at least two key mapped into current
-                               backet */
+    if (s[n].low != s[n].high) {
+      *keySum += s[n].high;
+    } /* there is at least two key mapped into current
+                                    backet */
   }
 
   Assert(*overlapUp <= *keySum);
@@ -1046,8 +1110,8 @@ extern "C" double calcSparseDiceSml(CSfp a, CSfp b) {
   return res;
 }
 
-extern "C" double calcSparseStringDiceSml(const char *a, unsigned int sza,
-                                          const char *b, unsigned int szb) {
+extern "C" double calcSparseStringDiceSml(const char *a, unsigned int,
+                                          const char *b, unsigned int) {
   const auto *t1 = (const unsigned char *)a;
   const auto *t2 = (const unsigned char *)b;
 
@@ -1159,7 +1223,7 @@ extern "C" double calcSparseStringDiceSml(const char *a, unsigned int sza,
   return res;
 }
 
-extern "C" bool calcSparseStringAllValsGT(const char *a, unsigned int sza,
+extern "C" bool calcSparseStringAllValsGT(const char *a, unsigned int,
                                           int tgt) {
   const auto *t1 = (const unsigned char *)a;
 
@@ -1199,7 +1263,7 @@ extern "C" bool calcSparseStringAllValsGT(const char *a, unsigned int sza,
   }
   return true;
 }
-extern "C" bool calcSparseStringAllValsLT(const char *a, unsigned int sza,
+extern "C" bool calcSparseStringAllValsLT(const char *a, unsigned int,
                                           int tgt) {
   const auto *t1 = (const unsigned char *)a;
 
@@ -1952,7 +2016,6 @@ extern "C" CSfp makeReactionDifferenceSFP(CChemicalReaction data, int size,
     if (fpType > 3 || fpType < 1) {
       elog(ERROR, "makeReactionDifferenceSFP: Unknown Fingerprint type");
     }
-    auto fp = static_cast<RDKit::FingerprintType>(fpType);
     RDKit::ReactionFingerprintParams params;
     params.fpType = static_cast<FingerprintType>(fpType);
     params.fpSize = size;
@@ -1974,7 +2037,6 @@ extern "C" CBfp makeReactionBFP(CChemicalReaction data, int size, int fpType) {
     if (fpType > 5 || fpType < 1) {
       elog(ERROR, "makeReactionBFP: Unknown Fingerprint type");
     }
-    auto fp = static_cast<RDKit::FingerprintType>(fpType);
     RDKit::ReactionFingerprintParams params;
     params.fpType = static_cast<FingerprintType>(fpType);
     params.fpSize = size;
@@ -2059,20 +2121,18 @@ extern "C" char *findMCSsmiles(char *smiles, char *params) {
 
   char *str = smiles;
   char *s = str;
-  int len, nmols = 0;
+  char *s_end = str + strlen(str);
+  int len = 0;
   std::vector<RDKit::ROMOL_SPTR> molecules;
   while (*s && *s <= ' ') {
     s++;
   }
-  while (*s > ' ') {
+  while (s<s_end && * s> ' ') {
     len = 0;
     while (s[len] > ' ') {
       len++;
     }
     s[len] = '\0';
-    if (0 == strlen(s)) {
-      continue;
-    }
     ROMol *molptr = nullptr;
     try {
       molptr = RDKit::SmilesToMol(s);
@@ -2107,9 +2167,10 @@ extern "C" char *findMCSsmiles(char *smiles, char *params) {
   try {
     MCSResult res = RDKit::findMCS(molecules, &p);
     mcs = res.SmartsString;
-    if (!res.isCompleted())
+    if (!res.isCompleted()) {
       ereport(WARNING, (errcode(ERRCODE_WARNING),
                         errmsg("findMCS timed out, result is not maximal")));
+    }
   } catch (...) {
     ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("findMCS: failed")));
     mcs.clear();
@@ -2162,9 +2223,10 @@ extern "C" char *findMCS(void *vmols, char *params) {
 
   try {
     MCSResult res = RDKit::findMCS(*molecules, &p);
-    if (!res.isCompleted())
+    if (!res.isCompleted()) {
       ereport(WARNING, (errcode(ERRCODE_WARNING),
                         errmsg("findMCS timed out, result is not maximal")));
+    }
     mcs = res.SmartsString;
   } catch (...) {
     ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("findMCS: failed")));

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2019 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,10 +14,11 @@
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Resonance.h>
 #include <GraphMol/MolBundle.h>
-#include "GraphMol/Chirality.h"
+#include <GraphMol/Chirality.h>
 
 #include "SubstructMatch.h"
 #include "SubstructUtils.h"
+#include <GraphMol/GenericGroups/GenericGroups.h>
 #include <boost/smart_ptr.hpp>
 #include <map>
 
@@ -197,13 +198,17 @@ MolMatchFinalCheckFunctor::MolMatchFinalCheckFunctor(
 
 bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
                                            const std::uint32_t m_c[]) const {
-  if (d_params.extraFinalCheck) {
+  if (d_params.extraFinalCheck || d_params.useGenericMatchers) {
     // EFF: we can no-doubt do better than this
     std::vector<unsigned int> aids(m_c, m_c + d_query.getNumAtoms());
     for (unsigned int i = 0; i < d_query.getNumAtoms(); ++i) {
       aids[i] = m_c[i];
     }
-    if (!d_params.extraFinalCheck(d_mol, aids)) {
+    if (d_params.useGenericMatchers &&
+        !GenericGroups::genericAtomMatcher(d_mol, d_query, aids)) {
+      return false;
+    }
+    if (d_params.extraFinalCheck && !d_params.extraFinalCheck(d_mol, aids)) {
       return false;
     }
   }
@@ -427,6 +432,24 @@ void ResSubstructMatchHelper_(const ResSubstructMatchHelperArgs_ &args,
     delete mol;
   }
 };
+
+struct RecursiveLocker {
+  std::vector<RecursiveStructureQuery *> locked;
+  RecursiveLocker(const ROMol &query, const bool recursionPossible) {
+    if (recursionPossible) {
+      locked.reserve(query.getNumAtoms());
+    }
+  }
+
+  ~RecursiveLocker() {
+    for (auto v : locked) {
+      v->clear();
+#ifdef RDK_THREADSAFE_SSS
+      v->d_mutex.unlock();
+#endif
+    }
+  }
+};
 }  // namespace detail
 
 // ----------------------------------------------
@@ -439,8 +462,9 @@ std::vector<MatchVectType> SubstructMatch(
   if (!mol.getNumAtoms() || !query.getNumAtoms()) {
     return matches;
   }
-  std::vector<RecursiveStructureQuery *> locked;
-  locked.reserve(query.getNumAtoms());
+
+  detail::RecursiveLocker locker(query, params.recursionPossible);
+
   if (params.recursionPossible) {
     detail::SUBQUERY_MAP subqueryMap;
     ROMol::ConstAtomIterator atIt;
@@ -448,7 +472,7 @@ std::vector<MatchVectType> SubstructMatch(
       if ((*atIt)->getQuery()) {
         // std::cerr<<"recurse from atom "<<(*atIt)->getIdx()<<std::endl;
         detail::MatchSubqueries(mol, (*atIt)->getQuery(), params, subqueryMap,
-                                locked);
+                                locker.locked);
       }
     }
   }
@@ -459,8 +483,8 @@ std::vector<MatchVectType> SubstructMatch(
 
   std::list<detail::ssPairType> pms;
 #if 0
-    bool found=boost::ullmann_all(query.getTopology(),mol.getTopology(),
-                                  atomLabeler,bondLabeler,pms);
+  bool found=boost::ullmann_all(query.getTopology(),mol.getTopology(),
+				atomLabeler,bondLabeler,pms);
 #else
   bool found =
       boost::vf2_all(query.getTopology(), mol.getTopology(), atomLabeler,
@@ -480,15 +504,6 @@ std::vector<MatchVectType> SubstructMatch(
     }
     if (params.uniquify) {
       removeDuplicates(matches, mol.getNumAtoms());
-    }
-  }
-
-  if (params.recursionPossible) {
-    for (auto v : locked) {
-      v->clear();
-#ifdef RDK_THREADSAFE_SSS
-      v->d_mutex.unlock();
-#endif
     }
   }
   return matches;

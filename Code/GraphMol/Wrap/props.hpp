@@ -82,21 +82,40 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
   // std::vector<int>, std::vector<unsigned>, string
   STR_VECT keys = obj.getPropList(includePrivate, includeComputed);
   for (size_t i = 0; i < keys.size(); ++i) {
-    if (AddToDict<int>(obj, dict, keys[i])) continue;
-    if (AddToDict<unsigned int>(obj, dict, keys[i])) continue;
-    if (AddToDict<bool>(obj, dict, keys[i])) continue;
-    if (AddToDict<double>(obj, dict, keys[i])) continue;
-    if (AddToDict<std::vector<int>>(obj, dict, keys[i])) continue;
-    if (AddToDict<std::vector<unsigned int>>(obj, dict, keys[i])) continue;
-    if (AddToDict<std::vector<double>>(obj, dict, keys[i])) continue;
-    if (AddToDict<std::vector<std::string>>(obj, dict, keys[i])) continue;
-    if (AddToDict<std::string>(obj, dict, keys[i])) continue;
-    if (AddToDict<std::list<int>>(obj, dict, keys[i])) continue;
+    if (AddToDict<int>(obj, dict, keys[i])) {
+      continue;
+    }
+    if (AddToDict<unsigned int>(obj, dict, keys[i])) {
+      continue;
+    }
+    if (AddToDict<bool>(obj, dict, keys[i])) {
+      continue;
+    }
+    if (AddToDict<double>(obj, dict, keys[i])) {
+      continue;
+    }
+    if (AddToDict<std::vector<int>>(obj, dict, keys[i])) {
+      continue;
+    }
+    if (AddToDict<std::vector<unsigned int>>(obj, dict, keys[i])) {
+      continue;
+    }
+    if (AddToDict<std::vector<double>>(obj, dict, keys[i])) {
+      continue;
+    }
+    if (AddToDict<std::vector<std::string>>(obj, dict, keys[i])) {
+      continue;
+    }
+    if (AddToDict<std::string>(obj, dict, keys[i])) {
+      continue;
+    }
+    if (AddToDict<std::list<int>>(obj, dict, keys[i])) {
+      continue;
+    }
   }
   return dict;
 }
 
-  
 template <class RDOb, class T>
 T GetProp(RDOb *ob, const char *key) {
   T res;
@@ -106,7 +125,7 @@ T GetProp(RDOb *ob, const char *key) {
       throw python::error_already_set();
     }
     return res;
-  } catch (const std::exception&e ) {
+  } catch (const std::exception &e) {
     throw ValueErrorException(std::string("key `") + key +
                               "` exists but does not result in " +
                               GetTypeName<T>() + " reason: " + e.what());

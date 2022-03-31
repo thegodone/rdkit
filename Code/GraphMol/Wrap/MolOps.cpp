@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -29,6 +29,7 @@
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
+#include <GraphMol/GenericGroups/GenericGroups.h>
 #include <RDBoost/PySequenceHolder.h>
 #include <RDBoost/Wrap.h>
 #include <RDBoost/python_streambuf.h>
@@ -44,8 +45,7 @@ python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
                                         python::object pyDummyLabels,
                                         python::object pyBondTypes,
                                         bool returnCutsPerAtom) {
-  std::unique_ptr<std::vector<unsigned int>> bondIndices =
-      pythonObjectToVect(pyBondIndices, mol.getNumBonds());
+  auto bondIndices = pythonObjectToVect(pyBondIndices, mol.getNumBonds());
   if (!bondIndices.get()) {
     throw_value_error("empty bond indices");
   }
@@ -119,8 +119,7 @@ ROMol *fragmentOnBondsHelper(const ROMol &mol, python::object pyBondIndices,
                              bool addDummies, python::object pyDummyLabels,
                              python::object pyBondTypes,
                              python::list pyCutsPerAtom) {
-  std::unique_ptr<std::vector<unsigned int>> bondIndices =
-      pythonObjectToVect(pyBondIndices, mol.getNumBonds());
+  auto bondIndices = pythonObjectToVect(pyBondIndices, mol.getNumBonds());
   if (!bondIndices.get()) {
     throw_value_error("empty bond indices");
   }
@@ -177,23 +176,23 @@ ROMol *renumberAtomsHelper(const ROMol &mol, python::object &pyNewOrder) {
       mol.getNumAtoms()) {
     throw_value_error("atomCounts shorter than the number of atoms");
   }
-  std::unique_ptr<std::vector<unsigned int>> newOrder =
-      pythonObjectToVect(pyNewOrder, mol.getNumAtoms());
+  auto newOrder = pythonObjectToVect(pyNewOrder, mol.getNumAtoms());
+  if (!newOrder) {
+    throw_value_error("newOrder argument must be non-empty");
+  }
   ROMol *res = MolOps::renumberAtoms(mol, *newOrder);
   return res;
 }
 
 namespace {
-std::string getResidue(const ROMol &m, const Atom *at) {
-  RDUNUSED_PARAM(m);
+std::string getResidue(const ROMol &, const Atom *at) {
   if (at->getMonomerInfo()->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
     return "";
   }
   return static_cast<const AtomPDBResidueInfo *>(at->getMonomerInfo())
       ->getResidueName();
 }
-std::string getChainId(const ROMol &m, const Atom *at) {
-  RDUNUSED_PARAM(m);
+std::string getChainId(const ROMol &, const Atom *at) {
   if (at->getMonomerInfo()->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
     return "";
   }
@@ -417,6 +416,10 @@ ROMol *getNormal(const RWMol &mol) {
 void kekulizeMol(ROMol &mol, bool clearAromaticFlags = false) {
   auto &wmol = static_cast<RWMol &>(mol);
   MolOps::Kekulize(wmol, clearAromaticFlags);
+}
+void kekulizeMolIfPossible(ROMol &mol, bool clearAromaticFlags = false) {
+  auto &wmol = static_cast<RWMol &>(mol);
+  MolOps::KekulizeIfPossible(wmol, clearAromaticFlags);
 }
 
 void cleanupMol(ROMol &mol) {
@@ -789,6 +792,29 @@ python::object findAllSubgraphsOfLengthsMtoNHelper(const ROMol &mol,
   return python::tuple(res);
 };
 
+PATH_TYPE findAtomEnvironmentOfRadiusNHelper(const ROMol &mol,
+                                             unsigned int radius,
+                                             unsigned int rootedAtAtom,
+                                             bool useHs, bool enforceSize,
+                                             python::object atomMap) {
+  PATH_TYPE path;
+  if (atomMap == python::object()) {
+    path = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, useHs,
+                                        enforceSize);
+  } else {
+    std::unordered_map<unsigned int, unsigned int> cAtomMap;
+    path = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, useHs,
+                                        enforceSize, &cAtomMap);
+    // make sure the optional argument (atomMap) is actually a dictionary
+    python::dict typecheck = python::extract<python::dict>(atomMap);
+    atomMap.attr("clear")();
+    for (auto pair : cAtomMap) {
+      atomMap[pair.first] = pair.second;
+    }
+  }
+  return path;
+}
+
 ROMol *pathToSubmolHelper(const ROMol &mol, python::object &path, bool useQuery,
                           python::object atomMap) {
   ROMol *result;
@@ -884,6 +910,17 @@ void setDoubleBondNeighborDirectionsHelper(ROMol &mol, python::object confObj) {
   MolOps::setDoubleBondNeighborDirections(mol, conf);
 }
 
+void setAtomSymbols(MolzipParams &p, python::object symbols) {
+  p.atomSymbols.clear();
+  if (symbols) {
+    unsigned int nVs =
+        python::extract<unsigned int>(symbols.attr("__len__")());
+    for (unsigned int i = 0; i < nVs; ++i) {
+      p.atomSymbols.push_back(python::extract<std::string>(symbols[i]));
+    }
+  }
+}
+  
 ROMol *molzip_new(const ROMol &a, const ROMol &b, const MolzipParams &p) {
   return molzip(a, b, p).release();
 }
@@ -1453,7 +1490,7 @@ to the terminal dummy atoms.\n\
 \n\
     - clearAromaticFlags: (optional) if this toggle is set, all atoms and bonds in the \n\
       molecule will be marked non-aromatic following the kekulization.\n\
-      Default value is 0.\n\
+      Default value is False.\n\
 \n\
   NOTES:\n\
 \n\
@@ -1463,6 +1500,25 @@ to the terminal dummy atoms.\n\
                 (python::arg("mol"), python::arg("clearAromaticFlags") = false),
                 docString.c_str());
 
+    // ------------------------------------------------------------------------
+    docString =
+        "Kekulizes the molecule if possible. Otherwise the molecule is not modified\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+\n\
+    - clearAromaticFlags: (optional) if this toggle is set, all atoms and bonds in the \n\
+      molecule will be marked non-aromatic if the kekulization succeds.\n\
+      Default value is False.\n\
+\n\
+  NOTES:\n\
+\n\
+    - The molecule is modified in place.\n\
+\n";
+    python::def("KekulizeIfPossible", kekulizeMolIfPossible,
+                (python::arg("mol"), python::arg("clearAromaticFlags") = false),
+                docString.c_str());
     // ------------------------------------------------------------------------
     docString =
         "cleans up certain common bad functionalities in the molecule\n\
@@ -1666,7 +1722,8 @@ to the terminal dummy atoms.\n\
 
     // ------------------------------------------------------------------------
     docString =
-        "Finds the bonds within a certain radius of an atom in a molecule\n\
+        "Find bonds of a particular radius around an atom. \n\
+         Return empty result if there is no bond at the requested radius.\n\
 \n\
   ARGUMENTS:\n\
 \n\
@@ -1680,13 +1737,21 @@ to the terminal dummy atoms.\n\
       should be included in the results.\n\
       Defaults to 0.\n\
 \n\
-  RETURNS: a vector of bond IDs\n\
+    - enforceSize (optional) If set to False, all bonds within the requested radius is \n\
+      collected. Defaults to 1. \n\
 \n\
+    - atomMap: (optional) If provided, it will measure the minimum distance of the atom \n\
+      from the rooted atom (start with 0 from the rooted atom). The result is a pair of \n\
+      the atom ID and the distance. \n\
+\n\
+  RETURNS: a vector of bond IDs\n\
 \n";
-    python::def("FindAtomEnvironmentOfRadiusN", &findAtomEnvironmentOfRadiusN,
-                (python::arg("mol"), python::arg("radius"),
-                 python::arg("rootedAtAtom"), python::arg("useHs") = false),
-                docString.c_str());
+    python::def(
+        "FindAtomEnvironmentOfRadiusN", findAtomEnvironmentOfRadiusNHelper,
+        (python::arg("mol"), python::arg("radius"), python::arg("rootedAtAtom"),
+         python::arg("useHs") = false, python::arg("enforceSize") = true,
+         python::arg("atomMap") = python::object()),
+        docString.c_str());
 
     python::def("PathToSubmol", pathToSubmolHelper,
                 (python::arg("mol"), python::arg("path"),
@@ -2434,7 +2499,13 @@ EXAMPLES:\n\n\
     python::class_<MolzipParams>("MolzipParams", docString.c_str(),
                                  python::init<>())
         .def_readwrite("label", &MolzipParams::label,
-                       "Set the atom labelling system to zip together");
+                       "Set the atom labelling system to zip together")
+        .def_readwrite("enforceValenceRules", &MolzipParams::enforceValenceRules,
+		       "If true (default) enforce valences after zipping\n\
+Setting this to false allows assembling chemically incorrect fragments.")
+        .def("setAtomSymbols", &RDKit::setAtomSymbols,
+             "Set the atom symbols used to zip mols together when using AtomType labeling")
+      ;
 
     docString =
         "molzip: zip two molecules together preserving bond and atom stereochemistry.\n\
@@ -2560,10 +2631,10 @@ A note on the flags controlling which atoms/bonds are modified:
         .def_readwrite("adjustHeavyDegree",
                        &MolOps::AdjustQueryParameters::adjustHeavyDegree,
                        "adjust the heavy-atom degree")
-        .def_readwrite(
-            "adjustHeavyDegreeFlags",
-            &MolOps::AdjustQueryParameters::adjustHeavyDegreeFlags,
-            "controls which atoms have their heavy-atom degree queries changed")
+        .def_readwrite("adjustHeavyDegreeFlags",
+                       &MolOps::AdjustQueryParameters::adjustHeavyDegreeFlags,
+                       "controls which atoms have their heavy-atom degree "
+                       "queries changed")
         .def_readwrite("adjustRingCount",
                        &MolOps::AdjustQueryParameters::adjustRingCount,
                        "add ring-count queries")
@@ -2608,25 +2679,27 @@ A note on the flags controlling which atoms/bonds are modified:
         .def_readwrite(
             "setMDLFiveRingAromaticity",
             &MolOps::AdjustQueryParameters::setMDLFiveRingAromaticity,
-            "uses the 5-ring aromaticity behavior of the (former) MDL software "
+            "uses the 5-ring aromaticity behavior of the (former) MDL "
+            "software "
             "as documented in the Chemical Representation Guide")
         .def_readwrite("adjustSingleBondsToDegreeOneNeighbors",
                        &MolOps::AdjustQueryParameters::
                            adjustSingleBondsToDegreeOneNeighbors,
-                       "set single bonds bewteen aromatic atoms and degree-one "
-                       "neighbors to SINGLE|AROMATIC")
+                       "set single bonds bewteen aromatic or conjugated atoms "
+                       "and degree-one neighbors to SINGLE|AROMATIC")
         .def_readwrite("adjustSingleBondsBetweenAromaticAtoms",
                        &MolOps::AdjustQueryParameters::
                            adjustSingleBondsBetweenAromaticAtoms,
-                       "sets non-ring single bonds between two aromatic atoms "
-                       "to SINGLE|AROMATIC")
+                       "sets non-ring single bonds between two aromatic or "
+                       "conjugated atoms to SINGLE|AROMATIC")
         .def("NoAdjustments", &MolOps::AdjustQueryParameters::noAdjustments,
              "Returns an AdjustQueryParameters object with all parameters set "
              "to false")
         .staticmethod("NoAdjustments");
 
     docString =
-        "Returns a new molecule where the query properties of atoms have been "
+        "Returns a new molecule where the query properties of atoms have "
+        "been "
         "modified.";
     python::def("AdjustQueryProperties", adjustQueryPropertiesHelper,
                 (python::arg("mol"), python::arg("params") = python::object()),
@@ -2637,7 +2710,15 @@ A note on the flags controlling which atoms/bonds are modified:
         "DetectChemistryProblems", detectChemistryProblemsHelper,
         (python::arg("mol"), python::arg("sanitizeOps") = MolOps::SANITIZE_ALL),
         docString.c_str());
-  };
+    python::def("SetGenericQueriesFromProperties",
+                GenericGroups::setGenericQueriesFromProperties,
+                (python::arg("mol"), python::arg("useAtomLabels") = true,
+                 python::arg("useSGroups") = true),
+                "documentation");
+    python::def("ConvertGenericQueriesToSubstanceGroups",
+                GenericGroups::convertGenericQueriesToSubstanceGroups,
+                python::arg("mol"), "documentation");
+  }
 };
 }  // namespace RDKit
 

@@ -37,7 +37,7 @@ typedef INVAR_VECT::const_iterator INVAR_VECT_CI;
 namespace MolOps {
 
 //! return the number of electrons available on an atom to donate for
-// aromaticity
+/// aromaticity
 /*!
    The result is determined using the default valency, number of lone pairs,
    number of bonds and the formal charge. Note that the atom may not donate
@@ -84,7 +84,7 @@ RDKIT_GRAPHMOL_EXPORT unsigned int getMolFrags(
     const ROMol &mol, std::vector<std::vector<int>> &frags);
 
 //! splits a molecule into its component fragments
-//  (disconnected components of the molecular graph)
+/// (disconnected components of the molecular graph)
 /*!
 
   \param mol     the molecule of interest
@@ -137,25 +137,6 @@ getMolFragsWithQuery(const ROMol &mol, T (*query)(const ROMol &, const Atom *),
     RDKIT_GRAPHMOL_EXPORT void findSpanningTree(const ROMol &mol,std::vector<int> &mst);
 #endif
 
-//! calculates Balaban's J index for the molecule
-/*!
-  \param mol      the molecule of interest
-  \param useBO    toggles inclusion of the bond order in the calculation
-                  (when false, we're not really calculating the J value)
-  \param force    forces the calculation (instead of using cached results)
-  \param bondPath when included, only paths using bonds whose indices occur
-                  in this vector will be included in the calculation
-  \param cacheIt  If this is true, the calculated value will be cached
-                  as a property on the molecule
-  \return the J index
-
-*/
-RDKIT_GRAPHMOL_EXPORT double computeBalabanJ(
-    const ROMol &mol, bool useBO = true, bool force = false,
-    const std::vector<int> *bondPath = nullptr, bool cacheIt = true);
-//! \overload
-RDKIT_GRAPHMOL_EXPORT double computeBalabanJ(double *distMat, int nb, int nAts);
-
 //! \name Dealing with hydrogens
 //{@
 
@@ -186,7 +167,7 @@ RDKIT_GRAPHMOL_EXPORT ROMol *addHs(const ROMol &mol, bool explicitOnly = false,
                                    const UINT_VECT *onlyOnAtoms = nullptr,
                                    bool addResidueInfo = false);
 //! \overload
-// modifies the molecule in place
+/// modifies the molecule in place
 RDKIT_GRAPHMOL_EXPORT void addHs(RWMol &mol, bool explicitOnly = false,
                                  bool addCoords = false,
                                  const UINT_VECT *onlyOnAtoms = nullptr,
@@ -243,7 +224,7 @@ RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol,
                                       bool updateExplicitCount = false,
                                       bool sanitize = true);
 //! \overload
-// modifies the molecule in place
+/// modifies the molecule in place
 RDKIT_GRAPHMOL_EXPORT void removeHs(RWMol &mol, bool implicitOnly = false,
                                     bool updateExplicitCount = false,
                                     bool sanitize = true);
@@ -272,11 +253,11 @@ struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
   bool removeHydrides = true; /**< Removing Hydrides */
 };
 //! \overload
-// modifies the molecule in place
+/// modifies the molecule in place
 RDKIT_GRAPHMOL_EXPORT void removeHs(RWMol &mol, const RemoveHsParameters &ps,
                                     bool sanitize = true);
 //! \overload
-// The caller owns the pointer this returns
+/// The caller owns the pointer this returns
 RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol,
                                       const RemoveHsParameters &ps,
                                       bool sanitize = true);
@@ -284,7 +265,7 @@ RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol,
 //! removes all Hs from a molecule
 RDKIT_GRAPHMOL_EXPORT void removeAllHs(RWMol &mol, bool sanitize = true);
 //! \overload
-// The caller owns the pointer this returns
+/// The caller owns the pointer this returns
 RDKIT_GRAPHMOL_EXPORT ROMol *removeAllHs(const ROMol &mol,
                                          bool sanitize = true);
 
@@ -316,7 +297,7 @@ RDKIT_GRAPHMOL_EXPORT ROMol *removeAllHs(const ROMol &mol,
 RDKIT_GRAPHMOL_EXPORT ROMol *mergeQueryHs(const ROMol &mol,
                                           bool mergeUnmappedOnly = false);
 //! \overload
-// modifies the molecule in place
+/// modifies the molecule in place
 RDKIT_GRAPHMOL_EXPORT void mergeQueryHs(RWMol &mol,
                                         bool mergeUnmappedOnly = false);
 
@@ -381,12 +362,12 @@ struct RDKIT_GRAPHMOL_EXPORT AdjustQueryParameters {
                 software as documented in the Chemical Representation Guide */
 
   bool adjustSingleBondsToDegreeOneNeighbors =
-      false; /**<  sets single bonds between aromatic atoms and degree one
-                neighbors to SINGLE|AROMATIC */
+      false; /**<  sets single bonds between aromatic or conjugated atoms and
+                degree one neighbors to SINGLE|AROMATIC */
 
   bool adjustSingleBondsBetweenAromaticAtoms =
-      false; /**<  sets non-ring single bonds between two aromatic atoms to
-                SINGLE|AROMATIC */
+      false; /**<  sets non-ring single bonds between two aromatic or conjugated
+                atoms to SINGLE|AROMATIC */
   //! \brief returns an AdjustQueryParameters object with all adjustments
   //! disabled
   static AdjustQueryParameters noAdjustments() {
@@ -413,7 +394,7 @@ RDKIT_GRAPHMOL_EXPORT void parseAdjustQueryParametersFromJSON(
 RDKIT_GRAPHMOL_EXPORT ROMol *adjustQueryProperties(
     const ROMol &mol, const AdjustQueryParameters *params = nullptr);
 //! \overload
-// modifies the molecule in place
+/// modifies the molecule in place
 RDKIT_GRAPHMOL_EXPORT void adjustQueryProperties(
     RWMol &mol, const AdjustQueryParameters *params = nullptr);
 
@@ -438,7 +419,7 @@ RDKIT_GRAPHMOL_EXPORT ROMol *renumberAtoms(
 //@}
 
 //! \name Sanitization
-//@{
+/// {
 
 typedef enum {
   SANITIZE_NONE = 0x0,
@@ -456,7 +437,7 @@ typedef enum {
 } SanitizeFlags;
 
 //! \brief carries out a collection of tasks for cleaning up a molecule and
-// ensuring
+/// ensuring
 //! that it makes "chemical sense"
 /*!
    This functions calls the following in sequence
@@ -573,7 +554,7 @@ RDKIT_GRAPHMOL_EXPORT int setAromaticity(
     int (*func)(RWMol &) = nullptr);
 
 //! Designed to be called by the sanitizer to handle special cases before
-// anything is done.
+/// anything is done.
 /*!
 
     Currently this:
@@ -618,25 +599,48 @@ RDKIT_GRAPHMOL_EXPORT void adjustHs(RWMol &mol);
 /*!
 
    \param mol             the molecule of interest
-   \param markAtomsBonds  if this is set to true, \c isAromatic boolean
-   settings on both the Bonds and Atoms are turned to false following the
-   Kekulization, otherwise they are left alone in their original state. \param
-   maxBackTracks   the maximum number of attempts at back-tracking. The
-   algorithm
-                          uses a back-tracking procedure to revisit a previous
-   setting of
-                          double bond if we hit a wall in the kekulization
-   process
+
+   \param markAtomsBonds  if this is set to true, \c isAromatic boolean settings
+   on both the Bonds and Atoms are turned to false following the Kekulization,
+   otherwise they are left alone in their original state.
+
+   \param maxBackTracks   the maximum number of attempts at back-tracking. The
+   algorithm uses a back-tracking procedure to revisit a previous setting of
+   double bond if we hit a wall in the kekulization process
 
    <b>Notes:</b>
      - even if \c markAtomsBonds is \c false the \c BondType for all aromatic
        bonds will be changed from \c RDKit::Bond::AROMATIC to \c
-   RDKit::Bond::SINGLE
-       or RDKit::Bond::DOUBLE during Kekulization.
+       RDKit::Bond::SINGLE or RDKit::Bond::DOUBLE during Kekulization.
 
 */
 RDKIT_GRAPHMOL_EXPORT void Kekulize(RWMol &mol, bool markAtomsBonds = true,
                                     unsigned int maxBackTracks = 100);
+//! Kekulizes the molecule if possible. If the kekulization fails the molecule
+//! will not be modified
+/*!
+
+   \param mol             the molecule of interest
+
+   \param markAtomsBonds  if this is set to true, \c isAromatic boolean settings
+   on both the Bonds and Atoms are turned to false following the Kekulization,
+   otherwise they are left alone in their original state.
+
+   \param maxBackTracks   the maximum number of attempts at back-tracking. The
+   algorithm uses a back-tracking procedure to revisit a previous setting of
+   double bond if we hit a wall in the kekulization process
+
+   \returns whether or not the kekulization succeeded
+
+   <b>Notes:</b>
+     - even if \c markAtomsBonds is \c false the \c BondType for all aromatic
+       bonds will be changed from \c RDKit::Bond::AROMATIC to \c
+       RDKit::Bond::SINGLE or RDKit::Bond::DOUBLE during Kekulization.
+
+*/
+RDKIT_GRAPHMOL_EXPORT bool KekulizeIfPossible(RWMol &mol,
+                                              bool markAtomsBonds = true,
+                                              unsigned int maxBackTracks = 100);
 
 //! flags the molecule's conjugated bonds
 RDKIT_GRAPHMOL_EXPORT void setConjugation(ROMol &mol);
@@ -948,7 +952,7 @@ RDKIT_GRAPHMOL_EXPORT void assignStereochemistry(
     ROMol &mol, bool cleanIt = false, bool force = false,
     bool flagPossibleStereoCenters = false);
 //! Removes all stereochemistry information from atoms (i.e. R/S) and bonds
-//(i.e. Z/E)
+/// i.e. Z/E)
 /*!
 
   \param mol     the molecule of interest

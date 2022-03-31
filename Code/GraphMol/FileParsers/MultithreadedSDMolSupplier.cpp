@@ -130,7 +130,8 @@ bool MultithreadedSDMolSupplier::extractNextRecord(std::string &record,
   record = "";
   lineNum = d_line;
   while (!dp_inStream->eof() && !dp_inStream->fail() &&
-         (prevStr.find_first_not_of(" \t\r\n") != std::string::npos ||
+         ( (prevStr.find_first_not_of(" \t\r\n") != std::string::npos &&
+	    prevStr.find("M  END") != 0) ||
           currentStr[0] != '$' || currentStr.substr(0, 4) != "$$$$")) {
     prevStr = currentStr;
     std::getline(*dp_inStream, currentStr);
@@ -184,7 +185,7 @@ void MultithreadedSDMolSupplier::readMolProps(ROMol *mol,
             std::getline(inStream, tempStr);
             if (inStream.eof()) {
               if (mol) {
-                  delete mol;
+                delete mol;
               }
               throw FileParseException("End of data field name not found");
             }
@@ -232,7 +233,7 @@ void MultithreadedSDMolSupplier::readMolProps(ROMol *mol,
           // FIX: should we be deleting the molecule (which is probably fine)
           // because we couldn't read the data ???
           if (mol) {
-              delete mol;
+            delete mol;
           }
           throw FileParseException("Problems encountered parsing data fields");
         } else {

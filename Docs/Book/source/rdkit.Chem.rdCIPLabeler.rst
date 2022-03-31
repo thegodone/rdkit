@@ -1,7 +1,7 @@
-rdkit.Chem.rdStructChecker module
+rdkit.Chem.rdCIPLabeler module
 =================================
 
-.. automodule:: rdkit.Chem.rdStructChecker
+.. automodule:: rdkit.Chem.rdCIPLabeler
     :members:
     :undoc-members:
     :show-inheritance:

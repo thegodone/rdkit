@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2015-2019 Greg Landrum
+//  Copyright (C) 2015-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,10 +15,9 @@
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <Geometry/point.h>
+#include <GraphMol/MolDraw2D/DrawTextSVG.h>
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #include <GraphMol/MolDraw2D/DrawTextFTSVG.h>
-#else
-#include <GraphMol/MolDraw2D/DrawTextSVG.h>
 #endif
 
 #include <boost/format.hpp>
@@ -44,9 +43,7 @@ void outputTagClasses(const t_obj *obj, std::ostream &d_os,
 }
 
 template <class t_obj>
-void outputMetaData(const t_obj *obj, std::ostream &d_os,
-                    const std::string &d_activeClass) {
-  RDUNUSED_PARAM(d_activeClass);
+void outputMetaData(const t_obj *obj, std::ostream &d_os) {
   std::string value;
   for (const auto &prop : obj->getPropList()) {
     if (prop.length() < 11 || prop.rfind("_metaData-", 0) != 0) {
@@ -100,6 +97,28 @@ std::string DrawColourToSVG(const DrawColour &col) {
 }
 
 // ****************************************************************************
+MolDraw2DSVG::MolDraw2DSVG(int width, int height, std::ostream &os,
+                           int panelWidth, int panelHeight, bool noFreetype)
+    : MolDraw2D(width, height, panelWidth, panelHeight), d_os(os) {
+  if (width > 0 && height > 0) {
+    initDrawing();
+    needs_init_ = false;
+  }
+  initTextDrawer(noFreetype);
+}
+
+// ****************************************************************************
+MolDraw2DSVG::MolDraw2DSVG(int width, int height, int panelWidth,
+                           int panelHeight, bool noFreetype)
+    : MolDraw2D(width, height, panelWidth, panelHeight), d_os(d_ss) {
+  if (width > 0 && height > 0) {
+    initDrawing();
+    needs_init_ = false;
+  }
+  initTextDrawer(noFreetype);
+}
+
+// ****************************************************************************
 void MolDraw2DSVG::initDrawing() {
   d_os << "<?xml version='1.0' encoding='iso-8859-1'?>\n";
   d_os << "<svg version='1.1' baseProfile='full'\n      \
@@ -110,9 +129,6 @@ void MolDraw2DSVG::initDrawing() {
   d_os << boost::format{"width='%1%px' height='%2%px' viewBox='0 0 %1% %2%'>\n"}
       % width() % height();
   d_os << "<!-- END OF HEADER -->\n";
-
-  // d_os<<"<g transform='translate("<<width()*.05<<","<<height()*.05<<")
-  // scale(.85,.85)'>";
 }
 
 // ****************************************************************************
@@ -121,24 +137,27 @@ void MolDraw2DSVG::initTextDrawer(bool noFreetype) {
   double min_fnt_sz = drawOptions().minFontSize;
 
   if (noFreetype) {
-    text_drawer_.reset(
-        new DrawTextSVG(max_fnt_sz, min_fnt_sz, d_os, d_activeClass));
+    text_drawer_.reset(new MolDraw2D_detail::DrawTextSVG(max_fnt_sz, min_fnt_sz,
+                                                         d_os, d_activeClass));
   } else {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     try {
-      text_drawer_.reset(new DrawTextFTSVG(
+      text_drawer_.reset(new MolDraw2D_detail::DrawTextFTSVG(
           max_fnt_sz, min_fnt_sz, drawOptions().fontFile, d_os, d_activeClass));
     } catch (std::runtime_error &e) {
       BOOST_LOG(rdWarningLog)
           << e.what() << std::endl
           << "Falling back to native SVG text handling." << std::endl;
-      text_drawer_.reset(
-          new DrawTextSVG(max_fnt_sz, min_fnt_sz, d_os, d_activeClass));
+      text_drawer_.reset(new MolDraw2D_detail::DrawTextSVG(
+          max_fnt_sz, min_fnt_sz, d_os, d_activeClass));
     }
 #else
-    text_drawer_.reset(
-        new DrawTextSVG(max_fnt_sz, min_fnt_sz, d_os, d_activeClass));
+    text_drawer_.reset(new MolDraw2D_detail::DrawTextSVG(max_fnt_sz, min_fnt_sz,
+                                                         d_os, d_activeClass));
 #endif
+  }
+  if (drawOptions().baseFontSize > 0.0) {
+    text_drawer_->setBaseFontSize(drawOptions().baseFontSize);
   }
 }
 
@@ -155,11 +174,10 @@ void MolDraw2DSVG::setColour(const DrawColour &col) {
 
 // ****************************************************************************
 void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
-                                const DrawColour &col1, const DrawColour &col2,
-                                unsigned int nSegments, double vertOffset) {
+                                const DrawColour &col1, const DrawColour &,
+                                unsigned int nSegments, double vertOffset,
+                                bool rawCoords) {
   PRECONDITION(nSegments > 1, "too few segments");
-  RDUNUSED_PARAM(col2);
-
   if (nSegments % 2) {
     ++nSegments;  // we're going to assume an even number of segments
   }
@@ -171,7 +189,7 @@ void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
   perp *= vertOffset;
   delta /= nSegments;
 
-  Point2D c1 = getDrawCoords(cds1);
+  Point2D c1 = rawCoords ? cds1 : getDrawCoords(cds1);
 
   std::string col = DrawColourToSVG(colour());
   double width = getDrawLineWidth();
@@ -180,11 +198,12 @@ void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
   d_os << "d='M" << c1.x << "," << c1.y;
   for (unsigned int i = 0; i < nSegments; ++i) {
     Point2D startpt = cds1 + delta * i;
-    Point2D segpt = getDrawCoords(startpt + delta);
-    Point2D cpt1 =
-        getDrawCoords(startpt + delta / 3. + perp * (i % 2 ? -1 : 1));
-    Point2D cpt2 =
-        getDrawCoords(startpt + delta * 2. / 3. + perp * (i % 2 ? -1 : 1));
+    Point2D segpt =
+        rawCoords ? startpt + delta : getDrawCoords(startpt + delta);
+    Point2D cpt1 = startpt + delta / 3. + perp * (i % 2 ? -1 : 1);
+    cpt1 = rawCoords ? cpt1 : getDrawCoords(cpt1);
+    Point2D cpt2 = startpt + delta * 2. / 3. + perp * (i % 2 ? -1 : 1);
+    cpt2 = rawCoords ? cpt2 : getDrawCoords(cpt2);
     d_os << " C" << cpt1.x << "," << cpt1.y << " " << cpt2.x << "," << cpt2.y
          << " " << segpt.x << "," << segpt.y;
   }
@@ -198,51 +217,10 @@ void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
 }
 
 // ****************************************************************************
-void MolDraw2DSVG::drawBond(
-    const ROMol &mol, const Bond *bond, int at1_idx, int at2_idx,
-    const std::vector<int> *highlight_atoms,
-    const std::map<int, DrawColour> *highlight_atom_map,
-    const std::vector<int> *highlight_bonds,
-    const std::map<int, DrawColour> *highlight_bond_map,
-    const std::vector<std::pair<DrawColour, DrawColour>> *bond_colours) {
-  PRECONDITION(bond, "bad bond");
-  std::string o_class = d_activeClass;
-  if (!d_activeClass.empty()) {
-    d_activeClass += " ";
-  }
-  d_activeClass += boost::str(boost::format("bond-%d") % bond->getIdx());
-  MolDraw2D::drawBond(mol, bond, at1_idx, at2_idx, highlight_atoms,
-                      highlight_atom_map, highlight_bonds, highlight_bond_map,
-                      bond_colours);
-  d_activeClass = o_class;
-};
-
-// ****************************************************************************
-void MolDraw2DSVG::drawAtomLabel(int atom_num, const DrawColour &draw_colour) {
-  std::string o_class = d_activeClass;
-  if (!d_activeClass.empty()) {
-    d_activeClass += " ";
-  }
-  d_activeClass += boost::str(boost::format("atom-%d") % atom_num);
-  MolDraw2D::drawAtomLabel(atom_num, draw_colour);
-  d_activeClass = o_class;
-}
-
-// ****************************************************************************
-void MolDraw2DSVG::drawAnnotation(const AnnotationType &annot) {
-  std::string o_class = d_activeClass;
-  if (!d_activeClass.empty()) {
-    d_activeClass += " ";
-  }
-  d_activeClass += "note";
-  MolDraw2D::drawAnnotation(annot);
-  d_activeClass = o_class;
-}
-
-// ****************************************************************************
-void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2) {
-  Point2D c1 = getDrawCoords(cds1);
-  Point2D c2 = getDrawCoords(cds2);
+void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2,
+                            bool rawCoords) {
+  Point2D c1 = rawCoords ? cds1 : getDrawCoords(cds1);
+  Point2D c2 = rawCoords ? cds2 : getDrawCoords(cds2);
   std::string col = DrawColourToSVG(colour());
   double width = getDrawLineWidth();
   std::string dashString = "";
@@ -269,7 +247,8 @@ void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2) {
 }
 
 // ****************************************************************************
-void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
+void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds,
+                               bool rawCoords) {
   PRECONDITION(cds.size() >= 3, "must have at least three points");
 
   std::string col = DrawColourToSVG(colour());
@@ -278,11 +257,11 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
   d_os << "<path ";
   outputClasses();
   d_os << "d='M";
-  Point2D c0 = getDrawCoords(cds[0]);
+  Point2D c0 = rawCoords ? cds[0] : getDrawCoords(cds[0]);
   d_os << " " << MolDraw2D_detail::formatDouble(c0.x) << ","
        << MolDraw2D_detail::formatDouble(c0.y);
   for (unsigned int i = 1; i < cds.size(); ++i) {
-    Point2D ci = getDrawCoords(cds[i]);
+    Point2D ci = rawCoords ? cds[i] : getDrawCoords(cds[i]);
     d_os << " L " << MolDraw2D_detail::formatDouble(ci.x) << ","
          << MolDraw2D_detail::formatDouble(ci.y);
   }
@@ -302,9 +281,10 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
 }
 
 // ****************************************************************************
-void MolDraw2DSVG::drawEllipse(const Point2D &cds1, const Point2D &cds2) {
-  Point2D c1 = getDrawCoords(cds1);
-  Point2D c2 = getDrawCoords(cds2);
+void MolDraw2DSVG::drawEllipse(const Point2D &cds1, const Point2D &cds2,
+                               bool rawCoords) {
+  Point2D c1 = rawCoords ? cds1 : getDrawCoords(cds1);
+  Point2D c2 = rawCoords ? cds2 : getDrawCoords(cds2);
   double w = c2.x - c1.x;
   double h = c2.y - c1.y;
   double cx = c1.x + w / 2;
@@ -379,7 +359,7 @@ void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol, int confId) const {
          << " y=\"" << pos.y << "\""
          << " z=\"" << pos.z << "\"";
 
-    outputMetaData(atom, d_os, d_activeClass);
+    outputMetaData(atom, d_os);
 
     d_os << " />" << std::endl;
   }
@@ -392,24 +372,27 @@ void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol, int confId) const {
          << SmilesWrite::GetBondSmiles(bond, -1, doKekule, allBondsExplicit)
          << "\"";
 
-    outputMetaData(bond, d_os, d_activeClass);
+    outputMetaData(bond, d_os);
 
     d_os << " />" << std::endl;
   }
   d_os << "</rdkit:mol></metadata>" << std::endl;
 }
 
+// ****************************************************************************
 void MolDraw2DSVG::addMoleculeMetadata(const std::vector<ROMol *> &mols,
-                                       const std::vector<int> confIds) const {
+                                       const std::vector<int> confIds) {
   for (unsigned int i = 0; i < mols.size(); ++i) {
     int confId = -1;
     if (confIds.size() == mols.size()) {
       confId = confIds[i];
     }
+    setActiveMolIdx(i);
     addMoleculeMetadata(*(mols[i]), confId);
   }
 };
 
+// ****************************************************************************
 void MolDraw2DSVG::tagAtoms(const ROMol &mol, double radius,
                             const std::map<std::string, std::string> &events) {
   PRECONDITION(d_os, "no output stream");
@@ -418,8 +401,8 @@ void MolDraw2DSVG::tagAtoms(const ROMol &mol, double radius,
     const auto this_idx = bond->getIdx();
     const auto a_idx1 = bond->getBeginAtomIdx();
     const auto a_idx2 = bond->getEndAtomIdx();
-    const auto a1pos = getDrawCoords(atomCoords()[bond->getBeginAtomIdx()]);
-    const auto a2pos = getDrawCoords(atomCoords()[bond->getEndAtomIdx()]);
+    const auto a1pos = getDrawCoords(bond->getBeginAtomIdx());
+    const auto a2pos = getDrawCoords(bond->getEndAtomIdx());
     const auto width = 2 + lineWidth();
     if (drawOptions().splitBonds) {
       const auto midp = (a1pos + a2pos) / 2;
@@ -470,7 +453,7 @@ void MolDraw2DSVG::tagAtoms(const ROMol &mol, double radius,
   }
   for (const auto &at : mol.atoms()) {
     auto this_idx = at->getIdx();
-    auto pos = getDrawCoords(atomCoords()[this_idx]);
+    auto pos = getDrawCoords(this_idx);
     d_os << "<circle "
          << " cx='" << MolDraw2D_detail::formatDouble(pos.x) << "'"
          << " cy='" << MolDraw2D_detail::formatDouble(pos.y) << "'"
@@ -489,16 +472,26 @@ void MolDraw2DSVG::tagAtoms(const ROMol &mol, double radius,
   }
 }
 
+// ****************************************************************************
 void MolDraw2DSVG::outputClasses() {
-  if (d_activeClass.empty() && !hasActiveAtmIdx()) return;
+  if (d_activeClass.empty() && !hasActiveAtmIdx()) {
+    return;
+  }
 
   d_os << "class='";
   if (!d_activeClass.empty()) {
     d_os << d_activeClass;
   }
+  if (hasActiveBndIdx()) {
+    d_os << "bond-" << getActiveBndIdx();
+  }
+
   if (!hasActiveAtmIdx()) {
     d_os << "' ";
     return;
+  }
+  if (hasActiveBndIdx()) {
+    d_os << " ";
   }
   d_os << (!d_activeClass.empty() ? " " : "");
   const auto aidx1 = getActiveAtmIdx1();

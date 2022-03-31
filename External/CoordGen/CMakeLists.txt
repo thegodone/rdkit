@@ -51,9 +51,14 @@ if(RDK_BUILD_MAEPARSER_SUPPORT)
         CACHE STRING "MaeParser Include Dir" FORCE)
     file(GLOB MAESOURCES "${MAEPARSER_DIR}/*.cpp")
 
+     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated-copy")
+     endif()
+
     rdkit_library(maeparser ${MAESOURCES} LINK_LIBRARIES ${Boost_LIBRARIES} ${ZLIB_LIBRARIES} SHARED)
     install(TARGETS maeparser DESTINATION ${RDKit_LibDir})
     set(maeparser_LIBRARIES maeparser ${ZLIB_LIBRARIES})
+
 
   endif(MAEPARSER_FORCE_BUILD OR (NOT maeparser_FOUND))
 
@@ -82,8 +87,8 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
     endif()
 
     if(NOT EXISTS "${COORDGEN_DIR}/sketcherMinimizer.h")
-        set(RELEASE_NO "2.0.3")
-        set(MD5 "e5541909e4283c67ef4934d2ad271aa3")
+        set(RELEASE_NO "3.0.0")
+        set(MD5 "5b4c5b91e412c03438b31b4a4c871026")
         downloadAndCheckMD5("https://github.com/schrodinger/coordgenlibs/archive/v${RELEASE_NO}.tar.gz"
               "${CMAKE_CURRENT_SOURCE_DIR}/coordgenlibs-${RELEASE_NO}.tar.gz" ${MD5})
         execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf

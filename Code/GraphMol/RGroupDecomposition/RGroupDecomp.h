@@ -172,12 +172,12 @@ class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecomposition {
   ~RGroupDecomposition();
 
   //! Returns the index of the added molecule in the RGroupDecomposition
-  //   or a negative error code
-  // :param mol: Molecule to add to the decomposition
-  // :result: index of the molecle or
-  //              -1 if none of the core matches
-  //              -2 if the matched molecule has no sidechains, i.e. is the
-  //                 same as the scaffold
+  ///  or a negative error code
+  /// :param mol: Molecule to add to the decomposition
+  /// :result: index of the molecle or
+  ///             -1 if none of the core matches
+  ///             -2 if the matched molecule has no sidechains, i.e. is the
+  ///                same as the scaffold
   int add(const ROMol &mol);
   RGroupDecompositionProcessResult processAndScore();
   bool process();
@@ -206,7 +206,9 @@ RDKIT_RGROUPDECOMPOSITION_EXPORT unsigned int RGroupDecompose(
 
 inline bool checkForTimeout(const std::chrono::steady_clock::time_point &t0,
                             double timeout, bool throwOnTimeout = true) {
-  if (timeout <= 0) return false;
+  if (timeout <= 0) {
+    return false;
+  }
   auto t1 = std::chrono::steady_clock::now();
   std::chrono::duration<double> elapsed = t1 - t0;
   if (elapsed.count() >= timeout) {

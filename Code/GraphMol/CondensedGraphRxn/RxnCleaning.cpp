@@ -1190,7 +1190,7 @@ namespace RDKit {
             }
 
             // use useSmile = true and aromatize/sanitize = true (parameter expose in python!)
-            ChemicalReaction *rxn(RxnSmartsToChemicalReaction( sma, nullptr, true, true));
+            ChemicalReaction *rxn(RxnSmartsToChemicalReaction( sma, nullptr, true, true, true));
             if (debug) {
                 // check data process
                 std::cout << "2: reaction readed." << std::endl;

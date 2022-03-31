@@ -8,12 +8,13 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_BOND_H
-#define _RD_BOND_H
+#ifndef RD_BOND_H
+#define RD_BOND_H
 
 // std stuff
 #include <iostream>
 #include <map>
+#include <utility>
 
 // Ours
 #include <RDGeneral/Invariant.h>
@@ -129,6 +130,41 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   Bond(const Bond &other);
   virtual ~Bond();
   Bond &operator=(const Bond &other);
+
+  Bond(Bond &&o) noexcept : RDProps(std::move(o)) {
+    df_isAromatic = o.df_isAromatic;
+    df_isConjugated = o.df_isConjugated;
+    d_bondType = o.d_bondType;
+    d_dirTag = o.d_dirTag;
+    d_stereo = o.d_stereo;
+    d_index = o.d_index;
+    d_beginAtomIdx = o.d_beginAtomIdx;
+    d_endAtomIdx = o.d_endAtomIdx;
+    // NOTE: this is somewhat fraught for bonds associated with molecules since
+    // the molecule will still be pointing to the original object
+    dp_mol = std::exchange(o.dp_mol, nullptr);
+    dp_stereoAtoms = std::exchange(o.dp_stereoAtoms, nullptr);
+  }
+  Bond &operator=(Bond &&o) noexcept {
+    if (this == &o) {
+      return *this;
+    }
+    RDProps::operator=(std::move(o));
+    df_isAromatic = o.df_isAromatic;
+    df_isConjugated = o.df_isConjugated;
+    d_bondType = o.d_bondType;
+    d_dirTag = o.d_dirTag;
+    d_stereo = o.d_stereo;
+    d_index = o.d_index;
+    d_beginAtomIdx = o.d_beginAtomIdx;
+    d_endAtomIdx = o.d_endAtomIdx;
+    // NOTE: this is somewhat fraught for bonds associated with molecules since
+    // the molecule will still be pointing to the original object
+    delete dp_stereoAtoms;
+    dp_mol = std::exchange(o.dp_mol, nullptr);
+    dp_stereoAtoms = std::exchange(o.dp_stereoAtoms, nullptr);
+    return *this;
+  }
 
   //! returns a copy
   /*!
@@ -344,7 +380,9 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   }
   //! \overload
   INT_VECT &getStereoAtoms() {
-    if (!dp_stereoAtoms) dp_stereoAtoms = new INT_VECT();
+    if (!dp_stereoAtoms) {
+      dp_stereoAtoms = new INT_VECT();
+    }
     return *dp_stereoAtoms;
   }
 
@@ -357,9 +395,9 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
 
  protected:
   //! sets our owning molecule
-  // void setOwningMol(ROMol *other);
+  /// void setOwningMol(ROMol *other);
   //! sets our owning molecule
-  // void setOwningMol(ROMol &other) { setOwningMol(&other); }
+  /// void setOwningMol(ROMol &other) { setOwningMol(&other); }
   bool df_isAromatic;
   bool df_isConjugated;
   std::uint8_t d_bondType;
@@ -375,7 +413,7 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
 
 //! returns twice the \c bondType
 //! (e.g. SINGLE->2, AROMATIC->3, etc.)
-uint8_t getTwiceBondType(const RDKit::Bond &b);
+RDKIT_GRAPHMOL_EXPORT extern uint8_t getTwiceBondType(const RDKit::Bond &b);
 
 };  // namespace RDKit
 

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2020 Greg Landrum
+//  Copyright (C) 2021 Greg Landrum
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -7,6 +7,14 @@
 //  of the RDKit source tree.
 //
 
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
-                           // this in one cpp file
+#define CATCH_CONFIG_RUNNER
 #include "catch.hpp"
+#include <RDGeneral/RDLog.h>
+
+int main(int argc, char* argv[]) {
+  RDLog::InitLogs();
+
+  int result = Catch::Session().run(argc, argv);
+
+  return result;
+}

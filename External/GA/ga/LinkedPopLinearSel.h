@@ -138,7 +138,7 @@ LinkedPopLinearSel<Chromosome, PopulationPolicy>::LinkedPopLinearSel(
                           << " predictTotalScaledFitness "
                           << predictTotalScaledFitness;
 #endif
-  assert(abs(totalScaledFitness - predictTotalScaledFitness) < 1.0e-5);
+  assert(std::abs(totalScaledFitness - predictTotalScaledFitness) < 1.0e-5);
 
   double predictEndFitness = SELECT_START + (popsize - 1.0) * scaledFitnessStep;
   (void)predictEndFitness;  // suppress warnings when building with
@@ -147,7 +147,7 @@ LinkedPopLinearSel<Chromosome, PopulationPolicy>::LinkedPopLinearSel(
   REPORT(Reporter::TRACE) << "endFitness " << endFitness
                           << " predictEndFitness " << predictEndFitness;
 #endif
-  assert(abs(endFitness - predictEndFitness) < 1.0e-10);
+  assert(std::abs(endFitness - predictEndFitness) < 1.0e-10);
 
   freeChromosomes.reserve(10);
 }
@@ -200,13 +200,15 @@ LinkedPopLinearSel<Chromosome, PopulationPolicy>::selectParent() {
   double sum = SELECT_START, currentFitness = SELECT_START;
   auto iterator = population.begin();
   for (size_t i = 0; i < popsize; i++) {
-    if (val <= sum) return iterator->second;
+    if (val <= sum) {
+      return iterator->second;
+    }
     currentFitness += scaledFitnessStep;
     sum += currentFitness;
     ++iterator;
   }
   // may get here because of numeric errors
-  assert(abs(sum - totalScaledFitness) < (0.000001 * scaledFitnessStep));
+  assert(std::abs(sum - totalScaledFitness) < (0.000001 * scaledFitnessStep));
   iterator = population.end();
   --iterator;
   return iterator->second;
@@ -436,7 +438,9 @@ LinkedPopLinearSel<Chromosome, PopulationPolicy>::findExactMatch(
   for (auto iterator = iterators.first; iterator != iterators.second;
        ++iterator) {
     const std::shared_ptr<Chromosome>& other = iterator->second;
-    if (c.equals(*other)) return iterator;
+    if (c.equals(*other)) {
+      return iterator;
+    }
   }
   return population.end();
 }
