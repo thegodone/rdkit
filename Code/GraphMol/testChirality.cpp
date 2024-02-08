@@ -14,7 +14,6 @@
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
-//#include <boost/log/functions.hpp>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Canon.h>
 #include <GraphMol/new_canon.h>
@@ -870,7 +869,7 @@ void testChiralityCleanup() {
   MolOps::assignStereochemistry(*mol, true, true);
   TEST_ASSERT(chiral_center->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
   TEST_ASSERT(MolToSmiles(*mol, true) ==
-              "C[C@H]1C[C@@H](C)C[C@H](N2CCc3ccc(N)cc3C2)C1");
+              "C[C@@H]1C[C@H](C)C[C@@H](N2CCc3ccc(N)cc3C2)C1");
   delete mol;
 
   // atom stereo dependent on bond stereo breaking symmetry
@@ -2299,7 +2298,7 @@ void testGithub87() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 5);
     TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag() != Atom::CHI_UNSPECIFIED);
-    WedgeMolBonds(*m, &m->getConformer());
+    Chirality::wedgeMolBonds(*m, &m->getConformer());
     MolOps::assignStereochemistry(*m, true, true);
     TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondDir() == Bond::BEGINWEDGE);
     m->getAtomWithIdx(0)->setChiralTag(Atom::CHI_UNSPECIFIED);
@@ -2314,7 +2313,7 @@ void testGithub87() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 5);
     TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag() != Atom::CHI_UNSPECIFIED);
-    WedgeMolBonds(*m, &m->getConformer());
+    Chirality::wedgeMolBonds(*m, &m->getConformer());
     MolOps::assignStereochemistry(*m, true, true);
     TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondDir() == Bond::BEGINDASH);
     m->getAtomWithIdx(0)->setChiralTag(Atom::CHI_UNSPECIFIED);
@@ -2782,9 +2781,13 @@ void testStereoGroupUpdating() {
 
   TEST_ASSERT(m->getStereoGroups().size() == 2);
   m->removeAtom(3);
-  TEST_ASSERT(m->getStereoGroups().size() == 1);
+  TEST_ASSERT(m->getStereoGroups().size() == 2);
+  TEST_ASSERT(m->getStereoGroups()[1].getGroupType() ==
+              RDKit::StereoGroupType::STEREO_OR);
+  TEST_ASSERT(m->getStereoGroups()[1].getAtoms().size() == 1)
+
   m->removeAtom(m->getAtomWithIdx(0));
-  TEST_ASSERT(m->getStereoGroups().size() == 0u);
+  TEST_ASSERT(m->getStereoGroups().size() == 1);
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
@@ -3029,7 +3032,7 @@ void testIncorrectBondDirsOnWedging() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getBondBetweenAtoms(10, 4));
     TEST_ASSERT(m->getBondBetweenAtoms(10, 4)->getBeginAtomIdx() == 10);
-    WedgeMolBonds(*m, &m->getConformer());
+    Chirality::wedgeMolBonds(*m, &m->getConformer());
     TEST_ASSERT(m->getBondBetweenAtoms(10, 4));
     TEST_ASSERT(m->getBondBetweenAtoms(10, 4)->getBondDir() ==
                 Bond::BEGINWEDGE);
@@ -3046,7 +3049,7 @@ void testIncorrectBondDirsOnWedging() {
     TEST_ASSERT(m->getBondBetweenAtoms(3, 21)->getBeginAtomIdx() == 3);
     TEST_ASSERT(m->getBondBetweenAtoms(2, 20));
     TEST_ASSERT(m->getBondBetweenAtoms(2, 20)->getBeginAtomIdx() == 2);
-    WedgeMolBonds(*m, &m->getConformer());
+    Chirality::wedgeMolBonds(*m, &m->getConformer());
     TEST_ASSERT(m->getBondBetweenAtoms(3, 21));
     TEST_ASSERT(m->getBondBetweenAtoms(3, 21)->getBeginAtomIdx() == 21);
     TEST_ASSERT(m->getBondBetweenAtoms(2, 20));
@@ -3200,6 +3203,35 @@ M  END)CTAB";
   TEST_ASSERT(double_bonds_seen == 6);
 }
 
+void testGithub7115() {
+    BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+    BOOST_LOG(rdInfoLog)
+    << "GitHub #7115: Quaternary nitrogens with hydrogens are not a candidate for stereo."
+    << std::endl;
+    
+    {
+        auto s = "C[C@]1(F)C[N@H+](O)C1"_smiles;
+        auto smi = MolToSmiles(*s);
+        TEST_ASSERT(smi == "C[C@]1(F)C[N@H+](O)C1");
+    }
+    {
+        auto s = "C[C@]1(F)C[N@+]([H])(O)C1"_smiles;
+        auto smi = MolToSmiles(*s);
+        TEST_ASSERT(smi == "C[C@]1(F)C[N@H+](O)C1");
+    }
+    {
+        auto insmi = "C[C@]1(F)C[N@+]([H])(O)C1";
+        SmilesParserParams params;
+        params.removeHs = false;
+        std::unique_ptr<RWMol> s(SmilesToMol(insmi, params));
+        auto smi = MolToSmiles(*s);
+        TEST_ASSERT(smi == "[H][N@+]1(O)C[C@](C)(F)C1");
+        // round trip
+        std::unique_ptr<RWMol> s2(SmilesToMol(smi));
+        TEST_ASSERT(MolToSmiles(*s2) == "C[C@]1(F)C[N@H+](O)C1");
+    }
+}
+
 int main() {
   RDLog::InitLogs();
   // boost::logging::enable_logs("rdApp.debug");
@@ -3236,5 +3268,6 @@ int main() {
   testIncorrectBondDirsOnWedging();
   testGithub3314();
   testGithub4494();
+  testGithub7115();
   return 0;
 }

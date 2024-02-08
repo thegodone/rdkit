@@ -199,15 +199,13 @@ void findSSSRforDupCands(const ROMol &mol, VECT_INT_VECT &res,
   }      // end of loop over all set of duplicate candidates
 }
 
-struct compRingSize : public std::binary_function<INT_VECT, INT_VECT, bool> {
-  bool operator()(const INT_VECT &v1, const INT_VECT &v2) const {
-    return v1.size() < v2.size();
-  }
+auto compRingSize = [](const auto &v1, const auto &v2) {
+  return v1.size() < v2.size();
 };
 
 void removeExtraRings(VECT_INT_VECT &res, unsigned int, const ROMol &mol) {
   // sort on size
-  std::sort(res.begin(), res.end(), compRingSize());
+  std::sort(res.begin(), res.end(), compRingSize);
 
 #if 0
         std::cerr<<"\n\nSORTED\n";
@@ -237,6 +235,9 @@ void removeExtraRings(VECT_INT_VECT &res, unsigned int, const ROMol &mol) {
   boost::dynamic_bitset<> keepRings(res.size());
   boost::dynamic_bitset<> munion(mol.getNumBonds());
 
+  // optimization - don't reallocate a new one each loop
+  boost::dynamic_bitset<> workspace(mol.getNumBonds());
+
   for (unsigned int i = 0; i < res.size(); ++i) {
     // skip this ring if we've already seen all of its bonds
     if (bitBrings[i].is_subset_of(munion)) {
@@ -260,20 +261,20 @@ void removeExtraRings(VECT_INT_VECT &res, unsigned int, const ROMol &mol) {
       }
     }
 
-    // std::cerr<<">>> "<<i<<" "<<consider.count()<<std::endl;
-    while (consider.count()) {
+    while (consider.any()) {
       unsigned int bestJ = i + 1;
       int bestOverlap = -1;
       // loop over the available other rings in consideration and pick the one
       // that has the most overlapping bonds with what we've done so far.
       // this is the fix to github #526
       for (unsigned int j = i + 1;
-           j < res.size() && bitBrings[j].count() == bitBrings[i].count();
-           ++j) {
+           j < res.size() && brings[j].size() == brings[i].size(); ++j) {
         if (!consider[j] || !availRings[j]) {
           continue;
         }
-        int overlap = rdcast<int>((bitBrings[j] & munion).count());
+        workspace = bitBrings[j];
+        workspace &= munion;
+        int overlap = rdcast<int>(workspace.count());
         if (overlap > bestOverlap) {
           bestOverlap = overlap;
           bestJ = j;
@@ -846,25 +847,21 @@ bool findRingConnectingAtoms(const ROMol &tMol, const Bond *bond,
 
 namespace RDKit {
 namespace MolOps {
-int findSSSR(const ROMol &mol, VECT_INT_VECT *res) {
+int findSSSR(const ROMol &mol, VECT_INT_VECT *res, bool includeDativeBonds) {
   if (!res) {
     VECT_INT_VECT rings;
-    return findSSSR(mol, rings);
+    return findSSSR(mol, rings, includeDativeBonds);
   } else {
-    return findSSSR(mol, (*res));
+    return findSSSR(mol, (*res), includeDativeBonds);
   }
 }
 
-int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
+int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds) {
   res.resize(0);
-  // check if SSSR's are already on the molecule
   if (mol.getRingInfo()->isInitialized()) {
-    res = mol.getRingInfo()->atomRings();
-    return rdcast<int>(res.size());
-  } else {
-    mol.getRingInfo()->initialize();
+    mol.getRingInfo()->reset();
   }
-
+  mol.getRingInfo()->initialize(FIND_RING_TYPE_SSSR);
   RINGINVAR_SET invars;
 
   unsigned int nats = mol.getNumAtoms();
@@ -874,12 +871,14 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
   boost::dynamic_bitset<> activeBonds(nbnds);
   activeBonds.set();
 
-  // Zero-order bonds are not candidates for rings
+  // Zero-order bonds are not candidates for rings, and dative bonds may also be
+  // out
   ROMol::EDGE_ITER firstB, lastB;
   boost::tie(firstB, lastB) = mol.getEdges();
   while (firstB != lastB) {
     const Bond *bond = mol[*firstB];
-    if (bond->getBondType() == Bond::ZERO) {
+    if (bond->getBondType() == Bond::ZERO ||
+        (!includeDativeBonds && isDative(*bond))) {
       activeBonds[bond->getIdx()] = 0;
     }
     ++firstB;
@@ -895,14 +894,11 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
     int deg = atom->getDegree();
     atomDegrees[i] = deg;
     atomDegreesWithZeroOrderBonds[i] = deg;
-    ROMol::OEDGE_ITER beg, end;
-    boost::tie(beg, end) = mol.getAtomBonds(atom);
-    while (beg != end) {
-      const Bond *bond = mol[*beg];
-      if (bond->getBondType() == Bond::ZERO) {
+    for (const auto bond : mol.atomBonds(atom)) {
+      if (bond->getBondType() == Bond::ZERO ||
+          (!includeDativeBonds && isDative(*bond))) {
         atomDegrees[i]--;
       }
-      ++beg;
     }
   }
 
@@ -999,8 +995,8 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
       }  // end of degree two nodes
       else if (nAtomsDone <
                curFrag.size()) {  // now deal with higher degree nodes
-        // this is brutal - we have no degree 2 nodes - find the first possible
-        // degree 3 node
+        // this is brutal - we have no degree 2 nodes - find the first
+        // possible degree 3 node
         int cand = -1;
         for (INT_VECT_CI aidi = curFrag.begin(); aidi != curFrag.end();
              aidi++) {
@@ -1120,22 +1116,21 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
   return rdcast<int>(res.size());
 }
 
-int symmetrizeSSSR(ROMol &mol) {
+int symmetrizeSSSR(ROMol &mol, bool includeDativeBonds) {
   VECT_INT_VECT tmp;
-  return symmetrizeSSSR(mol, tmp);
+  return symmetrizeSSSR(mol, tmp, includeDativeBonds);
 };
 
-int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res) {
+int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds) {
   res.clear();
   VECT_INT_VECT sssrs;
 
   // FIX: need to set flag here the symmetrization has been done in order to
   // avoid repeating this work
-  if (!mol.getRingInfo()->isInitialized()) {
-    findSSSR(mol, sssrs);
-  } else {
-    sssrs = mol.getRingInfo()->atomRings();
-  }
+  findSSSR(mol, sssrs, includeDativeBonds);
+
+  // reinit as SYMM_SSSR
+  mol.getRingInfo()->initialize(FIND_RING_TYPE_SYMM_SSSR);
 
   res.reserve(sssrs.size());
   for (const auto &r : sssrs) {
@@ -1264,13 +1259,12 @@ void _DFS(const ROMol &mol, const Atom *atom, INT_VECT &atomColors,
 }
 }  // end of anonymous namespace
 void fastFindRings(const ROMol &mol) {
-  // std::cerr<<"ffr"<<std::endl;
-  // check if SSSR's are already on the molecule
   if (mol.getRingInfo()->isInitialized()) {
-    return;
-  } else {
-    mol.getRingInfo()->initialize();
+    mol.getRingInfo()->reset();
   }
+
+  mol.getRingInfo()->initialize(FIND_RING_TYPE_FAST);
+
   VECT_INT_VECT res;
   res.resize(0);
 

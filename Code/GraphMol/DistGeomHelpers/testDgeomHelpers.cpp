@@ -402,11 +402,9 @@ void test5() {
       rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/cis_trans_cases.csv";
   SmilesMolSupplier smiSup(smifile, ",", 0, 1);
 
-  int i = 0;
   int cid;
   while (1) {
     try {
-      i++;
       std::unique_ptr<RWMol> mol{static_cast<RWMol *>(smiSup.next())};
       MolOps::addHs(*mol);
       cid = DGeomHelpers::EmbedMolecule(*mol, 10, 1);  // getCoords(*mol, iter);
@@ -928,11 +926,11 @@ void testRandomCoords() {
       const Conformer &conf1 = m->getConformer(0);
       const Conformer &conf2 = m2->getConformer(0);
 #if 0
-      BOOST_LOG(rdInfoLog) << "-----------------------" << std::endl;
-      BOOST_LOG(rdInfoLog) << MolToMolBlock(*m2) << std::endl;
-      BOOST_LOG(rdInfoLog) << "---" << std::endl;
-      BOOST_LOG(rdInfoLog) << MolToMolBlock(*m) << std::endl;
-      BOOST_LOG(rdInfoLog) << "-----------------------" << std::endl;
+      BOOST_LOG(rdWarningLog) << "-----------------------" << std::endl;
+      BOOST_LOG(rdWarningLog) << MolToMolBlock(*m2) << std::endl;
+      BOOST_LOG(rdWarningLog) << "---" << std::endl;
+      BOOST_LOG(rdWarningLog) << MolToMolBlock(*m) << std::endl;
+      BOOST_LOG(rdWarningLog) << "-----------------------" << std::endl;
 #endif
       for (unsigned int i = 0; i < nat; i++) {
         RDGeom::Point3D pt1i = conf1.getAtomPos(i);

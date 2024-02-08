@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 #include "GraphMol/ScaffoldNetwork/detail.h"
 #include "RDGeneral/test.h"
 #include <sstream>
@@ -655,9 +655,8 @@ TEST_CASE("larger multi-mol test", "[regression][scaffold]") {
         "*c1nocc1C(=O)NC1C(=O)N2CCSC12",
         "CC1(C)SC2C(NC(=O)Cc3ccccc3)C(=O)N2C1C(=O)O.[Na]",
         "CC1(C)S[C@@H]2[C@H](NC(=O)[C@H](N)c3ccccc3)C(=O)N2[C@H]1C(=O)O",
-        "Cc1onc(-c2c(F)cccc2Cl)c1C(=O)N[C@@H]1C(=O)N2[C@@H](C(=O)O)C(C)(C)S[C@"
-        "H]12",
-        "Cc1onc(-c2ccccc2)c1C(=O)N[C@@H]1C(=O)N2[C@@H](C(=O)O)C(C)(C)S[C@H]12",
+        "Cc1onc(-c2c(F)cccc2Cl)c1C(=O)N[C@@H]1C(=O)N2[C@@H]1SC(C)(C)[C@@H]2C(=O)O",
+        "Cc1onc(-c2ccccc2)c1C(=O)N[C@@H]1C(=O)N2[C@@H]1SC(C)(C)[C@@H]2C(=O)O",
         "O=C(Cc1ccccc1)NC1C(=O)N2CCSC12",
         "O=C(NC1C(=O)N2CCSC12)c1conc1-c1ccccc1"};
     CHECK(snodes == tgt);
@@ -704,9 +703,8 @@ TEST_CASE("larger multi-mol test", "[regression][scaffold]") {
         "*c1nocc1C(=O)NC1C(=O)N2CCSC12",
         "CC1(C)SC2C(NC(=O)Cc3ccccc3)C(=O)N2C1C(=O)O.[Na]",
         "CC1(C)S[C@@H]2[C@H](NC(=O)[C@H](N)c3ccccc3)C(=O)N2[C@H]1C(=O)O",
-        "Cc1onc(-c2c(F)cccc2Cl)c1C(=O)N[C@@H]1C(=O)N2[C@@H](C(=O)O)C(C)(C)S[C@"
-        "H]12",
-        "Cc1onc(-c2ccccc2)c1C(=O)N[C@@H]1C(=O)N2[C@@H](C(=O)O)C(C)(C)S[C@H]12",
+        "Cc1onc(-c2c(F)cccc2Cl)c1C(=O)N[C@@H]1C(=O)N2[C@@H]1SC(C)(C)[C@@H]2C(=O)O",
+        "Cc1onc(-c2ccccc2)c1C(=O)N[C@@H]1C(=O)N2[C@@H]1SC(C)(C)[C@@H]2C(=O)O",
         "O=C(Cc1ccccc1)NC1C(=O)N2CCSC12",
         "O=C(NC1C(=O)N2CCSC12)c1conc1-c1ccccc1"};
     CHECK(snodes == tgt);
@@ -900,5 +898,17 @@ TEST_CASE("molCounts", "[scaffolds]") {
       auto idx = loc - net.nodes.begin();
       CHECK(net.molCounts[idx] == endp.second);
     }
+  }
+}
+
+TEST_CASE("Github #6855 MakeScaffoldGeneric isotope removal", "[bug]") {
+  auto m = "[235U]1CC1"_smiles;
+  REQUIRE(m);
+  SECTION("basics") {
+    std::unique_ptr<ROMol> pm(
+        ScaffoldNetwork::detail::makeScaffoldGeneric(*m, true, false));
+    REQUIRE(pm);
+    auto smiles = MolToSmiles(*pm);
+    CHECK(smiles == "*1**1");
   }
 }

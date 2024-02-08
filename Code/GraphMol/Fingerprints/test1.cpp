@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 #include <RDGeneral/test.h>
 #include <GraphMol/RDKitBase.h>
@@ -3424,13 +3425,12 @@ void testRDKFPBitInfo() {
                             nullptr, nullptr, nullptr, &bitInfo);
     TEST_ASSERT(fp1);
 
-#if 0
-    for (iter2 = bitInfo.begin();
-         iter2 != bitInfo.end(); ++iter2) {
+#if 1
+    for (iter2 = bitInfo.begin(); iter2 != bitInfo.end(); ++iter2) {
       std::cerr << "   " << iter2->first << ": ";
-      for (unsigned i=0; i<iter2->second.size(); i++){
+      for (unsigned i = 0; i < iter2->second.size(); i++) {
         std::cerr << " [ ";
-        for (unsigned j=0; j<iter2->second.at(i).size(); j++){
+        for (unsigned j = 0; j < iter2->second.at(i).size(); j++) {
           std::cerr << iter2->second.at(i).at(j) << " ";
         }
         std::cerr << "], ";
@@ -3910,6 +3910,7 @@ M  END)CTAB";
   std::unique_ptr<ROMol> mol{MolBlockToMol(molblock)};
 
   TEST_ASSERT(AtomPairs::getAtomCode(mol->getAtomWithIdx(0), 0, false) == 486);
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
 int main(int argc, char *argv[]) {

@@ -42,6 +42,13 @@ RDKIT_RDKITCFFI_EXPORT char *get_inchi(const char *pkl, size_t pkl_sz,
 RDKIT_RDKITCFFI_EXPORT char *get_inchi_for_molblock(const char *ctab,
                                                     const char *details_json);
 RDKIT_RDKITCFFI_EXPORT char *get_inchikey_for_inchi(const char *inchi);
+RDKIT_RDKITCFFI_EXPORT char *get_rxn(const char *input, size_t *mol_sz,
+                                     const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char **get_mol_frags(const char *pkl, size_t pkl_sz,
+                                            size_t **frags_pkl_sz_array,
+                                            size_t *num_frags,
+                                            const char *details_json,
+                                            char **mappings_json);
 
 // substructure
 RDKIT_RDKITCFFI_EXPORT char *get_substruct_match(const char *mol_pkl,
@@ -58,6 +65,8 @@ RDKIT_RDKITCFFI_EXPORT char *get_substruct_matches(const char *mol_pkl,
 // Drawing
 RDKIT_RDKITCFFI_EXPORT char *get_svg(const char *pkl, size_t pkl_sz,
                                      const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char *get_rxn_svg(const char *pkl, size_t pkl_sz,
+                                         const char *details_json);
 
 // Calculators
 RDKIT_RDKITCFFI_EXPORT char *get_descriptors(const char *pkl, size_t pkl_sz);
@@ -79,6 +88,27 @@ RDKIT_RDKITCFFI_EXPORT char *get_pattern_fp_as_bytes(const char *pkl,
                                                      size_t pkl_sz,
                                                      size_t *nbytes,
                                                      const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char *get_topological_torsion_fp(
+    const char *pkl, size_t pkl_sz, const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char *get_topological_torsion_fp_as_bytes(
+    const char *pkl, size_t pkl_sz, size_t *nbytes, const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char *get_atom_pair_fp(const char *pkl, size_t pkl_sz,
+                                              const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char *get_atom_pair_fp_as_bytes(
+    const char *pkl, size_t pkl_sz, size_t *nbytes, const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char *get_maccs_fp(const char *pkl, size_t pkl_sz);
+RDKIT_RDKITCFFI_EXPORT char *get_maccs_fp_as_bytes(const char *pkl,
+                                                   size_t pkl_sz,
+                                                   size_t *nbytes);
+
+#ifdef RDK_BUILD_AVALON_SUPPORT
+RDKIT_RDKITCFFI_EXPORT char *get_avalon_fp(const char *pkl, size_t pkl_sz,
+                                           const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char *get_avalon_fp_as_bytes(const char *pkl,
+                                                    size_t pkl_sz,
+                                                    size_t *nbytes,
+                                                    const char *details_json);
+#endif
 
 // modification
 RDKIT_RDKITCFFI_EXPORT short add_hs(char **pkl, size_t *pkl_sz);
@@ -102,13 +132,15 @@ RDKIT_RDKITCFFI_EXPORT short fragment_parent(char **pkl, size_t *pkl_sz,
 
 // coordinates
 RDKIT_RDKITCFFI_EXPORT void prefer_coordgen(short val);
+RDKIT_RDKITCFFI_EXPORT short has_coords(char *mol_pkl, size_t mol_pkl_sz);
 RDKIT_RDKITCFFI_EXPORT short set_2d_coords(char **pkl, size_t *pkl_sz);
 RDKIT_RDKITCFFI_EXPORT short set_3d_coords(char **pkl, size_t *pkl_sz,
                                            const char *params_json);
 RDKIT_RDKITCFFI_EXPORT short set_2d_coords_aligned(char **pkl, size_t *pkl_sz,
                                                    const char *template_pkl,
                                                    size_t template_sz,
-                                                   const char *details_json);
+                                                   const char *details_json,
+                                                   char **match_json);
 
 // housekeeping
 RDKIT_RDKITCFFI_EXPORT void free_ptr(char *ptr);
@@ -116,6 +148,17 @@ RDKIT_RDKITCFFI_EXPORT void free_ptr(char *ptr);
 RDKIT_RDKITCFFI_EXPORT char *version();
 RDKIT_RDKITCFFI_EXPORT void enable_logging();
 RDKIT_RDKITCFFI_EXPORT void disable_logging();
+
+// chirality
+RDKIT_RDKITCFFI_EXPORT short use_legacy_stereo_perception(short value);
+RDKIT_RDKITCFFI_EXPORT short allow_non_tetrahedral_chirality(short value);
+
+// logging
+RDKIT_RDKITCFFI_EXPORT void *set_log_tee(const char *log_name);
+RDKIT_RDKITCFFI_EXPORT void *set_log_capture(const char *log_name);
+RDKIT_RDKITCFFI_EXPORT short destroy_log_handle(void **log_handle);
+RDKIT_RDKITCFFI_EXPORT char *get_log_buffer(void *log_handle);
+RDKIT_RDKITCFFI_EXPORT short clear_log_buffer(void *log_handle);
 
 #ifdef __cplusplus
 }

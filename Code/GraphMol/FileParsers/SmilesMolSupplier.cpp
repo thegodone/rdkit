@@ -186,7 +186,6 @@ ROMol *SmilesMolSupplier::processLine(std::string inLine) {
     // -----------
     // read in the properties
     // -----------
-    unsigned int iprop = 0;
     for (unsigned int col = 0; col < recs.size(); col++) {
       if (static_cast<int>(col) == d_smi || static_cast<int>(col) == d_name) {
         continue;
@@ -203,7 +202,6 @@ ROMol *SmilesMolSupplier::processLine(std::string inLine) {
 
       pval = recs[col];
       res->setProp(pname, pval);
-      iprop++;
     }
 
   } catch (const SmilesParseException &pe) {
@@ -390,7 +388,7 @@ void SmilesMolSupplier::moveTo(unsigned int idx) {
 
   // the stream pointer is now at the last thing we read in
   while (d_molpos.size() <= idx) {
-    int nextP = this->skipComments();
+    std::streampos nextP = this->skipComments();
     if (nextP < 0) {
       std::ostringstream errout;
       errout << "ERROR: Index error (idx = " << idx << "): "

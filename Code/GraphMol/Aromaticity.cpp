@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/QueryBond.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/Rings.h>
 #include <RDGeneral/types.h>
@@ -67,7 +68,7 @@ bool checkFused(const INT_VECT &rids, INT_INT_VECT_MAP &ringNeighs) {
   INT_VECT fused;
 
   // mark all rings in the system other than those in rids as done
-  for (auto nci : ringNeighs) {
+  for (const auto &nci : ringNeighs) {
     rid = nci.first;
     if (std::find(rids.begin(), rids.end(), rid) == rids.end()) {
       done[rid] = 1;
@@ -364,6 +365,16 @@ void applyHuckelToFused(
   std::set<unsigned int> doneBonds;
   while (1) {
     if (pos == -1) {
+      // If a ring system has more than 300 rings and a ring combination search
+      // larger than 2 is reached, the calculation becomes exponentially longer,
+      // in some case it never completes.
+      if ((curSize == 2) && (nrings > 300)) {
+        BOOST_LOG(rdWarningLog)
+            << "Aromaticity detection halted on some rings due to ring system size."
+            << std::endl;
+        break;
+      }
+
       ++curSize;
       // check if we are done with all the atoms in the fused
       // system, if so quit. This is a fix for Issue252 REVIEW: is
@@ -603,6 +614,16 @@ ElectronDonorType getAtomDonorTypeArom(
 
 namespace RDKit {
 namespace MolOps {
+bool isBondOrderQuery(const Bond *bond) {
+  if (bond->getBondType() == Bond::BondType::UNSPECIFIED && bond->hasQuery()) {
+    auto label =
+        dynamic_cast<const QueryBond *>(bond)->getQuery()->getTypeLabel();
+    if (label == "BondOrder") {
+      return true;
+    }
+  }
+  return false;
+}
 int countAtomElec(const Atom *at) {
   PRECONDITION(at, "bad atom");
 
@@ -619,7 +640,7 @@ int countAtomElec(const Atom *at) {
   const auto &mol = at->getOwningMol();
   for (const auto bond : mol.atomBonds(at)) {
     // don't count bonds that aren't actually contributing to the valence here:
-    if (!std::lround(bond->getValenceContrib(at))) {
+    if (!isBondOrderQuery(bond) && !std::lround(bond->getValenceContrib(at))) {
       --degree;
     }
   }
@@ -793,7 +814,7 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
     for (auto firstIdx : sring) {
       const auto at = mol.getAtomWithIdx(firstIdx);
 
-      if (allDummy && at->getAtomicNum() != 0) {
+      if (allDummy && !isAtomDummy(at)) {
         allDummy = false;
       }
 

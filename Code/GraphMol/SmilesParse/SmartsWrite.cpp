@@ -100,7 +100,7 @@ void describeQuery(const T *query, std::string leader = "\t") {
 const static std::string _qatomHasStereoSet = "_qatomHasStereoSet";
 std::string getAtomSmartsSimple(const QueryAtom *qatom,
                                 const Atom::QUERYATOM_QUERY *query,
-                                bool &needParen) {
+                                bool &needParen, bool checkForSymbol = false) {
   PRECONDITION(query, "bad query");
 
   auto *equery = dynamic_cast<const ATOM_EQUALS_QUERY *>(query);
@@ -132,9 +132,11 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
     hasVal = true;
     needParen = true;
   } else if (descrip == "AtomAtomicNum") {
-    res << "#";
-    hasVal = true;
-    needParen = true;
+    if (!qatom->hasProp(common_properties::smilesSymbol)) {
+      res << "#";
+      hasVal = true;
+      needParen = true;
+    }
   } else if (descrip == "AtomExplicitDegree") {
     res << "D";
     hasVal = true;
@@ -253,13 +255,22 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
     int atNum;
     bool isAromatic;
     parseAtomType(equery->getVal(), atNum, isAromatic);
-    std::string symbol = PeriodicTable::getTable()->getElementSymbol(atNum);
-    if (isAromatic) {
-      symbol[0] += ('a' - 'A');
-    }
-    res << symbol;
-    if (!SmilesWrite::inOrganicSubset(atNum)) {
-      needParen = true;
+    if (!checkForSymbol || !qatom->hasProp(common_properties::smilesSymbol)) {
+      std::string symbol = PeriodicTable::getTable()->getElementSymbol(atNum);
+      if (isAromatic) {
+        symbol[0] += ('a' - 'A');
+      }
+      res << symbol;
+
+      if (!SmilesWrite::inOrganicSubset(atNum)) {
+        needParen = true;
+      }
+    } else {
+      if (isAromatic) {
+        res << "a";
+      } else {
+        res << "A";
+      }
     }
   } else {
     BOOST_LOG(rdWarningLog)
@@ -365,6 +376,10 @@ std::string getBasicBondRepr(Bond::BondType typ, Bond::BondDir dir,
         res = "->";
       }
       break;
+    case Bond::ZERO:
+      res = "~";  // Actually means "any", but we use ~ for unknown bond types
+                  // in SMILES,
+      break;      // and this will match a ZOB.
     default:
       res = "";
   }
@@ -463,8 +478,10 @@ std::string _recurseGetSmarts(const QueryAtom *qatom,
     csmarts1 = getRecursiveStructureQuerySmarts(child1);
     features |= static_cast<unsigned int>(QueryBoolFeatures::HAS_RECURSION);
   } else if ((dsc1 != "AtomOr") && (dsc1 != "AtomAnd")) {
-    // child 1 is a simple node
-    csmarts1 = getAtomSmartsSimple(qatom, child1, needParen);
+    // child 1 is a simple node, but we only check for the smilesSymbol
+    //  if descrip=="AtomAnd"
+    csmarts1 =
+        getAtomSmartsSimple(qatom, child1, needParen, descrip == "AtomAnd");
     bool nneg = (negate) ^ (child1->getNegation());
     if (nneg) {
       csmarts1 = "!" + csmarts1;
@@ -616,10 +633,6 @@ std::string FragmentSmartsConstruct(
     std::vector<unsigned int> &atomOrdering,
     std::vector<unsigned int> &bondOrdering,
     const boost::dynamic_bitset<> *bondsInPlay) {
-  Canon::MolStack molStack;
-  molStack.reserve(mol.getNumAtoms() + mol.getNumBonds());
-  std::stringstream res;
-
   // this is dirty trick get around the fact that canonicalizeFragment
   // thinks we already called findSSSR - to do some atom ranking
   // but for smarts we are going to ignore that part. We will artificially
@@ -630,28 +643,19 @@ std::string FragmentSmartsConstruct(
     atom->updatePropertyCache(false);
   }
 
-  // Another dirty trick to avoid reordering of lead chiral atoms in
-  // canonicalizeFragment: since we are writing SMARTS, there won't be a
-  // reordering on parsing.
-  // The trick is as easy as choosing the first non-chiral atom we can find as
-  // root of the string. This should not be a problem, since SMARTS do not get
-  // canonicalized.
-  if (molStack.empty()) {
-    for (const auto atom : mol.atoms()) {
-      if (colors[atom->getIdx()] == Canon::WHITE_NODE &&
-          atom->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW &&
-          atom->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW) {
-        atomIdx = atom->getIdx();
-        break;
-      }
-    }
-  }
-
+  // For Smarts, we avoid reordering of chiral atoms in canonicalizeFragment.
+  bool doRandom = false;
+  bool doChiralInversions = true;
+  Canon::MolStack molStack;
+  molStack.reserve(mol.getNumAtoms() + mol.getNumBonds());
   Canon::canonicalizeFragment(mol, atomIdx, colors, ranks, molStack,
-                              bondsInPlay, nullptr, doIsomericSmiles);
+                              bondsInPlay, nullptr, doIsomericSmiles, doRandom,
+                              doChiralInversions);
 
   // now clear the "SSSR" property
   mol.getRingInfo()->reset();
+
+  std::stringstream res;
   for (auto &msCI : molStack) {
     switch (msCI.type) {
       case Canon::MOL_STACK_ATOM: {
@@ -702,7 +706,10 @@ std::string getNonQueryAtomSmarts(const Atom *atom) {
     res << isotope;
   }
 
-  if (SmilesWrite::inOrganicSubset(atom->getAtomicNum())) {
+  std::string symbol;
+  if (atom->getPropIfPresent(common_properties::smilesSymbol, symbol)) {
+    res << symbol;
+  } else if (SmilesWrite::inOrganicSubset(atom->getAtomicNum())) {
     res << "#" << atom->getAtomicNum();
   } else {
     res << atom->getSymbol();
@@ -780,7 +787,10 @@ std::string getNonQueryBondSmarts(const Bond *qbond, int atomToLeftIdx) {
 
 std::string molToSmarts(const ROMol &inmol, bool doIsomericSmiles,
                         std::vector<AtomColors> &&colors,
-                        const boost::dynamic_bitset<> *bondsInPlay) {
+                        const boost::dynamic_bitset<> *bondsInPlay,
+                        int rootedAtAtom) {
+  PRECONDITION(rootedAtAtom < static_cast<int>(inmol.getNumAtoms()),
+               "bad atom index");
   ROMol mol(inmol);
   const unsigned int nAtoms = mol.getNumAtoms();
   UINT_VECT ranks;
@@ -801,15 +811,30 @@ std::string molToSmarts(const ROMol &inmol, bool doIsomericSmiles,
   auto colorIt = std::find(colors.begin(), colors.end(), Canon::WHITE_NODE);
   while (colorIt != colors.end()) {
     unsigned int nextAtomIdx = 0;
-    unsigned int nextRank;
     std::string subSmi;
-    nextRank = nAtoms + 1;
-    for (unsigned int i = 0; i < nAtoms; ++i) {
-      if (colors[i] == Canon::WHITE_NODE && ranks[i] < nextRank) {
-        nextRank = ranks[i];
-        nextAtomIdx = i;
+
+    if (rootedAtAtom > -1 && colors[rootedAtAtom] == Canon::WHITE_NODE) {
+      nextAtomIdx = rootedAtAtom;
+    } else {
+      // Try to find a non-chiral atom we have not processed yet.
+      // If we can't find non-chiral atom, use the chiral atom with
+      // the lowest rank (we are guaranteed to find an unprocessed atom).
+      unsigned nextRank = nAtoms + 1;
+      for (auto atom : mol.atoms()) {
+        if (colors[atom->getIdx()] == Canon::WHITE_NODE) {
+          if (atom->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW &&
+              atom->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW) {
+            nextAtomIdx = atom->getIdx();
+            break;
+          }
+          if (ranks[atom->getIdx()] < nextRank) {
+            nextRank = ranks[atom->getIdx()];
+            nextAtomIdx = atom->getIdx();
+          }
+        }
       }
     }
+
     subSmi = FragmentSmartsConstruct(mol, nextAtomIdx, colors, ranks,
                                      doIsomericSmiles, atomOrdering,
                                      bondOrdering, bondsInPlay);
@@ -846,42 +871,50 @@ std::string GetAtomSmarts(const Atom *atom) {
   if (descrip.empty()) {
     // we have simple atom - just generate the smiles and return
     res = SmilesWrite::GetAtomSmiles(atom);
-    if (res[0] == '[') {
-      // chop the brackets off, we'll put them back on later:
+    return res;
+  } else {
+    if ((descrip == "AtomOr") || (descrip == "AtomAnd")) {
+      const QueryAtom *qatom = dynamic_cast<const QueryAtom *>(atom);
+      PRECONDITION(qatom, "could not convert atom to query atom");
+      // we have a composite query
       needParen = true;
-      res = res.substr(1, res.size() - 2);
-    }
-  } else if ((descrip == "AtomOr") || (descrip == "AtomAnd")) {
-    const QueryAtom *qatom = dynamic_cast<const QueryAtom *>(atom);
-    PRECONDITION(qatom, "could not convert atom to query atom");
-    // we have a composite query
-    needParen = true;
-    res = _recurseGetSmarts(qatom, query, query->getNegation(), queryFeatures);
-    if (res.length() == 1) {  // single atom symbol we don't need parens
-      needParen = false;
-    }
-  } else if (descrip == "RecursiveStructure") {
-    // it's a bare recursive structure query:
-    res = getRecursiveStructureQuerySmarts(query);
-    needParen = true;
-  } else {  // we have a simple smarts
-    const QueryAtom *qatom = dynamic_cast<const QueryAtom *>(atom);
-    PRECONDITION(qatom, "could not convert atom to query atom");
-    res = getAtomSmartsSimple(qatom, query, needParen);
-    if (query->getNegation()) {
-      res = "!" + res;
+      res =
+          _recurseGetSmarts(qatom, query, query->getNegation(), queryFeatures);
+      if (res.length() == 1) {  // single atom symbol we don't need parens
+        needParen = false;
+      }
+    } else if (descrip == "RecursiveStructure") {
+      // it's a bare recursive structure query:
+      res = getRecursiveStructureQuerySmarts(query);
       needParen = true;
+    } else {  // we have a simple smarts
+      const QueryAtom *qatom = dynamic_cast<const QueryAtom *>(atom);
+      PRECONDITION(qatom, "could not convert atom to query atom");
+      res = getAtomSmartsSimple(qatom, query, needParen, true);
+      if (query->getNegation()) {
+        res = "!" + res;
+        needParen = true;
+      }
     }
+    std::string mapNum;
+    if (atom->getPropIfPresent(common_properties::molAtomMapNumber, mapNum)) {
+      needParen = true;
+      res += ":" + mapNum;
+    }
+    std::string symbol;
+    if (atom->getPropIfPresent(common_properties::smilesSymbol, symbol)) {
+      needParen = true;
+      if (!res.empty()) {
+        res = symbol + ";" + res;
+      } else {
+        res = symbol;
+      }
+    }
+    if (needParen) {
+      res = "[" + res + "]";
+    }
+    return res;
   }
-  std::string mapNum;
-  if (atom->getPropIfPresent(common_properties::molAtomMapNumber, mapNum)) {
-    needParen = true;
-    res += ":" + mapNum;
-  }
-  if (needParen) {
-    res = "[" + res + "]";
-  }
-  return res;
 }
 
 std::string GetBondSmarts(const Bond *bond, int atomToLeftIdx) {
@@ -928,14 +961,16 @@ std::string GetBondSmarts(const Bond *bond, int atomToLeftIdx) {
 
 }  // end of namespace SmartsWrite
 
-std::string MolToSmarts(const ROMol &mol, bool doIsomericSmarts) {
+std::string MolToSmarts(const ROMol &mol, bool doIsomericSmarts,
+                        int rootedAtAtom) {
   const unsigned int nAtoms = mol.getNumAtoms();
   if (!nAtoms) {
     return "";
   }
 
   std::vector<AtomColors> colors(nAtoms, Canon::WHITE_NODE);
-  return molToSmarts(mol, doIsomericSmarts, std::move(colors), nullptr);
+  return molToSmarts(mol, doIsomericSmarts, std::move(colors), nullptr,
+                     rootedAtAtom);
 }
 
 std::string MolFragmentToSmarts(const ROMol &mol,
@@ -967,8 +1002,9 @@ std::string MolFragmentToSmarts(const ROMol &mol,
     colors[idx] = Canon::WHITE_NODE;
   }
 
+  int rootedAtAtom = -1;
   return molToSmarts(mol, doIsomericSmarts, std::move(colors),
-                     bondsInPlay.get());
+                     bondsInPlay.get(), rootedAtAtom);
 }
 
 std::string MolToCXSmarts(const ROMol &mol, bool doIsomericSmarts) {

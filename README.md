@@ -29,7 +29,7 @@
 ## Web presence
 
   * [RDKit web page](https://rdkit.org)
-  * [Blog](https://rdkit.blogspot.com)
+  * [Blog](https://greglandrum.github.io/rdkit-blog/)
   * [Documentation](https://www.rdkit.org/docs/index.html)
 
 #### Materials from user group meetings
@@ -43,6 +43,9 @@
   * [2018 UGM](https://github.com/rdkit/UGM_2018)
   * [2019 UGM](https://github.com/rdkit/UGM_2019)
   * [2020 UGM](https://github.com/rdkit/UGM_2020)
+  * [2021 UGM](https://github.com/rdkit/UGM_2021)
+  * [2022 UGM](https://github.com/rdkit/UGM_2022)
+  * [2023 UGM](https://github.com/rdkit/UGM_2023)
 
 ## Documentation
 Available on the [RDKit page](https://www.rdkit.org/docs/index.html)
@@ -60,9 +63,17 @@ Installation instructions are available in [Docs/Book/Install.md](https://github
   * [homebrew](https://github.com/rdkit/homebrew-rdkit) formula for building on the Mac. Contributed by Eddie Cao.
   * [recipes](https://github.com/rdkit/conda-rdkit) for building using the excellent conda package manager. Contributed by Riccardo Vianello.
   * [APKs](https://github.com/daverona/alpine-rdkit) for Alpine Linux. Contributed by da Verona
+  * [Wheels](https://pypi.org/project/rdkit/) at PyPi for all major platforms and python versions. Contributed by Christopher Kuenneth
 
 ## Projects using RDKit
 
+- [ROBERT](https://github.com/jvalegre/robert) - Automated Machine Learning Protocols
+- [AQME](https://github.com/jvalegre/aqme) - Automated Quantum Mechanical Environment
+- [chemprop](https://github.com/chemprop/chemprop) - message passing neural networks for molecular property prediction
+- [RMG](https://github.com/ReactionMechanismGenerator/RMG-Py) - Reaction Mechanism Generator
+- [RDMC](https://github.com/xiaoruiDong/RDMC) - Reaction Data and Molecular Conformers - package for dealing with reactions, molecules, conformers, mainly in 3D
+- [pychemprojections](https://github.com/vandan-revanur/pychemprojections) - python library for visualizing various 2D projections of molecules.
+- [pychemovality](https://github.com/vandan-revanur/pychemovality) - python library for estimating the ovality of molecules.
 - [ChEMBL Structure Pipeline](https://github.com/chembl/ChEMBL_Structure_Pipeline) - ChEMBL protocols used to standardise and salt strip molecules.
 - [FPSim2](https://github.com/chembl/FPSim2) - Simple package for fast molecular similarity searches.
 - [Datamol](https://datamol.io/) ([docs](https://doc.datamol.io/stable/), [repo](https://github.com/datamol-org/datamol/)) - A Python library to intuitively manipulate molecules.
@@ -72,7 +83,7 @@ a Python library for building, manipulating, analyzing and automatic design of m
 - [gpusimilarity](https://github.com/schrodinger/gpusimilarity) - A Cuda/Thrust implementation of fingerprint similarity searching
 - [Samson Connect](https://www.samson-connect.net) - Software for adaptive modeling and simulation of nanosystems
 - [mol_frame](https://github.com/apahl/mol_frame) - Chemical Structure Handling for Dask and Pandas DataFrames
-- [RDKitjs](https://github.com/cheminfo/RDKitjs) - port of RDKit functionality to JavaScript
+- [RDKit.js](https://github.com/rdkit/rdkit-js) - The official JavaScript release of RDKit
 - [DeepChem](https://deepchem.io) - python library for deep learning for chemistry
 - [mmpdb](https://github.com/rdkit/mmpdb) - Matched molecular pair database generation and analysis
 - [CheTo](https://github.com/rdkit/CheTo) ([paper](http://pubs.acs.org/doi/10.1021/acs.jcim.7b00249))- Chemical topic modeling

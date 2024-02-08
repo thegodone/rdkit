@@ -374,15 +374,14 @@ void testEnumeratorParams() {
       << std::endl;
 
   // Test a structure with hundreds of tautomers.
-  std::string smi68 = "[H][C](CO)(NC(=O)C1=C(O)C(O)=CC=C1)C(O)=O";
+  std::string smi68 = "C(CO)(NC(=O)C1=C(O)C(O)=CC=C1)C(O)=O";
   ROMOL_SPTR m68(SmilesToMol(smi68));
 
   {
     TautomerEnumerator te;
     TautomerEnumeratorResult res68 = te.enumerate(*m68);
-    TEST_ASSERT(res68.status() ==
-                TautomerEnumeratorStatus::MaxTransformsReached);
-    TEST_ASSERT(res68.size() == 252);
+    TEST_ASSERT(res68.status() == TautomerEnumeratorStatus::Completed);
+    TEST_ASSERT(res68.size() == 72);
   }
   {  // test v1 of the tautomerization parameters
     std::unique_ptr<TautomerEnumerator> te(getV1TautomerEnumerator());
@@ -577,6 +576,8 @@ void testEnumeratorCallback() {
   CleanupParameters params;
   params.maxTransforms = 10000;
   params.maxTautomers = 10000;
+  params.tautomerTransformData =
+      MolStandardize::defaults::defaultTautomerTransformsv1;
   {
     TautomerEnumerator te(params);
     te.setCallback(new MyTautomerEnumeratorCallback(50.0));
@@ -606,9 +607,9 @@ void testEnumeratorCallback() {
     // either the enumeration completed
     // or it ran very slowly and was canceled due to timeout
     bool hasReachedTimeout =
-        (res68.size() < 295 &&
+        (res68.size() < 375 &&
          res68.status() == TautomerEnumeratorStatus::Canceled);
-    bool hasCompleted = (res68.size() == 295 &&
+    bool hasCompleted = (res68.size() == 375 &&
                          res68.status() == TautomerEnumeratorStatus::Completed);
     if (hasReachedTimeout) {
       std::cerr << "Enumeration was canceled due to timeout (10 s)"
@@ -711,16 +712,18 @@ void testCanonicalize() {
       std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
 
   unsigned int ntransforms = tautparams->getTransforms().size();
-  TEST_ASSERT(ntransforms == 36);
+  TEST_ASSERT(ntransforms == 37);
 
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 
   for (const auto &itm : canonTautomerData) {
-    std::unique_ptr<ROMol> mol{SmilesToMol(itm.first)};
+    std::unique_ptr<RWMol> mol{SmilesToMol(itm.first)};
     TEST_ASSERT(mol);
     std::unique_ptr<ROMol> res{te.canonicalize(*mol)};
     TEST_ASSERT(res);
     TEST_ASSERT(MolToSmiles(*res) == itm.second);
+    te.canonicalizeInPlace(*mol);
+    TEST_ASSERT(MolToSmiles(*mol) == itm.second);
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -733,7 +736,7 @@ void testPickCanonical() {
       std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
 
   unsigned int ntransforms = tautparams->getTransforms().size();
-  TEST_ASSERT(ntransforms == 36);
+  TEST_ASSERT(ntransforms == 37);
 
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 
@@ -758,7 +761,7 @@ void testCustomScoreFunc() {
       std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
 
   unsigned int ntransforms = tautparams->getTransforms().size();
-  TEST_ASSERT(ntransforms == 36);
+  TEST_ASSERT(ntransforms == 37);
 
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 
@@ -827,7 +830,7 @@ void testEnumerationProblems() {
       std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
 
   unsigned int ntransforms = tautparams->getTransforms().size();
-  TEST_ASSERT(ntransforms == 36);
+  TEST_ASSERT(ntransforms == 37);
 
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 #if 1
@@ -859,7 +862,7 @@ void testPickCanonical2() {
   auto tautparams =
       std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
   unsigned int ntransforms = tautparams->getTransforms().size();
-  TEST_ASSERT(ntransforms == 36);
+  TEST_ASSERT(ntransforms == 37);
 
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
   {
@@ -893,7 +896,7 @@ void testEnumerateDetails() {
   auto tautparams =
       std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
   unsigned int ntransforms = tautparams->getTransforms().size();
-  TEST_ASSERT(ntransforms == 36);
+  TEST_ASSERT(ntransforms == 37);
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
   {
     auto mol = "c1ccccc1CN=c1[nH]cccc1"_smiles;
@@ -949,7 +952,7 @@ void testGithub2990() {
       std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
 
   unsigned int ntransforms = tautparams->getTransforms().size();
-  TEST_ASSERT(ntransforms == 36);
+  TEST_ASSERT(ntransforms == 37);
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
   {
     // atom stereo
@@ -1373,10 +1376,12 @@ void testGithub3755() {
       {"NC(=N)C(N)CO", "N=C(N)C(N)CO"}, {"NC(=N)NC(N)CO", "N=C(N)NC(N)CO"}};
   TautomerEnumerator te;
   for (const auto &pair : orig_vs_expected) {
-    ROMOL_SPTR orig(SmilesToMol(pair.first));
+    std::unique_ptr<RWMol> orig{SmilesToMol(pair.first)};
     TEST_ASSERT(orig);
     ROMOL_SPTR canonical(te.canonicalize(*orig));
     TEST_ASSERT(MolToSmiles(*canonical) == pair.second);
+    te.canonicalizeInPlace(*orig);
+    TEST_ASSERT(MolToSmiles(*orig) == pair.second);
   }
 }
 

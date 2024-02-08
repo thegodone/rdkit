@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <cstring>
 #include <iostream>
 #include <fstream>
 #include <map>
@@ -208,6 +209,15 @@ void parseStereoBondLabel(RWMol &mol, const std::string &stereo_prop) {
   bond->setStereo(type);
 }
 
+std::string strip_prefix_from_mae_property(const std::string &propName) {
+  const char &first = propName[0];
+  if ((first == 'b' || first == 'i' || first == 'r' || first == 's') &&
+      (strncmp(&propName.c_str()[1], "_rdk_", 5) == 0)) {
+    return propName.substr(6);
+  }
+  return propName;
+}
+
 //! Copy over the structure properties, including stereochemistry.
 void set_mol_properties(RWMol &mol, const mae::Block &ct_block) {
   for (const auto &prop : ct_block.getProperties<std::string>()) {
@@ -219,17 +229,21 @@ void set_mol_properties(RWMol &mol, const mae::Block &ct_block) {
     } else if (prop.first.find(mae::CT_EZ_PROP_PREFIX) == 0) {
       parseStereoBondLabel(mol, prop.second);
     } else {
-      mol.setProp(prop.first, prop.second);
+      auto propName = strip_prefix_from_mae_property(prop.first);
+      mol.setProp(propName, prop.second);
     }
   }
   for (const auto &prop : ct_block.getProperties<double>()) {
-    mol.setProp(prop.first, prop.second);
+    auto propName = strip_prefix_from_mae_property(prop.first);
+    mol.setProp(propName, prop.second);
   }
   for (const auto &prop : ct_block.getProperties<int>()) {
-    mol.setProp(prop.first, prop.second);
+    auto propName = strip_prefix_from_mae_property(prop.first);
+    mol.setProp(propName, prop.second);
   }
   for (const auto &prop : ct_block.getProperties<mae::BoolProperty>()) {
-    mol.setProp(prop.first, static_cast<bool>(prop.second));
+    auto propName = strip_prefix_from_mae_property(prop.first);
+    mol.setProp(propName, static_cast<bool>(prop.second));
   }
 }
 
@@ -247,7 +261,8 @@ void set_atom_properties(Atom &atom, const mae::IndexedBlock &atom_block,
       continue;
     }
 
-    atom.setProp(prop.first, prop.second->at(i));
+    auto propName = strip_prefix_from_mae_property(prop.first);
+    atom.setProp(propName, prop.second->at(i));
   }
 
   for (const auto &prop : atom_block.getProperties<double>()) {
@@ -263,7 +278,8 @@ void set_atom_properties(Atom &atom, const mae::IndexedBlock &atom_block,
       continue;
     }
 
-    atom.setProp(prop.first, prop.second->at(i));
+    auto propName = strip_prefix_from_mae_property(prop.first);
+    atom.setProp(propName, prop.second->at(i));
   }
   for (const auto &prop : atom_block.getProperties<int>()) {
     if (prop.first == mae::ATOM_ATOMIC_NUM) {
@@ -280,7 +296,8 @@ void set_atom_properties(Atom &atom, const mae::IndexedBlock &atom_block,
       // Formal charge has a specific setter
       atom.setFormalCharge(prop.second->at(i));
     } else {
-      atom.setProp(prop.first, prop.second->at(i));
+      auto propName = strip_prefix_from_mae_property(prop.first);
+      atom.setProp(propName, prop.second->at(i));
     }
   }
   for (const auto &prop : atom_block.getProperties<mae::BoolProperty>()) {
@@ -288,38 +305,69 @@ void set_atom_properties(Atom &atom, const mae::IndexedBlock &atom_block,
       continue;
     }
 
-    atom.setProp(prop.first, static_cast<bool>(prop.second->at(i)));
+    auto propName = strip_prefix_from_mae_property(prop.first);
+    atom.setProp(propName, static_cast<bool>(prop.second->at(i)));
   }
 }
 
-void addAtoms(const mae::IndexedBlock &atom_block, RWMol &mol) {
+void addAtoms(const mae::IndexedBlock &atom_block, RWMol &mol,
+              std::vector<unsigned int> &atomsToRemove) {
   // All atoms are guaranteed to have these three field names:
-  const auto atomic_numbers = atom_block.getIntProperty(mae::ATOM_ATOMIC_NUM);
+  const auto atomicNumbers = atom_block.getIntProperty(mae::ATOM_ATOMIC_NUM);
   const auto xs = atom_block.getRealProperty(mae::ATOM_X_COORD);
   const auto ys = atom_block.getRealProperty(mae::ATOM_Y_COORD);
   const auto zs = atom_block.getRealProperty(mae::ATOM_Z_COORD);
 
   // atomic numbers, and x, y, and z coordinates
-  const auto size = atomic_numbers->size();
+  const auto size = atomicNumbers->size();
   auto conf = new RDKit::Conformer(size);
-  conf->set3D(true);
   conf->setId(0);
 
   PDBInfo pdb_info(atom_block);
 
+  bool nonzeroZ = false;
   for (size_t i = 0; i < size; ++i) {
-    Atom *atom = new Atom(atomic_numbers->at(i));
-    mol.addAtom(atom, true, true);
+    bool removeAtom = false;
+    auto atomicNumber = atomicNumbers->at(i);
+    if (atomicNumber == 0 || atomicNumber == -1 || atomicNumber == -3) {
+      BOOST_LOG(rdWarningLog)
+          << "WARNING: atom " << (i + 1)
+          << " in input Maestro file has atomic number '" << atomicNumber
+          << "', which is reserved for internal use, and not allowed in inputs."
+          << " The atom will be ignored.";
 
-    pdb_info.addPDBData(atom, i);
-    set_atom_properties(*atom, atom_block, i);
+      // removing the atom now would be problematic for parsing the bonds
+      // (especially if the atom is bonded!), so we'll just add a dummy
+      // atom instead, and remove it again once we have finished parsing
+      // the file.
+      atomsToRemove.push_back(i);
+      removeAtom = true;
+      atomicNumber = 0;
+    } else if (atomicNumber == -2) {
+      // Maestro files use atomic number -2 to indicate a dummy atom.
+      atomicNumber = 0;
+    }
+
+    Atom *atom = new Atom(atomicNumber);
+    mol.addAtom(atom, true, true);
 
     RDGeom::Point3D pos;
     pos.x = xs->at(i);
     pos.y = ys->at(i);
     pos.z = zs->at(i);
     conf->setAtomPos(i, pos);
+
+    // If the atom is going to be removed, don't bother with pdb info or
+    // properties, and also don't consider it for planarity
+    if (!removeAtom) {
+      pdb_info.addPDBData(atom, i);
+      set_atom_properties(*atom, atom_block, i);
+
+      nonzeroZ |= (std::abs(pos.z) > 1.e-4);
+    }
   }
+
+  conf->set3D(nonzeroZ);
   mol.addConformer(conf, false);
 }
 
@@ -335,7 +383,14 @@ void addBonds(const mae::IndexedBlock &bond_block, RWMol &mol) {
     const auto from_atom = from_atoms->at(i) - 1;
     const auto to_atom = to_atoms->at(i) - 1;
     const auto order = bolookup.find(orders->at(i))->second;
-    if (from_atom > to_atom) {
+    if (auto bond = mol.getBondBetweenAtoms(from_atom, to_atom);
+        bond != nullptr) {
+      if (order != bond->getBondType()) {
+        BOOST_LOG(rdWarningLog)
+            << "WARNING: bond between atoms " << from_atom << " and " << to_atom
+            << " is defined more than once with different bond orders. "
+            << "The first definition will be honored, and the rest will be ignored.";
+      }
       continue;  // Maestro files may double-list some bonds
     }
 
@@ -349,37 +404,74 @@ void addBonds(const mae::IndexedBlock &bond_block, RWMol &mol) {
 
 void build_mol(RWMol &mol, mae::Block &structure_block, bool sanitize,
                bool removeHs) {
+  std::vector<unsigned int> atomsToRemove;
   const auto &atom_block = structure_block.getIndexedBlock(mae::ATOM_BLOCK);
-  addAtoms(*atom_block, mol);
+  addAtoms(*atom_block, mol, atomsToRemove);
 
-  const auto &bond_block = structure_block.getIndexedBlock(mae::BOND_BLOCK);
-  addBonds(*bond_block, mol);
+  std::shared_ptr<const mae::IndexedBlock> bond_block{nullptr};
+  try {
+    bond_block = structure_block.getIndexedBlock(mae::BOND_BLOCK);
+  } catch (const std::out_of_range &) {
+    // In Maestro files, the atom block is mandatory, but the bond block is not.
+  }
+  if (bond_block != nullptr) {
+    addBonds(*bond_block, mol);
+  }
 
   // These properties need to be set last, as stereochemistry is defined here,
   // and it requires atoms and bonds to be available.
   set_mol_properties(mol, structure_block);
 
+  bool replaceExistingTags = false;
   if (sanitize) {
     if (removeHs) {
+      // Bond stereo detection must happen before H removal, or
+      // else we might be removing stereogenic H atoms in double
+      // bonds (e.g. imines). But before we run stereo detection,
+      // we need to run mol cleanup so don't have trouble with
+      // e.g. nitro groups. Sadly, this a;; means we will find
+      // run both cleanup and ring finding twice (a fast find
+      // rings in bond stereo detection, and another in
+      // sanitization's SSSR symmetrization).
+      unsigned int failedOp = 0;
+      MolOps::sanitizeMol(mol, failedOp, MolOps::SANITIZE_CLEANUP);
+      MolOps::detectBondStereochemistry(mol);
       MolOps::removeHs(mol, false, false);
     } else {
       MolOps::sanitizeMol(mol);
+      MolOps::detectBondStereochemistry(mol, replaceExistingTags);
     }
   } else {
     // we need some properties for the chiral setup
     mol.updatePropertyCache(false);
+    MolOps::detectBondStereochemistry(mol, replaceExistingTags);
   }
 
   // If there are 3D coordinates, try to read more chiralities from them, but do
   // not override the ones that were read from properties
-  bool replaceExistingTags = false;
+
   if (mol.getNumConformers() && mol.getConformer().is3D()) {
     MolOps::assignChiralTypesFrom3D(mol, -1, replaceExistingTags);
   }
 
-  // Find more stereo bonds, assign labels, but don't replace the existing ones
-  MolOps::detectBondStereochemistry(mol, replaceExistingTags);
+  // Assign labels, but don't replace the existing ones
   MolOps::assignStereochemistry(mol, replaceExistingTags);
+
+  // If we saw any invalid atoms, remove them now
+  if (!atomsToRemove.empty()) {
+    mol.beginBatchEdit();
+    for (auto aidx : atomsToRemove) {
+      mol.removeAtom(aidx);
+    }
+    mol.commitBatchEdit();
+  }
+}
+
+void throw_idx_error(unsigned idx) {
+  std::ostringstream errout;
+  errout << "ERROR: Index error (idx = " << idx << ") : "
+         << " we do no have enough ct blocks";
+  throw FileParseException(errout.str());
 }
 
 }  // namespace
@@ -393,14 +485,7 @@ MaeMolSupplier::MaeMolSupplier(std::shared_ptr<std::istream> inStream,
   df_sanitize = sanitize;
   df_removeHs = removeHs;
 
-  d_reader.reset(new mae::Reader(dp_sInStream));
-  CHECK_INVARIANT(streamIsGoodOrExhausted(dp_inStream), "bad instream");
-
-  try {
-    d_next_struct = d_reader->next(mae::CT_BLOCK);
-  } catch (const mae::read_exception &e) {
-    throw FileParseException(e.what());
-  }
+  init();
 }
 
 MaeMolSupplier::MaeMolSupplier(std::istream *inStream, bool takeOwnership,
@@ -413,14 +498,7 @@ MaeMolSupplier::MaeMolSupplier(std::istream *inStream, bool takeOwnership,
   df_sanitize = sanitize;
   df_removeHs = removeHs;
 
-  d_reader.reset(new mae::Reader(dp_sInStream));
-  CHECK_INVARIANT(streamIsGoodOrExhausted(dp_inStream), "bad instream");
-
-  try {
-    d_next_struct = d_reader->next(mae::CT_BLOCK);
-  } catch (const mae::read_exception &e) {
-    throw FileParseException(e.what());
-  }
+  init();
 }
 
 MaeMolSupplier::MaeMolSupplier(const std::string &fileName, bool sanitize,
@@ -431,8 +509,16 @@ MaeMolSupplier::MaeMolSupplier(const std::string &fileName, bool sanitize,
   df_sanitize = sanitize;
   df_removeHs = removeHs;
 
+  init();
+}
+
+void MaeMolSupplier::init() {
+  PRECONDITION(dp_sInStream, "no input stream")
   d_reader.reset(new mae::Reader(dp_sInStream));
   CHECK_INVARIANT(streamIsGoodOrExhausted(dp_inStream), "bad instream");
+
+  d_position = 0;
+  d_length = 0;
 
   try {
     d_next_struct = d_reader->next(mae::CT_BLOCK);
@@ -440,9 +526,26 @@ MaeMolSupplier::MaeMolSupplier(const std::string &fileName, bool sanitize,
     throw FileParseException(e.what());
   }
 }
+void MaeMolSupplier::reset() {
+  dp_inStream->clear();
+  dp_inStream->seekg(0, std::ios::beg);
 
-void MaeMolSupplier::init() {}
-void MaeMolSupplier::reset() {}
+  auto length = d_length;
+  init();
+  d_length = length;
+}
+
+void MaeMolSupplier::setData(const std::string &text, bool sanitize,
+                             bool removeHs) {
+  dp_inStream = static_cast<std::istream *>(
+      new std::istringstream(text, std::ios_base::binary));
+  dp_sInStream.reset(dp_inStream);
+  df_owner = true;  // maeparser requires ownership
+  df_sanitize = sanitize;
+  df_removeHs = removeHs;
+
+  init();
+}
 
 ROMol *MaeMolSupplier::next() {
   PRECONDITION(dp_sInStream != nullptr, "no stream");
@@ -456,10 +559,10 @@ ROMol *MaeMolSupplier::next() {
 
   try {
     build_mol(*mol, *d_next_struct, df_sanitize, df_removeHs);
-  } catch (...) {
+  } catch (const std::exception &e) {
     delete mol;
     moveToNextBlock();
-    throw;
+    throw FileParseException(e.what());
   }
 
   moveToNextBlock();
@@ -473,7 +576,69 @@ void MaeMolSupplier::moveToNextBlock() {
   } catch (const mae::read_exception &e) {
     d_stored_exc = e.what();
   }
+  ++d_position;
 }
 
-bool MaeMolSupplier::atEnd() { return d_next_struct == nullptr; }
+bool MaeMolSupplier::atEnd() {
+  if (d_next_struct == nullptr) {
+    d_length = d_position;
+    return true;
+  }
+  return false;
+}
+
+unsigned int MaeMolSupplier::length() {
+  PRECONDITION(dp_inStream, "no stream");
+
+  if (d_length == 0 && !atEnd()) {
+    // maeparser has an internal buffer, so we can't just iterate over
+    // block till we reach the end of the file. So we have to rewind
+    // the input stream, use it to create a separate parser, fast
+    // forward this one to the end of the data, and then get the length
+    // from that parser. Then we can restore the input stream to
+    // the position where it was before, so that it is still in
+    // sync with maeparser's internal buffer.
+
+    dp_sInStream->clear();
+    auto current_position = dp_sInStream->tellg();
+    dp_sInStream->seekg(0, std::ios::beg);
+
+    MaeMolSupplier tmp_supplier(dp_sInStream);
+    while (!tmp_supplier.atEnd()) {
+      tmp_supplier.moveToNextBlock();
+    }
+
+    d_length = tmp_supplier.length();
+    dp_sInStream->seekg(current_position, std::ios::beg);
+  }
+
+  return d_length;
+}
+
+void MaeMolSupplier::moveTo(unsigned int idx) {
+  PRECONDITION(dp_inStream, "no stream");
+
+  if (d_length > 0 && idx > d_length) {
+    throw_idx_error(idx);
+  }
+
+  if (idx < d_position) {
+    reset();
+  }
+
+  while (idx > d_position) {
+    moveToNextBlock();
+
+    if (atEnd()) {
+      throw_idx_error(idx);
+    }
+  }
+}
+
+ROMol *MaeMolSupplier::operator[](unsigned int idx) {
+  PRECONDITION(dp_inStream, "no stream");
+  moveTo(idx);
+  return next();
+}
+
 }  // namespace RDKit

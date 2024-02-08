@@ -57,7 +57,8 @@ BOOST_PYTHON_MODULE(rdAbbreviations) {
   RegisterVectorConverter<Abbreviations::AbbreviationDefinition>();
 
   python::class_<Abbreviations::AbbreviationDefinition>(
-      "AbbreviationDefinition", "Abbreviation Definition", python::init<>())
+      "AbbreviationDefinition", "Abbreviation Definition",
+      python::init<>(python::args("self")))
       .def_readwrite("label", &Abbreviations::AbbreviationDefinition::label,
                      "the label")
       .def_readwrite(
@@ -99,6 +100,6 @@ BOOST_PYTHON_MODULE(rdAbbreviations) {
       "CondenseAbbreviationSubstanceGroups", &condenseAbbreviationSGroupHelper,
       (python::arg("mol")),
       python::return_value_policy<python::manage_new_object>(),
-      "Finds and replaces abbrevation (i.e. \"SUP\") substance groups in a "
+      "Finds and replaces abbreviation (i.e. \"SUP\") substance groups in a "
       "molecule. The result is not sanitized.");
 }

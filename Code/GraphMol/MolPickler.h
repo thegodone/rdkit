@@ -58,7 +58,7 @@ typedef enum {
   PrivateProps = 0x10,
   ComputedProps = 0x20,
   AllProps = 0x0000FFFF,        // all data pickled
-  CoordsAsDouble = 0x0001FFFF,  // save coordinates in double precision
+  CoordsAsDouble = 0x00010000,  // save coordinates in double precision
   NoConformers =
       0x00020000  // do not include conformers or associated properties
 } PropertyPickleOptions;
@@ -70,7 +70,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   static const std::int32_t versionMajor;  //!< mark the pickle major version
   static const std::int32_t versionMinor;  //!< mark the pickle minor version
   static const std::int32_t versionPatch;  //!< mark the pickle patch version
-  static const std::int32_t endianId;  //! mark the endian-ness of the pickle
+  static const std::int32_t endianId;  //!< mark the endian-ness of the pickle
 
   //! the pickle format is tagged using these tags:
   //! NOTE: if you add to this list, be sure to put new entries AT THE BOTTOM,
@@ -143,6 +143,9 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
     BEGINCONFPROPS,
     BEGINCONFS_DOUBLE,
     QUERY_TYPELABEL,
+    BEGINSYMMSSSR,
+    BEGINFASTFIND,
+    BEGINFINDOTHERORUNKNOWN,
     // add new entries above here
     INVALID_TAG = 255
   } Tags;
@@ -239,9 +242,9 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
 
   //! do the actual work of pickling Stereo Group data
   template <typename T>
-  static void _pickleStereo(std::ostream &ss,
-                            const std::vector<StereoGroup> &groups,
-                            std::map<int, int> &atomIdxMap);
+  static void _pickleStereo(std::ostream &ss, std::vector<StereoGroup> groups,
+                            std::map<int, int> &atomIdxMap,
+                            std::map<int, int> &bondIdxMap);
 
   //! do the actual work of pickling a Conformer
   template <typename T, typename C>
@@ -267,8 +270,10 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   //! extract ring info from a pickle and add the resulting RingInfo to the
   /// molecule
   template <typename T>
-  static void _addRingInfoFromPickle(std::istream &ss, ROMol *mol, int version,
-                                     bool directMap = false);
+  static void _addRingInfoFromPickle(
+      std::istream &ss, ROMol *mol, int version, bool directMap = false,
+      FIND_RING_TYPE ringType =
+          FIND_RING_TYPE::FIND_RING_TYPE_OTHER_OR_UNKNOWN);
 
   //! extract a SubstanceGroup from a pickle
   template <typename T>
@@ -286,7 +291,8 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   static void _pickleProperties(std::ostream &ss, const RDProps &props,
                                 unsigned int pickleFlags);
   //! unpickle standard properties
-  static void _unpickleProperties(std::istream &ss, RDProps &props);
+  static void _unpickleProperties(std::istream &ss, RDProps &props,
+                                  int version);
 
   //! backwards compatibility
   static void _pickleV1(const ROMol *mol, std::ostream &ss);

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2018 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -114,6 +114,23 @@ void testPass() {
     "C%(1000)CC.C%(1000)",   // github #2909
     "[C;d2]",                // non-hydrogen degree
     "C$C",                   // quadruple bonds
+    // extended chirality
+    "C[Fe@TH](O)(Cl)F",
+    "C[Fe@TH1](O)(Cl)F",
+    "C[Fe@SP](O)(Cl)F",
+    "C[Fe@SP1](O)(Cl)F",
+    "C[Fe@TB](O)(Cl)(Br)F",
+    "C[Fe@TB20](O)(Cl)(Br)F",
+    "C[Fe@OH](O)(Cl)(Br)(N)F",
+    "C[Fe@OH20](O)(Cl)(Br)(N)F",
+    "[@TH]",
+    "[@TH1]",
+    "[@SP]",
+    "[@SP1]",
+    "[@TB]",
+    "[@TB10]",
+    "[@OH]",
+    "[@OH20]",
     "EOS"
   };
   while (smis[i] != "EOS") {
@@ -2796,8 +2813,7 @@ void testSmartsStereoBonds() {
   {
     // A weird way of writing C/C=C/O:
     const auto mol = R"([#6](=[#6]/[#8])\[#6])"_smarts;
-
-    const Bond *bnd = mol->getBondWithIdx(1);
+    const Bond *bnd = mol->getBondWithIdx(0);
 
     TEST_ASSERT(bnd->getStereoAtoms() == INT_VECT({3, 2}));
     TEST_ASSERT(bnd->getStereo() == Bond::STEREOTRANS);
@@ -2814,6 +2830,20 @@ void testRingBondCrash() {
     auto m2 = "CC"_smiles;
     auto q = "[C]@[Cl]"_smarts;
     auto matches0 = SubstructMatch(*m2, *q);
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testGithub6730() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Testing stereo inverts on first atom of SMARTS" << std::endl;
+  {
+    auto input    = "[C@H](F)(Cl)O"_smarts;
+    auto expected = "F[C@@&H1](Cl)O";
+    auto actual   = MolToSmarts(*input,true,1); // doChiral,root=F(1)
+    TEST_ASSERT(expected == actual);    
   }
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
@@ -2873,6 +2903,7 @@ int main(int argc, char *argv[]) {
   testGithub2142();
   testGithub2565();
   testSmartsStereoBonds();
+  testGithub6730();
 #endif
   testRingBondCrash();
   return 0;

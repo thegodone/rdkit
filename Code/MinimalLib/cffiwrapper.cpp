@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include <string>
 #include <cstring>
 #include <iostream>
@@ -28,10 +29,15 @@
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
+#include <GraphMol/Fingerprints/AtomPairs.h>
+#include <GraphMol/Fingerprints/MACCS.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 #include <GraphMol/Abbreviations/Abbreviations.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
+#include <GraphMol/ChemReactions/Reaction.h>
+#include <GraphMol/ChemReactions/ReactionPickler.h>
+#include <GraphMol/Chirality.h>
 #include <DataStructs/BitOps.h>
 
 #include "common.h"
@@ -95,6 +101,15 @@ RWMol mol_from_pkl(const char *pkl, size_t pkl_sz) {
   return res;
 }
 
+ChemicalReaction rxn_from_pkl(const char *pkl, size_t pkl_sz) {
+  if (!pkl || !pkl_sz) {
+    return ChemicalReaction();
+  }
+  std::string rxn_pkl(pkl, pkl_sz);
+  ChemicalReaction res(rxn_pkl);
+  return res;
+}
+
 #ifdef PT_OPT_GET
 #undef PT_OPT_GET
 #endif
@@ -140,27 +155,6 @@ std::string cxsmiles_helper(const char *pkl, size_t pkl_sz,
   auto data = MolToCXSmiles(mol, params);
   return data;
 }
-
-std::string molblock_helper(const char *pkl, size_t pkl_sz,
-                            const char *details_json, bool forceV3000) {
-  if (!pkl || !pkl_sz) {
-    return "";
-  }
-  auto mol = mol_from_pkl(pkl, pkl_sz);
-  bool includeStereo = true;
-  bool kekulize = true;
-  if (details_json && strlen(details_json)) {
-    boost::property_tree::ptree pt;
-    std::istringstream ss;
-    ss.str(details_json);
-    boost::property_tree::read_json(ss, pt);
-    PT_OPT_GET(includeStereo);
-    PT_OPT_GET(kekulize);
-  }
-  auto data = MolToMolBlock(mol, includeStereo, -1, kekulize, forceV3000);
-  return data;
-}
-
 }  // namespace
 extern "C" char *get_smiles(const char *pkl, size_t pkl_sz,
                             const char *details_json) {
@@ -182,12 +176,20 @@ extern "C" char *get_cxsmiles(const char *pkl, size_t pkl_sz,
 }
 extern "C" char *get_molblock(const char *pkl, size_t pkl_sz,
                               const char *details_json) {
-  auto data = molblock_helper(pkl, pkl_sz, details_json, false);
+  if (!pkl || !pkl_sz) {
+    return nullptr;
+  }
+  auto mol = mol_from_pkl(pkl, pkl_sz);
+  auto data = MinimalLib::molblock_helper(mol, details_json, false);
   return str_to_c(data);
 }
 extern "C" char *get_v3kmolblock(const char *pkl, size_t pkl_sz,
                                  const char *details_json) {
-  auto data = molblock_helper(pkl, pkl_sz, details_json, true);
+  if (!pkl || !pkl_sz) {
+    return nullptr;
+  }
+  auto mol = mol_from_pkl(pkl, pkl_sz);
+  auto data = MinimalLib::molblock_helper(mol, details_json, true);
   return str_to_c(data);
 }
 extern "C" char *get_json(const char *pkl, size_t pkl_sz, const char *) {
@@ -213,6 +215,17 @@ extern "C" char *get_svg(const char *pkl, size_t pkl_sz,
   unsigned int width = MinimalLib::d_defaultWidth;
   unsigned int height = MinimalLib::d_defaultHeight;
   return str_to_c(MinimalLib::mol_to_svg(mol, width, height, details_json));
+}
+
+extern "C" char *get_rxn_svg(const char *pkl, size_t pkl_sz,
+                             const char *details_json) {
+  if (!pkl || !pkl_sz) {
+    return nullptr;
+  }
+  auto rxn = rxn_from_pkl(pkl, pkl_sz);
+  unsigned int width = MinimalLib::d_defaultWidth;
+  unsigned int height = MinimalLib::d_defaultHeight;
+  return str_to_c(MinimalLib::rxn_to_svg(rxn, width, height, details_json));
 }
 
 extern "C" char *get_inchi(const char *pkl, size_t pkl_sz,
@@ -272,7 +285,7 @@ extern "C" char *get_mol(const char *input, size_t *pkl_sz,
   std::unique_ptr<RWMol> mol{MinimalLib::mol_from_input(input, details_json)};
   if (!mol) {
     *pkl_sz = 0;
-    return NULL;
+    return nullptr;
   }
   unsigned int propFlags = PicklerOps::PropertyPickleOptions::AllProps ^
                            PicklerOps::PropertyPickleOptions::ComputedProps;
@@ -280,6 +293,7 @@ extern "C" char *get_mol(const char *input, size_t *pkl_sz,
   MolPickler::pickleMol(*mol, pkl, propFlags);
   return str_to_c(pkl, pkl_sz);
 }
+
 extern "C" char *get_qmol(const char *input, size_t *pkl_sz,
                           const char *details_json) {
   std::unique_ptr<RWMol> mol{MinimalLib::qmol_from_input(input, details_json)};
@@ -291,32 +305,71 @@ extern "C" char *get_qmol(const char *input, size_t *pkl_sz,
   MolPickler::pickleMol(*mol, pkl);
   return str_to_c(pkl, pkl_sz);
 }
-extern "C" char *version() { return str_to_c(rdkitVersion); }
-#ifdef RDK_THREADSAFE_SSS
-std::atomic_int logging_needs_init{1};
-#else
-short logging_needs_init = 1;
-#endif
-extern "C" void enable_logging() {
-  if (logging_needs_init) {
-    RDLog::InitLogs();
-    logging_needs_init = 0;
+
+extern "C" char *get_rxn(const char *input, size_t *pkl_sz,
+                         const char *details_json) {
+  std::unique_ptr<ChemicalReaction> rxn{
+      MinimalLib::rxn_from_input(input, details_json)};
+  if (!rxn) {
+    *pkl_sz = 0;
+    return nullptr;
   }
-  boost::logging::enable_logs("rdApp.*");
+  unsigned int propFlags = PicklerOps::PropertyPickleOptions::AllProps ^
+                           PicklerOps::PropertyPickleOptions::ComputedProps;
+  std::string pkl;
+  ReactionPickler::pickleReaction(*rxn, pkl, propFlags);
+  return str_to_c(pkl, pkl_sz);
 }
 
-extern "C" void disable_logging() {
-#ifdef RDK_THREADSAFE_SSS
-  static std::atomic_int needs_init{1};
-#else
-  static short needs_init = 1;
-#endif
-  if (needs_init) {
-    RDLog::InitLogs();
-    needs_init = 0;
+extern "C" char **get_mol_frags(const char *pkl, size_t pkl_sz,
+                                size_t **frags_pkl_sz_array, size_t *num_frags,
+                                const char *details_json,
+                                char **mappings_json) {
+  if (!pkl || !pkl_sz || !frags_pkl_sz_array || !num_frags) {
+    return nullptr;
   }
-  boost::logging::disable_logs("rdApp.*");
+  *frags_pkl_sz_array = nullptr;
+  *num_frags = 0;
+  auto mol = mol_from_pkl(pkl, pkl_sz);
+  std::vector<int> frags;
+  std::vector<std::vector<int>> fragsMolAtomMapping;
+  bool sanitizeFrags = true;
+  bool copyConformers = true;
+  if (details_json) {
+    std::string json = details_json;
+    MinimalLib::get_mol_frags_details(json, sanitizeFrags, copyConformers);
+  }
+  std::vector<ROMOL_SPTR> molFrags;
+  try {
+    molFrags = MolOps::getMolFrags(mol, sanitizeFrags, &frags,
+                                   &fragsMolAtomMapping, copyConformers);
+  } catch (...) {
+  }
+  if (molFrags.empty()) {
+    return nullptr;
+  }
+  char **molPklArray = (char **)malloc(sizeof(char *) * molFrags.size());
+  if (!molPklArray) {
+    return nullptr;
+  }
+  *frags_pkl_sz_array = (size_t *)malloc(sizeof(size_t) * molFrags.size());
+  if (!*frags_pkl_sz_array) {
+    free(molPklArray);
+    return nullptr;
+  }
+  memset(molPklArray, 0, sizeof(char *) * molFrags.size());
+  *num_frags = molFrags.size();
+  for (size_t i = 0; i < molFrags.size(); ++i) {
+    mol_to_pkl(*molFrags[i], &molPklArray[i], &(*frags_pkl_sz_array)[i]);
+  }
+  if (mappings_json) {
+    auto res = MinimalLib::get_mol_frags_mappings(frags, fragsMolAtomMapping);
+    *mappings_json = str_to_c(res);
+  }
+  return molPklArray;
 }
+
+extern "C" char *version() { return str_to_c(rdkitVersion); }
 
 extern "C" char *get_substruct_match(const char *mol_pkl, size_t mol_pkl_sz,
                                      const char *query_pkl, size_t query_pkl_sz,
@@ -394,147 +447,240 @@ extern "C" char *get_descriptors(const char *mol_pkl, size_t mol_pkl_sz) {
   return str_to_c(MinimalLib::get_descriptors(mol));
 }
 
-namespace {
-std::unique_ptr<ExplicitBitVect> morgan_fp_helper(const char *mol_pkl,
-                                                  size_t mol_pkl_sz,
-                                                  const char *details_json) {
-  if (!mol_pkl || !mol_pkl_sz) {
-    return nullptr;
-  }
-  auto mol = mol_from_pkl(mol_pkl, mol_pkl_sz);
-
-  size_t radius = 2;
-  size_t nBits = 2048;
-  bool useChirality = false;
-  bool useBondTypes = true;
-  bool includeRedundantEnvironments = false;
-  bool onlyNonzeroInvariants = false;
-  if (details_json && strlen(details_json)) {
-    // FIX: this should eventually be moved somewhere else
-    std::istringstream ss;
-    ss.str(details_json);
-    boost::property_tree::ptree pt;
-    boost::property_tree::read_json(ss, pt);
-    PT_OPT_GET(radius);
-    PT_OPT_GET(nBits);
-    PT_OPT_GET(useChirality);
-    PT_OPT_GET(useBondTypes);
-    PT_OPT_GET(includeRedundantEnvironments);
-    PT_OPT_GET(onlyNonzeroInvariants);
-  }
-  auto fp = MorganFingerprints::getFingerprintAsBitVect(
-      mol, radius, nBits, nullptr, nullptr, useChirality, useBondTypes,
-      onlyNonzeroInvariants, nullptr, includeRedundantEnvironments);
-  return std::unique_ptr<ExplicitBitVect>{fp};
-}
-
-std::unique_ptr<ExplicitBitVect> rdkit_fp_helper(const char *mol_pkl,
-                                                 size_t mol_pkl_sz,
-                                                 const char *details_json) {
-  if (!mol_pkl || !mol_pkl_sz) {
-    return nullptr;
-  }
-  auto mol = mol_from_pkl(mol_pkl, mol_pkl_sz);
-  unsigned int minPath = 1;
-  unsigned int maxPath = 7;
-  unsigned int nBits = 2048;
-  unsigned int nBitsPerHash = 2;
-  bool useHs = true;
-  bool branchedPaths = true;
-  bool useBondOrder = true;
-  if (details_json && strlen(details_json)) {
-    // FIX: this should eventually be moved somewhere else
-    std::istringstream ss;
-    ss.str(details_json);
-    boost::property_tree::ptree pt;
-    boost::property_tree::read_json(ss, pt);
-    PT_OPT_GET(minPath);
-    PT_OPT_GET(maxPath);
-    PT_OPT_GET(nBits);
-    PT_OPT_GET(nBitsPerHash);
-    PT_OPT_GET(useHs);
-    PT_OPT_GET(branchedPaths);
-    PT_OPT_GET(useBondOrder);
-  }
-  auto fp = RDKFingerprintMol(mol, minPath, maxPath, nBits, nBitsPerHash, useHs,
-                              0, 128, branchedPaths, useBondOrder);
-  return std::unique_ptr<ExplicitBitVect>{fp};
-}
-
-std::unique_ptr<ExplicitBitVect> pattern_fp_helper(const char *mol_pkl,
-                                                   size_t mol_pkl_sz,
-                                                   const char *details_json) {
-  if (!mol_pkl || !mol_pkl_sz) {
-    return nullptr;
-  }
-  auto mol = mol_from_pkl(mol_pkl, mol_pkl_sz);
-  unsigned int nBits = 2048;
-  bool tautomericFingerprint = false;
-  if (details_json && strlen(details_json)) {
-    // FIX: this should eventually be moved somewhere else
-    std::istringstream ss;
-    ss.str(details_json);
-    boost::property_tree::ptree pt;
-    boost::property_tree::read_json(ss, pt);
-    PT_OPT_GET(nBits);
-    PT_OPT_GET(tautomericFingerprint);
-  }
-  auto fp = PatternFingerprintMol(mol, nBits, nullptr, nullptr,
-                                  tautomericFingerprint);
-  return std::unique_ptr<ExplicitBitVect>{fp};
-}
-}  // namespace
-
 extern "C" char *get_morgan_fp(const char *mol_pkl, size_t mol_pkl_sz,
                                const char *details_json) {
-  auto fp = morgan_fp_helper(mol_pkl, mol_pkl_sz, details_json);
-  auto res = BitVectToText(*fp);
-  return str_to_c(res);
+  if (!mol_pkl || !mol_pkl_sz) {
+    return nullptr;
+  }
+  try {
+    auto fp = MinimalLib::morgan_fp_as_bitvect(mol_from_pkl(mol_pkl, mol_pkl_sz),
+                                               details_json);
+    auto res = BitVectToText(*fp);
+    return str_to_c(res);
+  } catch(...) {
+    return nullptr;
+  }
 }
 
 extern "C" char *get_morgan_fp_as_bytes(const char *mol_pkl, size_t mol_pkl_sz,
                                         size_t *nbytes,
                                         const char *details_json) {
-  auto fp = morgan_fp_helper(mol_pkl, mol_pkl_sz, details_json);
-  auto res = BitVectToBinaryText(*fp);
-  return str_to_c(res, nbytes);
+  if (!mol_pkl || !mol_pkl_sz) {
+    return nullptr;
+  }
+  try {
+    auto fp = MinimalLib::morgan_fp_as_bitvect(mol_from_pkl(mol_pkl, mol_pkl_sz),
+                                               details_json);
+    auto res = BitVectToBinaryText(*fp);
+    return str_to_c(res, nbytes);
+  } catch(...) {
+    return nullptr;
+  }
 }
 
 extern "C" char *get_rdkit_fp(const char *mol_pkl, size_t mol_pkl_sz,
                               const char *details_json) {
-  auto fp = rdkit_fp_helper(mol_pkl, mol_pkl_sz, details_json);
-  auto res = BitVectToText(*fp);
-  return str_to_c(res);
+  if (!mol_pkl || !mol_pkl_sz) {
+    return nullptr;
+  }
+  try {
+    auto fp = MinimalLib::rdkit_fp_as_bitvect(mol_from_pkl(mol_pkl, mol_pkl_sz),
+                                              details_json);
+    auto res = BitVectToText(*fp);
+    return str_to_c(res);
+  } catch(...) {
+    return nullptr;
+  }
 }
 
 extern "C" char *get_rdkit_fp_as_bytes(const char *mol_pkl, size_t mol_pkl_sz,
                                        size_t *nbytes,
                                        const char *details_json) {
-  auto fp = rdkit_fp_helper(mol_pkl, mol_pkl_sz, details_json);
-  auto res = BitVectToBinaryText(*fp);
-  return str_to_c(res, nbytes);
+  if (!mol_pkl || !mol_pkl_sz) {
+    return nullptr;
+  }
+  try {
+    auto fp = MinimalLib::rdkit_fp_as_bitvect(mol_from_pkl(mol_pkl, mol_pkl_sz),
+                                              details_json);
+    auto res = BitVectToBinaryText(*fp);
+    return str_to_c(res, nbytes);
+  } catch(...) {
+    return nullptr;
+  }
 }
 
 extern "C" char *get_pattern_fp(const char *mol_pkl, size_t mol_pkl_sz,
                                 const char *details_json) {
-  auto fp = pattern_fp_helper(mol_pkl, mol_pkl_sz, details_json);
-  auto res = BitVectToText(*fp);
-  return str_to_c(res);
+  if (!mol_pkl || !mol_pkl_sz) {
+    return nullptr;
+  }
+  try {
+    auto fp = MinimalLib::pattern_fp_as_bitvect(mol_from_pkl(mol_pkl, mol_pkl_sz),
+                                                details_json);
+    auto res = BitVectToText(*fp);
+    return str_to_c(res);
+  } catch(...) {
+    return nullptr;
+  }
 }
 
 extern "C" char *get_pattern_fp_as_bytes(const char *mol_pkl, size_t mol_pkl_sz,
                                          size_t *nbytes,
                                          const char *details_json) {
-  auto fp = pattern_fp_helper(mol_pkl, mol_pkl_sz, details_json);
-  auto res = BitVectToBinaryText(*fp);
-  return str_to_c(res, nbytes);
+  if (!mol_pkl || !mol_pkl_sz) {
+    return nullptr;
+  }
+  try {
+    auto fp = MinimalLib::pattern_fp_as_bitvect(mol_from_pkl(mol_pkl, mol_pkl_sz),
+                                                details_json);
+    auto res = BitVectToBinaryText(*fp);
+    return str_to_c(res, nbytes);
+  } catch(...) {
+    return nullptr;
+  }
 }
+
+extern "C" char *get_topological_torsion_fp(const char *mol_pkl,
+                                            size_t mol_pkl_sz,
+                                            const char *details_json) {
+  if (!mol_pkl || !mol_pkl_sz) {
+    return nullptr;
+  }
+  try {
+    auto fp = MinimalLib::topological_torsion_fp_as_bitvect(
+        mol_from_pkl(mol_pkl, mol_pkl_sz), details_json);
+    auto res = BitVectToText(*fp);
+    return str_to_c(res);
+  } catch(...) {
+    return nullptr;
+  }
+}
+
+extern "C" char *get_topological_torsion_fp_as_bytes(const char *mol_pkl,
+                                                     size_t mol_pkl_sz,
+                                                     size_t *nbytes,
+                                                     const char *details_json) {
+  if (!mol_pkl || !mol_pkl_sz) {
+    return nullptr;
+  }
+  try {
+    auto fp = MinimalLib::topological_torsion_fp_as_bitvect(
+        mol_from_pkl(mol_pkl, mol_pkl_sz), details_json);
+    auto res = BitVectToBinaryText(*fp);
+    return str_to_c(res, nbytes);
+  } catch(...) {
+    return nullptr;
+  }
+}
+
+extern "C" char *get_atom_pair_fp(const char *mol_pkl, size_t mol_pkl_sz,
+                                  const char *details_json) {
+  if (!mol_pkl || !mol_pkl_sz) {
+    return nullptr;
+  }
+  try {
+    auto fp = MinimalLib::atom_pair_fp_as_bitvect(
+        mol_from_pkl(mol_pkl, mol_pkl_sz), details_json);
+    auto res = BitVectToText(*fp);
+    return str_to_c(res);
+  } catch(...) {
+    return nullptr;
+  }
+}
+
+extern "C" char *get_atom_pair_fp_as_bytes(const char *mol_pkl,
+                                           size_t mol_pkl_sz, size_t *nbytes,
+                                           const char *details_json) {
+  if (!mol_pkl || !mol_pkl_sz) {
+    return nullptr;
+  }
+  try {
+    auto fp = MinimalLib::atom_pair_fp_as_bitvect(
+        mol_from_pkl(mol_pkl, mol_pkl_sz), details_json);
+    auto res = BitVectToBinaryText(*fp);
+    return str_to_c(res, nbytes);
+  } catch(...) {
+    return nullptr;
+  }
+}
+
+extern "C" char *get_maccs_fp(const char *mol_pkl, size_t mol_pkl_sz) {
+  if (!mol_pkl || !mol_pkl_sz) {
+    return nullptr;
+  }
+  try {
+    auto fp = MinimalLib::maccs_fp_as_bitvect(mol_from_pkl(mol_pkl, mol_pkl_sz));
+    auto res = BitVectToText(*fp);
+    return str_to_c(res);
+  } catch(...) {
+    return nullptr;
+  }
+}
+
+extern "C" char *get_maccs_fp_as_bytes(const char *mol_pkl, size_t mol_pkl_sz,
+                                       size_t *nbytes) {
+  if (!mol_pkl || !mol_pkl_sz) {
+    return nullptr;
+  }
+  try {
+    auto fp = MinimalLib::maccs_fp_as_bitvect(mol_from_pkl(mol_pkl, mol_pkl_sz));
+    auto res = BitVectToBinaryText(*fp);
+    return str_to_c(res, nbytes);
+  } catch(...) {
+    return nullptr;
+  }
+}
+
+#ifdef RDK_BUILD_AVALON_SUPPORT
+extern "C" char *get_avalon_fp(const char *mol_pkl, size_t mol_pkl_sz,
+                               const char *details_json) {
+  if (!mol_pkl || !mol_pkl_sz) {
+    return nullptr;
+  }
+  try {
+    auto fp = MinimalLib::avalon_fp_as_bitvect(mol_from_pkl(mol_pkl, mol_pkl_sz),
+                                              details_json);
+    auto res = BitVectToText(*fp);
+    return str_to_c(res);
+  } catch(...) {
+    return nullptr;
+  }
+}
+
+extern "C" char *get_avalon_fp_as_bytes(const char *mol_pkl, size_t mol_pkl_sz,
+                                        size_t *nbytes,
+                                        const char *details_json) {
+  if (!mol_pkl || !mol_pkl_sz) {
+    return nullptr;
+  }
+  try {
+    auto fp = MinimalLib::avalon_fp_as_bitvect(mol_from_pkl(mol_pkl, mol_pkl_sz),
+                                              details_json);
+    auto res = BitVectToBinaryText(*fp);
+    return str_to_c(res, nbytes);
+  } catch(...) {
+    return nullptr;
+  }
+}
+#endif
 
 extern "C" void prefer_coordgen(short val) {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = val;
 #endif
 };
+
+extern "C" short has_coords(char *mol_pkl, size_t mol_pkl_sz) {
+  short res = 0;
+  if (mol_pkl && mol_pkl_sz) {
+    auto mol = mol_from_pkl(mol_pkl, mol_pkl_sz);
+    res = (mol.getNumConformers() > 0);
+    if (res) {
+      res = mol.getConformer().is3D() ? 3 : 2;
+    }
+  }
+  return res;
+}
 
 extern "C" short set_2d_coords(char **mol_pkl, size_t *mol_pkl_sz) {
   if (!mol_pkl || !mol_pkl_sz || !*mol_pkl || !*mol_pkl_sz) {
@@ -550,7 +696,11 @@ extern "C" short set_2d_coords(char **mol_pkl, size_t *mol_pkl_sz) {
 extern "C" short set_2d_coords_aligned(char **mol_pkl, size_t *mol_pkl_sz,
                                        const char *template_pkl,
                                        size_t template_sz,
-                                       const char *details_json) {
+                                       const char *details_json,
+                                       char **match_json) {
+  if (match_json) {
+    *match_json = nullptr;
+  }
   if (!mol_pkl || !mol_pkl_sz || !*mol_pkl || !*mol_pkl_sz || !template_pkl ||
       !template_sz || !template_pkl || !template_sz) {
     return 0;
@@ -560,36 +710,14 @@ extern "C" short set_2d_coords_aligned(char **mol_pkl, size_t *mol_pkl_sz,
     return 0;
   }
   auto mol = mol_from_pkl(*mol_pkl, *mol_pkl_sz);
-  bool useCoordGen = true;
-  bool allowRGroups = false;
-  bool acceptFailure = true;
-  if (details_json && strlen(details_json)) {
-    std::istringstream ss;
-    ss.str(details_json);
-    boost::property_tree::ptree pt;
-    boost::property_tree::read_json(ss, pt);
-    PT_OPT_GET(useCoordGen);
-    PT_OPT_GET(allowRGroups);
-    PT_OPT_GET(acceptFailure);
-  }
-#ifdef RDK_BUILD_COORDGEN_SUPPORT
-  bool oprefer = RDDepict::preferCoordGen;
-  RDDepict::preferCoordGen = useCoordGen;
-#endif
-
-  int confId = -1;
-  // always accept failure in the original call because
-  // we detect it afterwards
-  bool acceptOrigFailure = true;
-  auto match = RDDepict::generateDepictionMatching2DStructure(
-      mol, templ, confId, nullptr, acceptOrigFailure, false, allowRGroups);
-#ifdef RDK_BUILD_COORDGEN_SUPPORT
-  RDDepict::preferCoordGen = oprefer;
-#endif
-  if (match.empty() && !acceptFailure) {
+  auto match = MinimalLib::generate_aligned_coords(mol, templ, details_json);
+  if (match.empty()) {
     return 0;
   } else {
     mol_to_pkl(mol, mol_pkl, mol_pkl_sz);
+    if (match_json) {
+      *match_json = str_to_c(match);
+    }
     return 1;
   }
 };
@@ -703,6 +831,59 @@ extern "C" short fragment_parent(char **mol_pkl, size_t *mol_pkl_sz,
   return standardize_func(mol_pkl, mol_pkl_sz, details_json,
                           MinimalLib::do_fragment_parent);
 };
+
+// chirality
+extern "C" short use_legacy_stereo_perception(short value) {
+  short was = Chirality::getUseLegacyStereoPerception();
+  Chirality::setUseLegacyStereoPerception(value);
+  return was;
+}
+
+extern "C" short allow_non_tetrahedral_chirality(short value) {
+  short was = Chirality::getAllowNontetrahedralChirality();
+  Chirality::setAllowNontetrahedralChirality(value);
+  return was;
+}
+
+MinimalLib::LogHandle::LoggingFlag MinimalLib::LogHandle::d_loggingNeedsInit =
+    true;
+
+extern "C" void enable_logging() { MinimalLib::LogHandle::enableLogging(); }
+
+extern "C" void disable_logging() { MinimalLib::LogHandle::disableLogging(); }
+
+extern "C" void *set_log_tee(const char *log_name) {
+  return MinimalLib::LogHandle::setLogTee(log_name);
+}
+
+extern "C" void *set_log_capture(const char *log_name) {
+  return MinimalLib::LogHandle::setLogCapture(log_name);
+}
+
+extern "C" short destroy_log_handle(void **log_handle) {
+  if (!log_handle || !*log_handle) {
+    return 0;
+  }
+  auto lh = reinterpret_cast<MinimalLib::LogHandle *>(*log_handle);
+  delete lh;
+  *log_handle = nullptr;
+  return 1;
+}
+
+extern "C" char *get_log_buffer(void *log_handle) {
+  return log_handle
+             ? str_to_c(reinterpret_cast<MinimalLib::LogHandle *>(log_handle)
+                            ->getBuffer())
+             : nullptr;
+}
+
+extern "C" bool clear_log_buffer(void *log_handle) {
+  if (log_handle) {
+    reinterpret_cast<MinimalLib::LogHandle *>(log_handle)->clearBuffer();
+    return 1;
+  }
+  return 0;
+}
 
 #if (defined(__GNUC__) || defined(__GNUG__))
 #pragma GCC diagnostic pop

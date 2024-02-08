@@ -83,6 +83,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
     SP,
     SP2,
     SP3,
+    SP2D,
     SP3D,
     SP3D2,
     OTHER  //!< unrecognized hybridization
@@ -94,7 +95,12 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
     CHI_TETRAHEDRAL_CW,   //!< tetrahedral: clockwise rotation (SMILES \@\@)
     CHI_TETRAHEDRAL_CCW,  //!< tetrahedral: counter-clockwise rotation (SMILES
                           //\@)
-    CHI_OTHER             //!< some unrecognized type of chirality
+    CHI_OTHER,            //!< some unrecognized type of chirality
+    CHI_TETRAHEDRAL,      //!< tetrahedral, use permutation flag
+    CHI_ALLENE,           //!< allene, use permutation flag
+    CHI_SQUAREPLANAR,     //!< square planar, use permutation flag
+    CHI_TRIGONALBIPYRAMIDAL,  //!< trigonal bipyramidal, use permutation flag
+    CHI_OCTAHEDRAL            //!< octahedral, use permutation flag
   } ChiralType;
 
   Atom();
@@ -209,6 +215,13 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   */
   int getImplicitValence() const;
 
+  //! returns whether the atom has a valency violation or not
+  /*!
+    <b>Notes:</b>
+      - requires an owning molecule
+  */
+  bool hasValenceViolation() const;
+
   //! returns the number of radical electrons for this Atom
   /*!
     <b>Notes:</b>
@@ -248,8 +261,8 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
 
   //! sets our \c chiralTag
   void setChiralTag(ChiralType what) { d_chiralTag = what; }
-  //! inverts our \c chiralTag
-  void invertChirality();
+  //! inverts our \c chiralTag, returns whether or not a change was made
+  bool invertChirality();
   //! returns our \c chiralTag
   ChiralType getChiralTag() const {
     return static_cast<ChiralType>(d_chiralTag);
@@ -277,7 +290,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   // This method can be used to distinguish query atoms from standard atoms:
   virtual bool hasQuery() const { return false; }
 
-  virtual std::string getQueryType() const {return "";}
+  virtual std::string getQueryType() const { return ""; }
 
   //! NOT CALLABLE
   virtual void setQuery(QUERYATOM_QUERY *what);

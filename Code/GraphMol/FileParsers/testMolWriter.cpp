@@ -697,7 +697,8 @@ void testMolFileChiralFlag() {
     std::string mb = MolToMolBlock(*m1);
     delete m1;
     m1 = MolBlockToMol(mb);
-    TEST_ASSERT(!m1->hasProp(common_properties::_MolFileChiralFlag));
+    TEST_ASSERT(m1->hasProp(common_properties::_MolFileChiralFlag));
+    TEST_ASSERT(m1->getProp<int>(common_properties::_MolFileChiralFlag) == 0);
     delete m1;
   }
   {
@@ -738,7 +739,7 @@ void testMolFileTotalValence() {
     TEST_ASSERT(m1->getNumAtoms() == 1);
     TEST_ASSERT(m1->getAtomWithIdx(0)->getNoImplicit());
     TEST_ASSERT(m1->getAtomWithIdx(0)->getNumExplicitHs() == 1);
-    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumRadicalElectrons() == 3);
 
     delete m1;
   }

@@ -1,4 +1,5 @@
 import random
+
 from rdkit import Chem
 from rdkit.Chem.rdDistGeom import EmbedMolecule
 
@@ -162,7 +163,7 @@ def GetStereoisomerCount(m, options=StereoEnumerationOptions()):
 
 
 def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False):
-  """ returns a generator that yields possible stereoisomers for a molecule
+  r""" returns a generator that yields possible stereoisomers for a molecule
 
     Arguments:
       - m: the molecule to work with
@@ -183,21 +184,21 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     ...     print(smi)
     ...
     F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C\\Br)O2
+    F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2
     F[C@@]12C[C@@]1(Cl)C[C@H](/C=C/Br)O2
-    F[C@@]12C[C@@]1(Cl)C[C@H](/C=C\\Br)O2
+    F[C@@]12C[C@@]1(Cl)C[C@H](/C=C\Br)O2
     F[C@@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\\Br)O2
+    F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2
     F[C@@]12C[C@]1(Cl)C[C@H](/C=C/Br)O2
-    F[C@@]12C[C@]1(Cl)C[C@H](/C=C\\Br)O2
+    F[C@@]12C[C@]1(Cl)C[C@H](/C=C\Br)O2
     F[C@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\\Br)O2
+    F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2
     F[C@]12C[C@@]1(Cl)C[C@H](/C=C/Br)O2
-    F[C@]12C[C@@]1(Cl)C[C@H](/C=C\\Br)O2
+    F[C@]12C[C@@]1(Cl)C[C@H](/C=C\Br)O2
     F[C@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@]12C[C@]1(Cl)C[C@@H](/C=C\\Br)O2
+    F[C@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2
     F[C@]12C[C@]1(Cl)C[C@H](/C=C/Br)O2
-    F[C@]12C[C@]1(Cl)C[C@H](/C=C\\Br)O2
+    F[C@]12C[C@]1(Cl)C[C@H](/C=C\Br)O2
 
     Because the molecule is constrained, not all of those isomers can
     actually exist. We can check that:
@@ -210,13 +211,13 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     ...     print(smi)
     ...
     F[C@@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\\Br)O2
+    F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2
     F[C@@]12C[C@]1(Cl)C[C@H](/C=C/Br)O2
-    F[C@@]12C[C@]1(Cl)C[C@H](/C=C\\Br)O2
+    F[C@@]12C[C@]1(Cl)C[C@H](/C=C\Br)O2
     F[C@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\\Br)O2
+    F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2
     F[C@]12C[C@@]1(Cl)C[C@H](/C=C/Br)O2
-    F[C@]12C[C@@]1(Cl)C[C@H](/C=C\\Br)O2
+    F[C@]12C[C@@]1(Cl)C[C@H](/C=C\Br)O2
 
     Or we can force the output to only give us unique isomers:
 
@@ -229,15 +230,15 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     ...     print(smi)
     ...
     F[C@@H](Cl)/C=C/C=C/[C@@H](F)Cl
-    F[C@@H](Cl)/C=C/C=C/[C@H](F)Cl
-    F[C@@H](Cl)/C=C/C=C\\[C@H](F)Cl
-    F[C@@H](Cl)/C=C\\C=C/[C@@H](F)Cl
-    F[C@@H](Cl)/C=C\\C=C/[C@H](F)Cl
-    F[C@@H](Cl)/C=C\\C=C\\[C@@H](F)Cl
-    F[C@@H](Cl)/C=C\\C=C\\[C@H](F)Cl
+    F[C@@H](Cl)/C=C\C=C/[C@@H](F)Cl
+    F[C@@H](Cl)/C=C\C=C\[C@@H](F)Cl
+    F[C@H](Cl)/C=C/C=C/[C@@H](F)Cl
     F[C@H](Cl)/C=C/C=C/[C@H](F)Cl
-    F[C@H](Cl)/C=C\\C=C/[C@H](F)Cl
-    F[C@H](Cl)/C=C\\C=C\\[C@H](F)Cl
+    F[C@H](Cl)/C=C/C=C\[C@@H](F)Cl
+    F[C@H](Cl)/C=C\C=C/[C@@H](F)Cl
+    F[C@H](Cl)/C=C\C=C/[C@H](F)Cl
+    F[C@H](Cl)/C=C\C=C\[C@@H](F)Cl
+    F[C@H](Cl)/C=C\C=C\[C@H](F)Cl
 
     By default the code only expands unspecified stereocenters:
 
@@ -249,13 +250,13 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     ...     print(smi)
     ...
     F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C\\Br)O2
+    F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2
     F[C@@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\\Br)O2
+    F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2
     F[C@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\\Br)O2
+    F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2
     F[C@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@]12C[C@]1(Cl)C[C@@H](/C=C\\Br)O2
+    F[C@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2
 
     But we can change that behavior:
 
@@ -325,7 +326,14 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     for i in range(nCenters):
       flag = bool(bitflag & (1 << i))
       flippers[i].flip(flag)
-    isomer = Chem.Mol(tm)
+
+    # from this point on we no longer need the stereogroups (if any are there), so
+    # remove them:
+    if tm.GetStereoGroups():
+      isomer = Chem.RWMol(tm)
+      isomer.SetStereoGroups([])
+    else:
+      isomer = Chem.Mol(tm)
     Chem.SetDoubleBondNeighborDirections(isomer)
     isomer.ClearComputedProps(includeRings=False)
 
@@ -355,3 +363,19 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
         break
     elif verbose:
       print("%s    failed to embed" % (Chem.MolToSmiles(isomer, isomericSmiles=True)))
+
+
+#------------------------------------
+#
+#  doctest boilerplate
+#
+def _test():
+  import doctest
+  import sys
+  return doctest.testmod(sys.modules["__main__"])
+
+
+if __name__ == '__main__':
+  import sys
+  failed, tried = _test()
+  sys.exit(failed)

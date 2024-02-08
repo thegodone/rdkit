@@ -218,7 +218,7 @@ int testMolSup() {
       std::unique_ptr<ROMol> nmol;
       try {
         nmol.reset(maesup.next());
-      } catch (const Invar::Invariant &) {
+      } catch (const FileParseException &) {
         // just ignore this failure
       }
       TEST_ASSERT(!nmol);
@@ -253,7 +253,7 @@ int testMolSup() {
         if (i == 0) {
           auto smiles = MolToSmiles(*nmol);
           TEST_ASSERT(smiles ==
-                      "CCC1=[O+][Cu@]2([O+]=C(CC)CC(CC)=[O+]2)[O+]=C(CC)C1");
+                      "CCC1=[O+][Cu@]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2");
         }
       }
     }
@@ -2332,7 +2332,7 @@ int testForwardSDSupplier() {
     }
     TEST_ASSERT(i == 1663);
   }
-#if RDK_USE_BOOST_IOSTREAMS  
+#if RDK_USE_BOOST_IOSTREAMS
   {
     gzstream strm(maefname2);
 
@@ -2816,7 +2816,7 @@ void testGitHub2881() {
     ROMol *mol = nullptr;
     try {
       mol = suppl.next();
-    } catch (const Invar::Invariant &) {
+    } catch (const FileParseException &) {
     }
     TEST_ASSERT(!mol);
   }

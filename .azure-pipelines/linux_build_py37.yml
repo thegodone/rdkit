@@ -9,7 +9,7 @@ steps:
         boost-cpp=$(boost_version) boost=$(boost_version) \
         py-boost=$(boost_version) libboost=$(boost_version) \
         numpy matplotlib pillow eigen pandas \
-        sphinx=3.1.2 recommonmark jupyter
+        sphinx myst-parser jupyter
     conda activate rdkit_build
     conda install -c rdkit nox cairo=1.14.6
   displayName: Setup build environment
@@ -23,7 +23,6 @@ steps:
     -DRDK_INSTALL_STATIC_LIBS=OFF \
     -DRDK_BUILD_CPP_TESTS=ON \
     -DRDK_BUILD_PYTHON_WRAPPERS=ON \
-    -DRDK_USE_BOOST_REGEX=ON \
     -DRDK_BUILD_COORDGEN_SUPPORT=ON \
     -DRDK_BUILD_MAEPARSER_SUPPORT=ON \
     -DRDK_OPTIMIZE_POPCNT=ON \
