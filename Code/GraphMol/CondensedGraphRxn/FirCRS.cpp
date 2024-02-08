@@ -205,7 +205,7 @@ Atom* lookupAtom(RWMOL_SPTR mol, const unsigned int mnum) {
     return res;
 }
     
-std::string CRSWriter::write(const std::string &rxnsma, bool rnd, int root) {
+std::string CRSWriter::write(const std::string &rxnsma, bool rnd, int /*root*/) {
     std::stringstream res;
     
     // Import the vectors for reagents and products
@@ -232,7 +232,6 @@ std::string CRSWriter::write(const std::string &rxnsma, bool rnd, int root) {
             // the information in the reagent molecules. We have 3 cases:
             // 1. Bond in both or only in product => these become type CRS{N,S,D,T,A}{S,D,T,A}
             // TODO: Probably only do this if both mapnums are in the reagents (IG sometimes missing).$
-            int frag=0;
             for (Bond *bond : prod->bonds()) {
                 const int from = bond->getBeginAtom()->getAtomMapNum();
                 const int to = bond->getEndAtom()->getAtomMapNum();
@@ -415,7 +414,7 @@ void map(RWMOL_SPTR mol, bool mapcrsatoms, bool mapallatoms) {
     else if (mapcrsatoms) {
         const size_t num = mol->getNumAtoms();
         bool* crs = (bool*) std::malloc(num*sizeof(bool));
-        for (int idx=0;idx<num;idx++) {
+        for (unsigned int idx=0;idx<num;idx++) {
             crs[idx]=0;
         }
         for (Bond *bond : mol->bonds()) {
@@ -624,7 +623,6 @@ std::string CRSReader::siteSmarts(const std::string &crssmiles, bool siteplusone
             }
 
             // Delete all undesired atoms, then export to stringstream
-            unsigned int mnum = 0;
             for (int idx=num-1;idx>=0;idx--) {
                 if (!keep[idx]) 
                     molptr1->removeAtom(idx);

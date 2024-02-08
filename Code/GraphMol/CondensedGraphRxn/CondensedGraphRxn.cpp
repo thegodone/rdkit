@@ -25,7 +25,7 @@
 #include <vector>
 
 /////////////////// CRS format validation ///////////////////////
-extern std::string validcrss[20] = {
+std::string validcrss[20] = {
     "{!-}","{!=}","{!#}","{!:}",
     "{-!}","{-=}","{-#}","{-:}",
     "{=!}","{=-}","{=#}","{=:}",
@@ -99,10 +99,10 @@ public:
     virtual ~Row() {
         free(this->ptr);
     }
-    void Set(const int idx,int value) {
+    void Set(int idx,int value) {
         this->ptr[idx] = value;
     }
-    const int Get(const int idx) {
+    int Get(int idx) {
         return this->ptr[idx];
     }
     void Display() {
@@ -138,7 +138,7 @@ public:
         int qcol = std::max(from,to);
         M[qrow][qcol] = bo;
     }
-    const int GetBO(const int& from,const int& to) {
+    int GetBO(const int& from,const int& to) {
         int qrow = std::min(from,to);
         int qcol = std::max(from,to);
         return M[qrow][qcol];
@@ -156,7 +156,7 @@ public:
 
 ///////////////// bond CRS type //////////////
 // This may become something like
-const Bond::BondType getCRSBondType(const int bor, const int bop) {
+Bond::BondType getCRSBondType(int bor, int bop) {
         if (bor == bop){
            switch(bor) {
               case 1:
@@ -178,26 +178,31 @@ const Bond::BondType getCRSBondType(const int bor, const int bop) {
                       else if (bop == 2) return  Bond::BondType::CRSND;
                       else if (bop == 3) return  Bond::BondType::CRSNT;
                       else if (bop == 4) return  Bond::BondType::CRSNA;
+                      else return Bond::BondType::ZERO;
                 case 1:
                       if (bop == 0) return  Bond::BondType::CRSSN;
                       else if (bop == 2) return  Bond::BondType::CRSSD;
                       else if (bop == 3) return  Bond::BondType::CRSST;
                       else if (bop == 4) return  Bond::BondType::CRSSA;
+                      else return Bond::BondType::ZERO;
                 case 2:
                       if (bop == 0) return  Bond::BondType::CRSDN;
                       else if (bop == 1) return  Bond::BondType::CRSDS;
                       else if (bop == 3) return  Bond::BondType::CRSDT;
                       else if (bop == 4) return  Bond::BondType::CRSDA;
+                      else return Bond::BondType::ZERO;
                 case 3:
                       if (bop == 0) return  Bond::BondType::CRSTN;
                       else if (bop == 1) return  Bond::BondType::CRSTS;
                       else if (bop == 2) return  Bond::BondType::CRSTD;
                       else if (bop == 4) return  Bond::BondType::CRSTA;
+                      else return Bond::BondType::ZERO;
                 case 4:
                       if (bop == 0) return  Bond::BondType::CRSAN;
                       else if (bop == 1) return  Bond::BondType::CRSAS;
                       else if (bop == 2) return  Bond::BondType::CRSAD;
                       else if (bop == 3) return  Bond::BondType::CRSAT;
+                      else return Bond::BondType::ZERO;
                 default:
                       return Bond::BondType::ZERO;
              }
@@ -424,7 +429,7 @@ std::vector<unsigned int> getNeighborsPtr(std::shared_ptr<RWMol> &mol, Atom* ato
    return res;
 }
 
-void BFS(std::shared_ptr<RWMol> mol, std::vector<unsigned int> atidx, bool* important, unsigned int radius, int r=0) {
+void BFS(std::shared_ptr<RWMol> mol, std::vector<unsigned int> atidx, bool* important, unsigned int radius, unsigned int r=0) {
    // Check if the depth has been reached or the list is empty
    // Stop if this is the case => this will never fail, because
    // eventually we will have all atoms as important.

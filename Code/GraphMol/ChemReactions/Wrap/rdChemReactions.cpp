@@ -308,9 +308,14 @@ ChemicalReaction *ReactionFromSmarts(const char *smarts, python::dict replDict,
         python::extract<std::string>(replDict.values()[i]);
   }
   ChemicalReaction *res;
-  bool allowCXSmiles = true;
-  res = RxnSmartsToChemicalReaction(smarts, &replacements, useSmiles,
-                                    allowCXSmiles, sanitize);
+  v2::ReactionParser::ReactionSmartsParserParams params;
+  params.replacements = replacements;
+  params.sanitize = sanitize;
+  if(! useSmiles) {
+    res = v2::ReactionParser::ReactionFromSmarts(smarts, params).release();
+  } else {
+    res = v2::ReactionParser::ReactionFromSmiles(smarts, params).release();
+  }
   return res;
 }
 

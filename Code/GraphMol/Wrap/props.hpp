@@ -154,9 +154,9 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
           rdvalue.key;
       UNDER_CONSTRUCTION(message.c_str());
     }
-    if (AddToDict<std::list<int>>(obj, dict, keys[i])) {
-      continue;
-    }
+    // if (AddToDict<std::list<int>>(obj, dict, keys[i])) {
+    //   continue;
+    // }
   }
   return dict;
 }

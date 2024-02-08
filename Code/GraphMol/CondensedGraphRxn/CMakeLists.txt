@@ -6,7 +6,7 @@ rdkit_library(CondensedGraphRxn
 
       rdkit_headers(CondensedGraphRxn.h FirCRS.h DEST GraphMol/CondensedGraphRxn)
 
-rdkit_catch_test(testCondensedGraphRxn catch_main.cpp catch_tests.cpp 
+rdkit_catch_test(testCondensedGraphRxn catch_tests.cpp 
 LINK_LIBRARIES CondensedGraphRxn ChemReactions SubstructMatch  SmilesParse )
 
 
